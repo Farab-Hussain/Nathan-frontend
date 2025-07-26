@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Archivo";
+  src: url("/fonts/Archivo-VariableFont_wdth,wght.ttf");
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter-VariableFont_opsz,wght.ttf");
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #FF5D39;
+  --secondary: #F1A900;
+  --white: #FFFFFF;
+  --black: #101010;
+  --muted: #64607D;
+  --accent: #00B2AA;
+  --font-inter: "Inter";
+  --font-archivo: "Archivo";
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-inter: var(--font-inter);
+  --font-archivo: var(--font-archivo);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-white: var(--white);
+  --color-black: var(--black);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+}
+
+body {
+  font-family: var(--font-inter), var(--font-archivo), Arial, Helvetica, sans-serif;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.layout {
+  @apply container m-auto px-2 md:px-0;
+}
