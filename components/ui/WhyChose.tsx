@@ -1,0 +1,173 @@
+"use client";
+import Image from "next/image";
+import React, { useEffect, useState, useRef } from "react";
+import AnimatedText from "../custom/AnimatedText";
+
+const list = [
+  {
+    description: "50% of Every Sale Goes to You",
+  },
+  {
+    description: "No Upfront Costs or Minimum Orders",
+  },
+  {
+    description: "Sample Box Provided for Free",
+  },
+  {
+    description: "Premium Sweets in popular flavor",
+  },
+];
+
+const WhyChose = () => {
+  const [isImageAnimated, setIsImageAnimated] = useState(false);
+  const [counterStarted, setCounterStarted] = useState(false);
+  const [organizationsCount, setOrganizationsCount] = useState(0);
+  const [projectsCount, setProjectsCount] = useState(0);
+  
+  const imageRef = useRef<HTMLDivElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.3,
+      rootMargin: "0px 0px -100px 0px",
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setIsImageAnimated(true);
+        } else {
+          // Return to initial position when scrolling back up
+          setIsImageAnimated(false);
+        }
+      });
+    }, observerOptions);
+
+    if (imageRef.current) {
+      observer.observe(imageRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Counter animation effect
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.5,
+      rootMargin: "0px 0px -100px 0px",
+    };
+
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && !counterStarted) {
+          setCounterStarted(true);
+          animateCounters();
+        }
+      });
+    }, observerOptions);
+
+    if (statsRef.current) {
+      counterObserver.observe(statsRef.current);
+    }
+
+    return () => counterObserver.disconnect();
+  }, [counterStarted]);
+
+  const animateCounters = () => {
+    const organizationsTarget = 120;
+    const projectsTarget = 8.990;
+    const duration = 2000; // 2 seconds
+    const steps = 60; // 60 steps for smooth animation
+    const stepDuration = duration / steps;
+
+    let currentStep = 0;
+
+    const animate = () => {
+      if (currentStep >= steps) {
+        setOrganizationsCount(organizationsTarget);
+        setProjectsCount(projectsTarget);
+        return;
+      }
+
+      const progress = currentStep / steps;
+      const easeProgress = 1 - Math.pow(1 - progress, 3); // Easing function
+
+      setOrganizationsCount(Math.floor(organizationsTarget * easeProgress));
+      setProjectsCount(parseFloat((projectsTarget * easeProgress).toFixed(3)));
+
+      currentStep++;
+      setTimeout(animate, stepDuration);
+    };
+
+    animate();
+  };
+
+  return (
+    <section className="min-h-screen w-full bg-[url('/assets/images/3bg.png')] bg-cover bg-no-repeat bg-center bg-fixed flex items-center justify-center px-4 md:px-8 py-10 md:py-20">
+      <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-12 lg:gap-16 max-w-7xl mx-auto">
+        {/* Image Section */}
+        <div 
+          ref={imageRef}
+          className="w-full lg:w-1/2 flex items-center justify-center mb-8 lg:mb-0"
+        >
+          <Image
+            src="/assets/images/mobile.png"
+            alt="why"
+            width={400}
+            height={400}
+            className={`w-full max-w-xs md:max-w-md lg:max-w-lg h-auto object-contain hover:scale-105 transition-all duration-1000 ease-out ${
+              isImageAnimated 
+                ? 'translate-x-0 opacity-100' 
+                : 'translate-x-[30%] opacity-70'
+            } hover:rotate-6`}
+          />
+        </div>
+        {/* Content Section */}
+        <div className="w-full lg:w-1/2 flex flex-col items-start justify-start gap-6">
+          <AnimatedText
+            text="Why Choose Us for Your Next Fundraiser?"
+            className="text-3xl md:text-5xl lg:text-6xl font-inter font-bold max-w-full md:max-w-2xl relative z-10 text-white"
+            splitBy="word"
+            duration={0.3}
+            stagger={0.1}
+          />
+          <ul className="flex flex-col items-start justify-start gap-3 md:gap-4 w-full list-disc list-inside">
+            {list.map((item, index) => (
+              <li
+                key={index}
+                className="text-white text-base md:text-lg font-medium leading-relaxed"
+              >
+                {item.description}
+              </li>
+            ))}
+          </ul>
+          {/* Stats Section */}
+          <div 
+            ref={statsRef}
+            className="w-full flex flex-col sm:flex-row items-center justify-between gap-8 py-10"
+          >
+            <div className="flex flex-col items-center sm:items-start justify-start gap-2 w-full sm:w-1/2">
+              <h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-inter font-bold">
+                {organizationsCount}K
+              </h1>
+              <h6 className="text-white text-base md:text-lg font-medium leading-relaxed">
+                Organizations
+              </h6>
+            </div>
+            <div className="flex flex-col items-center sm:items-start justify-start gap-2 w-full sm:w-1/2">
+              <h1 className="text-white text-4xl md:text-5xl lg:text-6xl font-inter font-bold">
+                {projectsCount}
+              </h1>
+              <h6 className="text-white text-base md:text-lg font-medium leading-relaxed">
+                Project Done
+              </h6>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default WhyChose;

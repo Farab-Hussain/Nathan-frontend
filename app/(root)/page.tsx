@@ -1,11 +1,76 @@
-import React from "react";
+"use client";
+import React, { useEffect } from "react";
 import Home from "./Home/page";
-const page = () => {
+// import LoadingScreen from "../../components/LoadingScreen";
+import Lenis from "lenis";
+
+const Page = () => {
+  // const [isLoading, setIsLoading] = useState(true);
+  // const [showHome, setShowHome] = useState(false);
+
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2, // Reduced from default 1.5
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Custom easing
+      smoothWheel: true,
+      wheelMultiplier: 0.8, // Reduced wheel sensitivity
+      touchMultiplier: 1.5,
+      infinite: false,
+    });
+
+    function ref(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(ref);
+    }
+    requestAnimationFrame(ref);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
+
+  // Disable scroll while loading
+  // useEffect(() => {
+  //   if (isLoading) {
+  //     // Disable scroll
+  //     document.body.style.overflow = 'hidden';
+  //     document.body.style.position = 'fixed';
+  //     document.body.style.width = '100%';
+  //   } else {
+  //     // Re-enable scroll
+  //     document.body.style.overflow = '';
+  //     document.body.style.position = '';
+  //     document.body.style.width = '';
+  //   }
+
+  //   // Cleanup function
+  //   return () => {
+  //     document.body.style.overflow = '';
+  //     document.body.style.position = '';
+  //     document.body.style.width = '';
+  //   };
+  // }, [isLoading]);
+
+  // const handleLoadingComplete = () => {
+  //   setIsLoading(false);
+  //   // Faster transition - reduced delay
+  //   setTimeout(() => {
+  //     setShowHome(true);
+  //   }, 100);
+  // };
+
   return (
-    <section>
-      <Home />
-    </section>
+    <>
+      {/* {isLoading && <LoadingScreen onComplete={handleLoadingComplete} />} */}
+      {/* <section className={`transition-all duration-500 ease-out ${
+        showHome 
+          ? 'opacity-100 scale-100' 
+          : 'opacity-0 scale-95'
+      }`}> */}
+        <Home />
+      {/* </section> */}
+    </>
   );
 };
 
-export default page;
+export default Page;

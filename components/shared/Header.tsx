@@ -7,36 +7,35 @@ import { usePathname } from "next/navigation";
 import { AlignLeft, X } from "lucide-react";
 import CustomButton from "@/components/custom/CustomButton";
 
-
 const Header = () => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   return (
-    <header
-      className="z-50 h-[114px] w-full layout
-    flex justify-between items-center py-4 layout "
-    >
-      <div className="flex justify-between items-center md:w-[50%] w-full gap-10 ">
+    <header className="z-50 h-auto min-h-[80px] md:h-[114px] w-full layout flex justify-between items-center py-4 px-4 md:px-0">
+      <div className="flex justify-between items-center w-full md:w-[50%] gap-4 md:gap-10">
         <div className="flex justify-between items-center gap-4 md:hidden">
-          <AlignLeft onClick={() => setIsOpen(!isOpen)} />
+          <AlignLeft
+            onClick={() => setIsOpen(!isOpen)}
+            className="text-white"
+          />
           {isOpen && (
-            <div
-              className="flex  justify-between 
-            items-start gap-4 absolute top-0 left-0 w-1/2 h-screen z-50 bg-primary border-r border-white     
-            p-4 transition-all duration-700 pt-11"
-            >
+            <div className="flex justify-between items-start gap-4 absolute top-0 left-0 w-1/2 h-screen z-50 bg-primary border-r border-white p-4 transition-all duration-700 pt-11">
               <div className="flex flex-col justify-between items-start gap-4">
                 {navLinks.map((link) => {
                   const isActive = pathname === link.href;
                   return (
-                    <Link href={link.href} key={link.label}>
-                      <h2
-                        className={`text-16 font-inter transition-all duration-300
-                        ${isActive ? "text-secondary" : ""}
-                        hover:text-secondary active:text-secondary focus:text-secondary`}
+                    <Link
+                      href={link.href}
+                      key={link.label}
+                      className="no-underline"
+                    >
+                      <span
+                        className={`text-16 font-inter transition-all duration-300 ${
+                          isActive ? "text-secondary" : "text-white"
+                        } hover:text-secondary active:text-secondary focus:text-secondary`}
                       >
                         {link.label}
-                      </h2>
+                      </span>
                     </Link>
                   );
                 })}
@@ -46,29 +45,35 @@ const Header = () => {
           )}
         </div>
         <Link href="/">
-          <Image src="/assets/svg/logo.svg" alt="logo" width={110} height={110} />
+          <Image
+            src="/assets/svg/logo.svg"
+            alt="logo"
+            width={110}
+            height={110}
+            className="w-[80px] h-[80px] md:w-[110px] md:h-[110px]"
+          />
         </Link>
-        <div className="justify-between items-center gap-10 hidden md:flex">
+        <div className="justify-between items-center gap-6 md:gap-10 hidden md:flex">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
-              <Link href={link.href} key={link.label}>
-                <h2
-                  className={`text-16 font-inter transition-all duration-300
-                  ${isActive ? "text-secondary" : ""}
-                  hover:text-secondary active:text-secondary focus:text-secondary`}
+              <Link href={link.href} key={link.label} className="no-underline">
+                <span
+                  className={`text-16 font-inter transition-all duration-300 ${
+                    isActive ? "text-secondary" : "text-white"
+                  } hover:text-secondary active:text-secondary focus:text-secondary`}
                 >
                   {link.label}
-                </h2>
+                </span>
               </Link>
             );
           })}
         </div>
       </div>
-      <div className="flex justify-end items-center gap-4  w-full">
+      <div className="flex justify-end items-center gap-4 w-full md:w-[60%]">
         <CustomButton
           title="Sign in"
-          className="bg-white !text-primary font-inter font-bold rounded-md"
+          className="bg-white !text-primary font-inter font-bold rounded-md px-4 py-2 md:px-6 md:py-4 text-sm md:text-base"
         />
       </div>
     </header>
