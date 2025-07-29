@@ -27,54 +27,10 @@ const WhyChose = () => {
   const imageRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.3,
-      rootMargin: "0px 0px -100px 0px",
-    };
+ 
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setIsImageAnimated(true);
-        } else {
-          // Return to initial position when scrolling back up
-          setIsImageAnimated(false);
-        }
-      });
-    }, observerOptions);
-
-    if (imageRef.current) {
-      observer.observe(imageRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  // Counter animation effect
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.5,
-      rootMargin: "0px 0px -100px 0px",
-    };
-
-    const counterObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting && !counterStarted) {
-          setCounterStarted(true);
-          animateCounters();
-        }
-      });
-    }, observerOptions);
-
-    if (statsRef.current) {
-      counterObserver.observe(statsRef.current);
-    }
-
-    return () => counterObserver.disconnect();
-  }, [counterStarted]);
-
-  const animateCounters = () => {
+ 
+   const animateCounters = () => {
     const organizationsTarget = 120;
     const projectsTarget = 8.990;
     const duration = 2000; // 2 seconds

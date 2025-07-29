@@ -5,10 +5,12 @@ import { Lenis } from "@/constant/lenis";
 
 const archivo = Archivo({
   variable: "--font-archivo",
+  subsets: ["latin"],
 });
 
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
