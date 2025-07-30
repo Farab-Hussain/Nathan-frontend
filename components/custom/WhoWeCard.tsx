@@ -22,15 +22,15 @@ const WhoWeCard: React.FC<WhoWeCardProps> = ({
 
   return (
     <div
-      className={`relative w-72 sm:w-80 md:w-96 ${className ? className : ""}`}
+      className={`relative w-64 sm:w-72 md:w-80 lg:w-96 xl:w-[420px] ${className ? className : ""}`}
     >
       <div
-        className={`absolute top-3 left-3 w-full h-full rounded-2xl z-0 ${shadow}`}
+        className={`absolute top-2 sm:top-3 left-2 sm:left-3 w-full h-full rounded-xl sm:rounded-2xl z-0 ${shadow}`}
       ></div>
       <div
-        className={`relative flex flex-col items-start justify-start w-full rounded-2xl p-6 z-10 ${bgColor}`}
+        className={`relative flex flex-col items-start justify-start w-full rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 z-10 ${bgColor}`}
       >
-        <div className="w-16  sm:w-20  md:w-24 mb-5">
+        <div className="w-12 sm:w-16 md:w-20 lg:w-24 mb-3 sm:mb-4 md:mb-5">
           <Image
             src="/assets/svg/logo.svg"
             alt="Southern Sweet & Sour Logo"
@@ -39,10 +39,10 @@ const WhoWeCard: React.FC<WhoWeCardProps> = ({
             className="w-full h-full object-contain"
           />
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-tight">
+        <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white mb-2 sm:mb-3 md:mb-4 leading-tight">
           {title}
         </h1>
-        <p className="text-sm  text-white leading-relaxed">
+        <p className="text-xs sm:text-sm md:text-base text-white leading-relaxed">
           {desc}
         </p>
       </div>

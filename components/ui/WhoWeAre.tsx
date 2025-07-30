@@ -5,12 +5,12 @@ import CustomButton from "../custom/CustomButton";
 
 const WhoWeAre = () => {
   return (
-    <section className="h-full w-full flex flex-col items-center justify-center bg-white py-8 md:py-12 lg:py-16 px-4">
-      <h1 className="text-3xl md:text-4xl font-bold text-black text-center mb-6 md:mb-8 lg:mb-10">
+    <section className="min-h-screen w-full flex flex-col items-center justify-center bg-white py-6 sm:py-8 md:py-12 lg:py-16 px-4">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-black text-center mb-4 sm:mb-6 md:mb-8 lg:mb-10">
         Who We Are
       </h1>
-      <div className="layout flex flex-col lg:flex-row items-center justify-between w-full gap-8 lg:gap-4">
-        <div className="h-full w-full flex flex-col justify-center items-center gap-4 md:gap-6 lg:gap-8">
+      <div className="layout flex flex-col xl:flex-row items-center justify-between w-full gap-6 sm:gap-8 lg:gap-12 xl:gap-4">
+        <div className="h-full w-full flex flex-col justify-center items-center gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16">
           <WhoWeCard
             title="Fundraising Made Easy"
             desc="We’ve simplified the fundraising process 
@@ -31,8 +31,12 @@ const WhoWeAre = () => {
             shadowColor="bg-[#FFBEAF]"
           />
         </div>
-        <div className="h-full w-full relative flex flex-col items-center justify-center gap-6 md:gap-8 lg:gap-10 mt-8 md:mt-16 lg:mt-36" style={{ perspective: '800px', transformStyle: 'preserve-3d' }}>
-          <div className="bg-[#00B2AA] rounded-lg h-[300px] w-[240px] md:h-[400px] md:w-[320px] lg:h-[475px] lg:w-[368px] relative mb-10 transition-transform duration-500 ease-in-out cursor-pointer hover-moved">
+        <div className="h-full w-full relative flex flex-col items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8 xl:gap-10 mt-4 sm:mt-6 md:mt-16 lg:mt-20 xl:mt-36">
+          <div
+            className="bg-[#00B2AA] rounded-lg h-[200px] w-[160px] sm:h-[250px] sm:w-[200px] md:h-[300px] md:w-[240px] lg:h-[400px] lg:w-[320px] 
+            xl:h-[475px] xl:w-[368px] relative mt-8 sm:mt-12 md:mt-16 lg:mt-0 mb-2 sm:mb-4 md:mb-6 lg:mb-8 xl:mb-10 
+          transition-transform duration-500 ease-in-out cursor-pointer hover-moved flex items-start"
+          >
             <Image
               src="/assets/images/girl.png"
               alt="who-we-are"
@@ -43,10 +47,10 @@ const WhoWeAre = () => {
           </div>
           <CustomButton
             title="Start Fundraiser"
-            className="mt-8 md:mt-12 lg:mt-[92px]"
+            className="mt-2 sm:mt-4 md:mt-6 lg:mt-8 xl:mt-[92px]"
           />
         </div>
-        <div className="h-full w-full flex flex-col justify-center items-center gap-4 md:gap-6 lg:gap-8">
+        <div className="h-full w-full flex flex-col justify-center items-center gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16">
           <WhoWeCard
             title="Rooted in Real Experience"
             desc="Our founders grew up doing 

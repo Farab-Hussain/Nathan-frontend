@@ -10,12 +10,13 @@ const Page = () => {
 
   useEffect(() => {
     const lenis = new Lenis({
-      duration: 1.2, // Reduced from default 1.5
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Custom easing
+      duration: 1.0,
+      easing: (t) => t, // Linear easing to prevent bounce
       smoothWheel: true,
-      wheelMultiplier: 0.8, // Reduced wheel sensitivity
-      touchMultiplier: 1.5,
+      wheelMultiplier: 1.0, // Normal wheel sensitivity
+      touchMultiplier: 1.0, // Normal touch sensitivity
       infinite: false,
+      lerp: 0.1, // Lower lerp value for smoother movement
     });
 
     function ref(time: number) {
