@@ -1,15 +1,16 @@
-import Fundraising from "@/components/ui/Fundraising";
-import HowItWorks from "@/components/ui/HowItWorks";
-import ShopOur from "@/components/ui/ShopOur";
-import WhoWeAre from "@/components/ui/WhoWeAre";
-import WhyChose from "@/components/ui/WhyChose";
+import Fundraising from "@/components/ui/home/Fundraising";
+// import HowItWorks from "@/components/ui/home/HowItWorks";
+import ShopOur from "@/components/ui/home/ShopOur";
+import WhoWeAre from "@/components/ui/home/WhoWeAre";
+import WhyChose from "@/components/ui/home/WhyChose";
 import React from "react";
+
 
 const home = () => {
   return (
     <>
       <Fundraising/>
-      <HowItWorks/>
+      {/* <HowItWorks/> */}
       <WhyChose/>
       <WhoWeAre/>
       <ShopOur/>

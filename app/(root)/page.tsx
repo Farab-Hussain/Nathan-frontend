@@ -9,15 +9,7 @@ const Page = () => {
   // const [showHome, setShowHome] = useState(false);
 
   useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.0,
-      easing: (t) => t, // Linear easing to prevent bounce
-      smoothWheel: true,
-      wheelMultiplier: 1.0, // Normal wheel sensitivity
-      touchMultiplier: 1.0, // Normal touch sensitivity
-      infinite: false,
-      lerp: 0.1, // Lower lerp value for smoother movement
-    });
+    const lenis = new Lenis();
 
     function ref(time: number) {
       lenis.raf(time);

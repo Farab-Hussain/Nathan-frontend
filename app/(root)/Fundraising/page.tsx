@@ -1,10 +1,22 @@
+import React from 'react'
+import Hero from '@/components/ui/fundraising/Hero'
+import Dedication from '@/components/ui/fundraising/dedication'
+import Off from '@/components/ui/fundraising/off'
+import VirtualFund from '@/components/ui/fundraising/VirtualFund'
+import GrateFull from '@/components/ui/fundraising/GrateFull'
+import Rope from '@/components/ui/fundraising/Rope'
 
 const Fundraising = () => {
-    return(
-        <section className="w-full h-full bg-[url('/assets/images/fun')] bg-cover bg-no-repeat bg-top">
-            <h1>fundraising</h1>
-        </section>
-    )
+  return (
+    <>
+    <Hero/>
+    <Dedication/>
+    <Off/>
+    <VirtualFund/>
+    <GrateFull/>
+    <Rope/>
+    </>
+  )
 }
 
-export default Fundraising;
+export default Fundraising

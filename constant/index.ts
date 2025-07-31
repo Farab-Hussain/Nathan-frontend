@@ -5,7 +5,7 @@ export const navLinks = [
   },
   {
     label: "Fundraising",
-    href: "/fundraising",
+    href: "/Fundraising",
   },
   {
     label: "Blog",

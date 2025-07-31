@@ -71,3 +71,38 @@ html.lenis body {
   pointer-events: none;
 }
 
+/* styles/globals.css */
+.clip-curve {
+  clip-path: path("M 0 150 C 300 0, 700 300, 1000 150 L 1000 1000 L 0 1000 Z"
+    );
+}
+
+/* Custom Slider Styles */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  height: 45px;
+  width: 45px;
+  border-radius: 50%;
+  background: #f97316;
+  cursor: pointer;
+  border: 8px solid #f1a900;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-moz-range-thumb {
+  height: 45px;
+  width: 45px;
+  border-radius: 50%;
+  background: #f97316;
+  cursor: pointer;
+  border: 28px solid #f1a900;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-webkit-slider-track {
+  background: transparent;
+}
+
+.slider::-moz-range-track {
+  background: transparent;
+}
