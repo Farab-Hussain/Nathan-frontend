@@ -87,12 +87,14 @@ const Off = () => {
           <div className="flex flex-row gap-3 md:gap-4 justify-center mt-4 md:mt-6">
             <button
               onClick={handlePrevious}
+              aria-label="Previous slide"
               className="w-10 h-10 md:w-12 md:h-12 bg-secondary rounded-full flex items-center justify-center text-white transition-all duration-300 hover:bg-white hover:text-secondary hover:scale-110"
             >
               <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8" />
             </button>
             <button
               onClick={handleNext}
+              aria-label="Next slide"
               className="w-10 h-10 md:w-12 md:h-12 bg-secondary rounded-full flex items-center justify-center text-white transition-all duration-300 hover:bg-white hover:text-secondary hover:scale-110"
             >
               <ArrowRight className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8" />

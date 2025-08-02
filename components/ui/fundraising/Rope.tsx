@@ -36,6 +36,7 @@ const Rope = () => {
         <button
           className="font-bold text-white w-full md:w-auto px-8 py-3 md:py-4 mt-4 rounded-full text-[14px] md:text-[16px]"
           style={{ backgroundColor: '#FF5D39' }}
+          aria-label="Explore our licorice flavors"
         >
           Explore Flavors
         </button>

@@ -17,8 +17,8 @@ const Fundraising = () => {
   };
 
   return (
-    <section className='w-full min-h-full flex flex-col items-center justify-center relative py-8 md:py-20 px-4 md:px-8 bg-[url("/assets/images/fundbg.png")] bg-cover bg-no-repeat bg-center'>
-      <div className="absolute top-0 left-0 opacity-50 w-full h-full z-0 bg-white/50"></div>
+    <section className='w-full min-h-full flex flex-col items-center justify-center relative py-8 md:py-20 px-4 md:px-8 bg-gradient-to-br from-orange-100 to-orange-200'>
+      <div className="absolute top-0 left-0 w-full h-full z-0 bg-white/30"></div>
 
       <div className="h-full w-full layout">
         <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-black text-center">
@@ -33,19 +33,25 @@ const Fundraising = () => {
           <div className="w-full max-w-md md:w-1/3 lg:w-1/4">
             <div className="relative w-full h-12">
               <input
+                id="participants-slider"
                 type="range"
                 min="1"
                 max="100"
                 value={participants}
                 onChange={handleSliderChange}
+                aria-label="Select number of participants for fundraising calculation"
+                aria-describedby="participants-value"
                 className="w-full h-8 md:h-10 bg-white/30 rounded-full appearance-none cursor-pointer slider"
               />
               {/* Dynamic number display that follows the slider */}
               <div
+                id="participants-value"
                 className="absolute top-14 md:top-16 transform -translate-x-1/2 text-base md:text-lg font-bold text-gray-800 pointer-events-none"
                 style={{
                   left: `${((participants - 1) / 99) * 100}%`,
                 }}
+                aria-live="polite"
+                aria-atomic="true"
               >
                 {participants}
               </div>

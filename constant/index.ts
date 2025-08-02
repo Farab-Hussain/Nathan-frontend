@@ -5,11 +5,11 @@ export const navLinks = [
   },
   {
     label: "Fundraising",
-    href: "/Fundraising",
+    href: "/fundraising",
   },
   {
     label: "Blog",
-    href: "/blog",
+    href: "/blogs",
   },
 ];
 
