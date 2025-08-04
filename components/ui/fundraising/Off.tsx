@@ -1,4 +1,5 @@
 "use client";
+import AnimatedText from "@/components/custom/AnimatedText";
 import CustomButton from "@/components/custom/CustomButton";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Image from "next/image";
@@ -12,9 +13,9 @@ const Off = () => {
   const sliderContent = [
     {
       image: "/assets/images/off1.png",
-    //   title: "",
-    //   subtitle: "",
-    //   description: "",
+      //   title: "",
+      //   subtitle: "",
+      //   description: "",
     },
     {
       image: "/assets/images/slider.png",
@@ -57,10 +58,11 @@ const Off = () => {
   return (
     <section className="w-full min-h-screen flex flex-col items-center justify-center bg-accent">
       <div className="w-full flex flex-col lg:flex-row items-center justify-center layout py-8 md:py-12 lg:py-16 px-4 md:px-8 gap-8 md:gap-12 lg:gap-16">
-        <div className="w-full lg:w-1/2 flex flex-col items-start justify-center gap-4 md:gap-6">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-bold text-white transition-all duration-500 leading-tight">
-            50%
-          </h1>
+        <div className="w-full lg:w-1/2 flex flex-col items-start justify-center gap-4 md:gap-6"> 
+          <AnimatedText
+            text={"50%"}
+            className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-bold text-white transition-all duration-500 leading-tight"
+          />
           <h4 className="text-base md:text-lg lg:text-xl xl:text-2xl font-bold text-white w-full transition-all duration-500 leading-relaxed">
             of every dollar you sell supports your cause
           </h4>

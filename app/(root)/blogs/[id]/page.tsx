@@ -1,0 +1,49 @@
+import React from "react";
+import BlogLayout from "@/components/shared/BlogLayout";
+import { getBlogById, blogPageData } from "@/constant/blogData";
+import { notFound } from "next/navigation";
+
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
+
+const Page = ({ params }: PageProps) => {
+  const { id } = params;
+  
+  // Get specific blog data based on ID
+  const blog = getBlogById(id);
+  
+  // If blog not found, show 404
+  if (!blog) {
+    notFound();
+  }
+  
+  const dynamicData = {
+    pageTitle: blog.title,
+    breadcrumbText: `Blog ${id}`,
+    blogData: [blog], // Single blog item
+    sideBarData: blogPageData.sideBarData,
+  };
+
+  return (
+    <BlogLayout
+      pageTitle={dynamicData.pageTitle}
+      breadcrumbText={dynamicData.breadcrumbText}
+      blogData={dynamicData.blogData}
+      sideBarData={dynamicData.sideBarData}
+    />
+  );
+};
+
+// Generate static params for all blog IDs
+export async function generateStaticParams() {
+  const blogIds = ["1", "2", "3"];
+  
+  return blogIds.map((id) => ({
+    id: id,
+  }));
+}
+
+export default Page; 

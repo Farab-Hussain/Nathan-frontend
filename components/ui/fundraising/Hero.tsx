@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import CustomButton from "@/components/custom/CustomButton";
+import AnimatedText from "@/components/custom/AnimatedText";
 
 const Fundraising = () => {
   const [participants, setParticipants] = useState(10);
@@ -21,12 +22,22 @@ const Fundraising = () => {
       <div className="absolute top-0 left-0 w-full h-full z-0 bg-white/30"></div>
 
       <div className="h-full w-full layout">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-black text-center">
-          Imagine what you could raise
-        </h1>
-        <h3 className="text-lg md:text-xl lg:text-2xl font-medium text-black/30 py-4 md:py-6 text-center px-4">
-          How many sellers do you expect to participate?
-        </h3>
+        <AnimatedText
+          text="Imagine what you could raise"
+          className="text-3xl md:text-4xl lg:text-5xl font-bold text-black text-center"
+          splitBy="word"
+          duration={0.6}
+          stagger={0.1}
+          triggerStart="top 80%"
+        />
+        <AnimatedText
+          text="How many sellers do you expect to participate?"
+          className="text-lg md:text-xl lg:text-2xl font-medium text-black/30 py-4 md:py-6 text-center px-4"
+          splitBy="word"
+          duration={0.6}
+          stagger={0.1}
+          triggerStart="top 80%"
+        />
         <div className="w-full flex items-center justify-center gap-4 md:gap-8 mb-6 md:mb-8 px-4">
           <div className="text-xl md:text-2xl lg:text-3xl text-white">1</div>
 
