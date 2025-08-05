@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import React from "react";
+import AnimatedSection from "./AnimatedSection";
 
 interface WhoWeCardProps {
   title: string;
@@ -21,7 +22,12 @@ const WhoWeCard: React.FC<WhoWeCardProps> = ({
   const shadow = shadowColor || bgColor;
 
   return (
-    <div
+    <AnimatedSection
+      animationType="slideRight"
+      duration={0.5}
+      delay={0.2}
+      stagger={0.1}
+      staggerDirection="left"
       className={`relative w-64 sm:w-72 md:w-80 lg:w-96 xl:w-[420px] ${className ? className : ""}`}
     >
       <div
@@ -46,7 +52,7 @@ const WhoWeCard: React.FC<WhoWeCardProps> = ({
           {desc}
         </p>
       </div>
-    </div>
+    </AnimatedSection>
   );
 };
 

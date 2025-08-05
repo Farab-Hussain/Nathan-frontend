@@ -1,6 +1,6 @@
 import Fundraising from "@/components/ui/home/Fundraising";
 import ProcessSteps from "@/components/custom/ProcessStep";
-// import HowItWorks from "@/components/ui/home/HowItWorks";
+import HowItWorks from "@/components/ui/home/HowItWorks";
 import ShopOur from "@/components/ui/home/ShopOur";
 import WhoWeAre from "@/components/ui/home/WhoWeAre";
 import WhyChose from "@/components/ui/home/WhyChose";
@@ -11,7 +11,7 @@ const home = () => {
   return (
     <>
       <Fundraising/>
-      {/* <HowItWorks/> */}
+      <HowItWorks/>
       <ProcessSteps/>
       <WhyChose/>
       <WhoWeAre/>

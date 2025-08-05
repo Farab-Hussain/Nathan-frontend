@@ -1,4 +1,5 @@
 import AnimatedText from "@/components/custom/AnimatedText";
+import AnimatedSection from "@/components/custom/AnimatedSection";
 import CustomButton from "@/components/custom/CustomButton";
 import Image from "next/image";
 import React from "react";
@@ -6,7 +7,12 @@ import React from "react";
 const dedication = () => {
   return (
     <section className="w-full min-h-screen flex flex-col items-center justify-center layout py-8 md:py-12 lg:py-16 px-4 md:px-8">
-      <div className="w-full flex flex-col items-center justify-center relative gap-6 md:gap-8 lg:gap-10">
+      <AnimatedSection 
+        animationType="slideUp"
+        duration={0.5}
+        delay={0.2}
+        className="w-full flex flex-col items-center justify-center relative gap-6 md:gap-8 lg:gap-10"
+      >
         <AnimatedText
           text="Your dedication and drive. Our rope candy."
           className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold text-center max-w-4xl leading-tight"
@@ -35,7 +41,7 @@ const dedication = () => {
             // priority
           />
         </div>
-      </div>
+      </AnimatedSection>
     </section>
   );
 };

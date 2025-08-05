@@ -2,13 +2,19 @@ import React from "react";
 import CustomButton from "@/components/custom/CustomButton";
 import Image from "next/image";
 import AnimatedText from "@/components/custom/AnimatedText";
+import AnimatedSection from "@/components/custom/AnimatedSection";
 
 const Fundraising = () => {
 
 
   return (
-    <section className="layout flex flex-col-reverse md:flex-row items-center justify-center gap-8 md:gap-10 min-h-[10vh] w-full text-white pb-28">
-      <div className="flex flex-col items-start justify-center w-full md:w-[48%] gap-4 text-white relative">
+    <section className="layout flex flex-col-reverse md:flex-row items-center justify-center gap-8 md:gap-10 w-full text-white pb-28">
+      <AnimatedSection 
+        className="flex flex-col items-start justify-center w-full md:w-[48%] gap-4 text-white relative"
+        animationType="slideLeft"
+        duration={0.5}
+        delay={0.2}
+      >
         <AnimatedText
           text="Fundraising just got sweeter"
           className="font-archivo font-bold text-[2.5rem] sm:text-[3rem] md:text-[3.5rem] lg:text-[4rem] xl:text-[72px] leading-[110%] tracking-[0]"
@@ -38,8 +44,13 @@ const Fundraising = () => {
           title="Get Started Now"
           className="bg-primary text-white w-full sm:w-auto relative z-10"
         />
-      </div>
-      <div className="flex flex-col items-center md:items-end justify-center w-full md:w-[52%] mb-6 md:mb-0">
+      </AnimatedSection>
+      <AnimatedSection 
+        className="flex flex-col items-center md:items-end justify-center w-full md:w-[52%] mb-6 md:mb-0"
+        animationType="slideRight"
+        duration={0.5}
+        delay={0.2}
+      >
         <Image
           src="/assets/images/hero.png"
           alt="hero-image"
@@ -47,7 +58,7 @@ const Fundraising = () => {
           height={400}
           className="w-full max-w-[320px] sm:max-w-[400px] md:max-w-[450px] lg:max-w-[500px] h-auto"
         />
-      </div>
+      </AnimatedSection>
     </section>
   );
 };

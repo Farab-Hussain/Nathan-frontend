@@ -1,4 +1,5 @@
 "use client";
+import AnimatedSection from "@/components/custom/AnimatedSection";
 import AnimatedText from "@/components/custom/AnimatedText";
 import CustomButton from "@/components/custom/CustomButton";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -58,7 +59,11 @@ const Off = () => {
   return (
     <section className="w-full min-h-screen flex flex-col items-center justify-center bg-accent">
       <div className="w-full flex flex-col lg:flex-row items-center justify-center layout py-8 md:py-12 lg:py-16 px-4 md:px-8 gap-8 md:gap-12 lg:gap-16">
-        <div className="w-full lg:w-1/2 flex flex-col items-start justify-center gap-4 md:gap-6"> 
+        <AnimatedSection 
+          animationType="slideLeft"
+          duration={0.6}
+          className="w-full lg:w-1/2 flex flex-col items-start justify-center gap-4 md:gap-6"
+        >
           <AnimatedText
             text={"50%"}
             className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl font-bold text-white transition-all duration-500 leading-tight"
@@ -75,8 +80,12 @@ const Off = () => {
             title="Get Started Now"
             className="font-bold text-white w-full md:w-auto px-8 py-3 md:py-4 mt-4"
           />
-        </div>
-        <div className="w-full lg:w-1/2 flex flex-col justify-center items-center gap-6 md:gap-8">
+        </AnimatedSection>
+        <AnimatedSection 
+          animationType="slideRight"
+          duration={0.6}
+          className="w-full lg:w-1/2 flex flex-col justify-center items-center gap-6 md:gap-8"
+        >
           <div className="relative overflow-hidden rounded-lg w-full max-w-md lg:max-w-lg xl:max-w-xl">
             <Image
               src={sliderContent[currentIndex].image}
@@ -102,7 +111,7 @@ const Off = () => {
               <ArrowRight className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8" />
             </button>
           </div>
-        </div>
+        </AnimatedSection>
       </div>
       <div className="w-full flex justify-center items-center bg-secondary">
         <Image

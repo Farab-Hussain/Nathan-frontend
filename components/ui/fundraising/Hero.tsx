@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import CustomButton from "@/components/custom/CustomButton";
 import AnimatedText from "@/components/custom/AnimatedText";
+import AnimatedSection from "@/components/custom/AnimatedSection";
 
 const Fundraising = () => {
   const [participants, setParticipants] = useState(10);
@@ -18,10 +19,15 @@ const Fundraising = () => {
   };
 
   return (
-    <section className='w-full min-h-full flex flex-col items-center justify-center relative py-8 md:py-20 px-4 md:px-8 bg-gradient-to-br from-orange-100 to-orange-200'>
-      <div className="absolute top-0 left-0 w-full h-full z-0 bg-white/30"></div>
+    <section className='w-full min-h-full flex flex-col items-center justify-center relative py-8 md:py-20 px-4 md:px-8 bg-white'>
+      <div className="absolute inset-0 w-full h-full z-0 bg-[url('/assets/images/fundbg.png')] bg-cover bg-center bg-no-repeat"></div>
 
-      <div className="h-full w-full layout">
+      <AnimatedSection 
+        animationType="slideUp"
+        duration={0.5}
+        delay={0.2}
+        className="h-full w-full layout"
+      >
         <AnimatedText
           text="Imagine what you could raise"
           className="text-3xl md:text-4xl lg:text-5xl font-bold text-black text-center"
@@ -87,7 +93,7 @@ const Fundraising = () => {
             className="w-full md:w-1/2 lg:w-1/3 xl:w-1/4 mt-4 md:mt-6 lg:mt-8"
           />
         </div>
-      </div>
+      </AnimatedSection>
     </section>
   );
 };

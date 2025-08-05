@@ -2,6 +2,7 @@
 import Image from "next/image";
 import React, { useEffect, useState, useRef } from "react";
 import AnimatedText from "../../custom/AnimatedText";
+import AnimatedSection from "@/components/custom/AnimatedSection";
 
 const list = [
   {
@@ -21,8 +22,13 @@ const list = [
 const WhyChose = () => {
 
   return (
-    <section className="min-h-screen w-full bg-[url('/assets/images/3bg.png')] bg-cover bg-no-repeat bg-center bg-fixed flex items-center justify-center px-4 md:px-8 py-10 md:py-20">
-      <div className="w-full flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-12 lg:gap-16 max-w-7xl mx-auto">
+    <section className="h-fit w-full bg-[url('/assets/images/3bg.png')] bg-cover bg-no-repeat bg-center bg-fixed flex items-center justify-center px-4 md:px-8 py-10 md:py-20">
+      <AnimatedSection 
+        animationType="slideUp"
+        duration={0.5}
+        delay={0.2}
+        className="w-full flex flex-col lg:flex-row items-center justify-between gap-8 md:gap-12 lg:gap-16 max-w-7xl mx-auto"
+      >
         {/* Image Section */}
         <div className="w-full lg:w-1/2 flex items-center justify-center mb-8 lg:mb-0">
           <Image
@@ -74,7 +80,7 @@ const WhyChose = () => {
             </div>
           </div>
         </div>
-      </div>
+      </AnimatedSection>
     </section>
   );
 };

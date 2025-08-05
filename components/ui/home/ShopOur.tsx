@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
+import AnimatedText from "@/components/custom/AnimatedText";
+import AnimatedSection from "@/components/custom/AnimatedSection";
 
 const productOptions = [
   "Traditional - 3 Red Twist",
@@ -43,12 +45,27 @@ const ShopOur = () => {
 
   return (
     <section className="h-full w-full bg-white flex flex-col justify-center items-center">
-      <div className="h-fit w-full layout py-6 md:py-8 lg:py-10 px-4">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-center md:text-left text-black w-full md:w-2/3 lg:w-1/3">
-          Shop Our Licorice Ropes
-        </h1>
-      </div>
-      <div className="h-full w-full layout gap-6 md:gap-8 lg:gap-10 flex flex-col lg:flex-row justify-between items-center px-4">
+      <AnimatedSection 
+        className="h-fit w-full layout py-6 md:py-8 lg:py-10 px-4"
+        animationType="fadeIn"
+        duration={0.8}
+        delay={0.4}
+      >
+        <AnimatedText
+          text="Shop Our Licorice Ropes"
+          className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-center md:text-left text-black w-full md:w-2/3 lg:w-1/3"
+          splitBy="word"
+        />
+      </AnimatedSection>
+      <AnimatedSection 
+        className="h-full w-full layout gap-6 md:gap-8 lg:gap-10 flex flex-col lg:flex-row justify-between items-center px-4"
+        animationType="slideLeft"
+        duration={1.2}
+        delay={0.6}
+        staggerChildren={true}
+        stagger={0.15}
+        staggerDirection="left"
+      >
         <div className="h-full w-full lg:w-[40%] flex justify-center">
           <Image
             src="/assets/images/slider.png"
@@ -70,7 +87,7 @@ const ShopOur = () => {
             {/* Checkbox List with Sliding Animation */}
             <div className="flex-1 overflow-hidden">
               <div
-                className="space-y-2 transition-transform duration-300 ease-in-out h-40" 
+                className="space-y-2 transition-transform duration-300 ease-in-out h-40"
                 style={{ transform: `translateY(-${currentIndex * 40}px)` }}
               >
                 {productOptions.map((option, index) => {
@@ -118,48 +135,48 @@ const ShopOur = () => {
               </div>
             </div>
 
-                          {/* Vertical Navigation Buttons */}
-              <div className="flex flex-row md:flex-col gap-2 justify-center md:justify-start">
-                <button
-                  onClick={handlePrevious}
-                  className="w-10 h-10 md:w-12 md:h-12 bg-secondary rounded-full flex items-center justify-center text-white transition-colors"
+            {/* Vertical Navigation Buttons */}
+            <div className="flex flex-row md:flex-col gap-2 justify-center md:justify-start">
+              <button
+                onClick={handlePrevious}
+                className="w-10 h-10 md:w-12 md:h-12 bg-secondary rounded-full flex items-center justify-center text-white transition-colors"
+              >
+                <svg
+                  className="w-6 h-6 md:w-8 md:h-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-6 h-6 md:w-8 md:h-8"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 15l7-7 7 7"
-                    />
-                  </svg>
-                </button>
-                <button
-                  onClick={handleNext}
-                  className="w-10 h-10 md:w-12 md:h-12 bg-secondary rounded-full flex items-center justify-center text-white transition-colors"
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 15l7-7 7 7"
+                  />
+                </svg>
+              </button>
+              <button
+                onClick={handleNext}
+                className="w-10 h-10 md:w-12 md:h-12 bg-secondary rounded-full flex items-center justify-center text-white transition-colors"
+              >
+                <svg
+                  className="w-6 h-6 md:w-8 md:h-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-6 h-6 md:w-8 md:h-8"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </AnimatedSection>
     </section>
   );
 };

@@ -1,6 +1,7 @@
 import CustomButton from "@/components/custom/CustomButton";
 import AnimatedText from "@/components/custom/AnimatedText";
 import React from "react";
+import AnimatedSection from "@/components/custom/AnimatedSection";
 
 const data = [
   {
@@ -25,13 +26,15 @@ const data = [
 const Rope = () => {
   return (
     <section className="w-full min-h-full flex flex-col items-center justify-center py-8 md:py-12 lg:py-16 px-4 md:px-8 bg-secondary">
-      <div className="w-full flex flex-col items-center justify-center relative gap-6 md:gap-8 lg:gap-10 layout">
+      <AnimatedSection
+        animationType="slideUp"
+        duration={0.5}
+        className="w-full flex flex-col items-center justify-center relative gap-6 md:gap-8 lg:gap-10 layout"
+      >
         <AnimatedText
           text="Rope-candy flavors that make tastebuds tango"
           className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold text-center max-w-4xl text-white leading-tight"
           splitBy="word"
-          duration={0.5}
-          stagger={0.1}
         />
         <p className="text-sm md:text-base lg:text-lg xl:text-xl 2xl:text-2xl text-white text-center w-full md:w-3/4 lg:w-1/2 leading-relaxed">
           Our Traditional, sweet, and sour flavors bring joy to all who try
@@ -43,7 +46,7 @@ const Rope = () => {
           aria-label="Explore our licorice flavors"
           title="Explore Flavors"
         />
-      </div>
+      </AnimatedSection>
     </section>
   );
 };
