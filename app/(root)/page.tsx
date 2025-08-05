@@ -1,12 +1,12 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Home from "./home/page";
-// import LoadingScreen from "../../components/LoadingScreen";
+import LoadingScreen from "@/components/custom/LoadingScreen";
 import Lenis from "lenis";
 
 const Page = () => {
-  // const [isLoading, setIsLoading] = useState(true);
-  // const [showHome, setShowHome] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showHome, setShowHome] = useState(false);
 
   useEffect(() => {
     const lenis = new Lenis();
@@ -23,45 +23,45 @@ const Page = () => {
   }, []);
 
   // Disable scroll while loading
-  // useEffect(() => {
-  //   if (isLoading) {
-  //     // Disable scroll
-  //     document.body.style.overflow = 'hidden';
-  //     document.body.style.position = 'fixed';
-  //     document.body.style.width = '100%';
-  //   } else {
-  //     // Re-enable scroll
-  //     document.body.style.overflow = '';
-  //     document.body.style.position = '';
-  //     document.body.style.width = '';
-  //   }
+  useEffect(() => {
+    if (isLoading) {
+      // Disable scroll
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      // Re-enable scroll
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
 
-  //   // Cleanup function
-  //   return () => {
-  //     document.body.style.overflow = '';
-  //     document.body.style.position = '';
-  //     document.body.style.width = '';
-  //   };
-  // }, [isLoading]);
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [isLoading]);
 
-  // const handleLoadingComplete = () => {
-  //   setIsLoading(false);
-  //   // Faster transition - reduced delay
-  //   setTimeout(() => {
-  //     setShowHome(true);
-  //   }, 100);
-  // };
+  const handleLoadingComplete = () => {
+    setIsLoading(false);
+    // Faster transition - reduced delay
+    setTimeout(() => {
+      setShowHome(true);
+    }, 100);
+  };
 
   return (
     <>
-      {/* {isLoading && <LoadingScreen onComplete={handleLoadingComplete} />} */}
-      {/* <section className={`transition-all duration-500 ease-out ${
+      {isLoading && <LoadingScreen onComplete={handleLoadingComplete} />}
+      <section className={`transition-all duration-500 ease-out ${
         showHome 
           ? 'opacity-100 scale-100' 
           : 'opacity-0 scale-95'
-      }`}> */}
+      }`}>
         <Home />
-      {/* </section> */}
+      </section>
     </>
   );
 };
