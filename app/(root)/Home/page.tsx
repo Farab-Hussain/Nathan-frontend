@@ -1,5 +1,5 @@
 import Fundraising from "@/components/ui/home/Fundraising";
-import ProcessSteps from "@/components/custom/ProcessStep";
+// import ProcessSteps from "@/components/custom/ProcessStep";
 import HowItWorks from "@/components/ui/home/HowItWorks";
 import ShopOur from "@/components/ui/home/ShopOur";
 import WhoWeAre from "@/components/ui/home/WhoWeAre";
@@ -12,7 +12,7 @@ const home = () => {
     <>
       <Fundraising/>
       <HowItWorks/>
-      <ProcessSteps/>
+      {/* <ProcessSteps/> */}
       <WhyChose/>
       <WhoWeAre/>
       <ShopOur/>
