@@ -64,9 +64,9 @@ const HowItWorks = () => {
                 <path
                   d="M26.5 350C74.5 385 186.3 451 249.5 435C328.5 415 348 312 470 288C592 264 681.5 347.5 776 227C870.5 106.5 916.5 27.5003 1043.5 44.5003"
                   stroke="#F57059"
-                  stroke-width="5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </g>
               <path
@@ -164,9 +164,9 @@ const HowItWorks = () => {
                   width="1070"
                   height="448.255"
                   filterUnits="userSpaceOnUse"
-                  color-interpolation-filters="sRGB"
+                  colorInterpolationFilters="sRGB"
                 >
-                  <feFlood flood-opacity="0" result="BackgroundImageFix" />
+                  <feFlood floodOpacity="0" result="BackgroundImageFix" />
                   <feColorMatrix
                     in="SourceAlpha"
                     type="matrix"

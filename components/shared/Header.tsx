@@ -6,10 +6,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlignLeft, X } from "lucide-react";
 import CustomButton from "@/components/custom/CustomButton";
+import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/hooks/useUser";
 
 const Header = () => {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const { logout } = useAuthStore();
+  const { user } = useUser();
+  const router = useRouter();
+
+  const handleAuthButtonClick = () => {
+    if (user) {
+      logout()
+        .then(() => router.replace("/"))
+        .catch(() => {});
+    } else {
+      router.push("/auth/register");
+    }
+  };
   return (
     <header className="z-50 h-auto min-h-[80px] md:h-[114px] w-full layout flex justify-between items-center py-4 px-4 md:px-0">
       <div className="flex justify-between items-center w-full md:w-[50%] gap-4 md:gap-10">
@@ -72,7 +88,8 @@ const Header = () => {
       </div>
       <div className="flex justify-end items-center gap-4 w-full md:w-[60%]">
         <CustomButton
-          title="Sign in"
+          title={user ? "Logout" : "Sign up"}
+          onClick={handleAuthButtonClick}
           className="bg-white !text-primary font-inter font-bold rounded-md px-4 py-2 md:px-6 md:py-4 text-sm md:text-base"
         />
       </div>

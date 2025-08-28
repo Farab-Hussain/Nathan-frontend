@@ -2,12 +2,12 @@
 
 @font-face {
   font-family: "Archivo";
-  src: url("/fonts/Archivo-VariableFont_wdth,wght.ttf");
+  src: url("/assets/fonts/Archivo-VariableFont_wdth,wght.ttf");
 }
 
 @font-face {
   font-family: "Inter";
-  src: url("/fonts/inter-VariableFont_opsz,wght.ttf");
+  src: url("/assets/fonts/Inter-VariableFont_opsz,wght.ttf");
 }
 
 :root {

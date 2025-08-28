@@ -28,7 +28,7 @@ const VirtualFund = () => {
           className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold text-center max-w-4xl text-black leading-tight"
           splitBy="word"
           stagger={0.1}
-          duration={0.4}
+          duration={0.3}
         />
         <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8 xl:gap-10">
           {data.map((item, index) => (
