@@ -3,13 +3,12 @@ import CustomButton from "@/components/custom/CustomButton";
 import Image from "next/image";
 import AnimatedText from "@/components/custom/AnimatedText";
 import AnimatedSection from "@/components/custom/AnimatedSection";
+import router from "next/router";
 
 const Fundraising = () => {
-
-
   return (
     <section className="layout flex flex-col-reverse md:flex-row items-center justify-center gap-8 md:gap-10 w-full text-white pb-28">
-      <AnimatedSection 
+      <AnimatedSection
         className="flex flex-col items-start justify-center w-full md:w-[48%] gap-4 text-white relative"
         animationType="slideLeft"
         duration={0.5}
@@ -26,26 +25,32 @@ const Fundraising = () => {
           Sell Southern Sweet & Sour Licorice Ropes and keep 50% of every sale.
           No fees, no minimums, just success.
         </p>
-        <Image
-          src="/assets/images/Arrow.png"
-          alt="decorative arrow"
-          width={40}
-          height={40}
-          className="
-            w-full max-w-[60px]
-            sm:max-w-[90px] md:max-w-[120px] lg:max-w-[150px] h-auto
-            sm:absolute sm:bottom-0 sm:left-1/3 sm:-translate-x-0
-            md:left-0 md:ml-[190px] md:translate-x-0 md:absolute
-            left-1/2 -translate-x-1/2
-            rotate-3 z-10 
-          "
-        />
-        <CustomButton
-          title="Get Started Now"
-          className="bg-primary text-white w-full sm:w-auto relative z-10"
-        />
+        <div className="flex justify-center sm:block w-full">
+          <Image
+            src="/assets/images/Arrow.png"
+            alt="decorative arrow"
+            width={40}
+            height={40}
+            className="
+              w-full max-w-[60px]
+              sm:max-w-[90px] md:max-w-[120px] lg:max-w-[150px] h-auto
+              sm:absolute sm:bottom-0 sm:left-1/3 sm:-translate-x-0
+              md:left-0 md:ml-[260px] md:translate-x-0 md:absolute
+              left-1/2 -translate-x-1/2
+              rotate-3 z-10 
+              mb-6 sm:mb-0 
+            "
+          />
+        </div>
+        <div className="mt-6 sm:mt-8 w-full sm:w-auto">
+          <CustomButton
+            title="Get Started Now"
+            className="bg-primary text-white w-full sm:w-auto relative z-10"
+            href="/fundraising"
+          />
+        </div>
       </AnimatedSection>
-      <AnimatedSection 
+      <AnimatedSection
         className="flex flex-col items-center md:items-end justify-center w-full md:w-[52%] mb-6 md:mb-0"
         animationType="slideRight"
         duration={0.5}

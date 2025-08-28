@@ -87,6 +87,23 @@ const Header = () => {
         </div>
       </div>
       <div className="flex justify-end items-center gap-4 w-full md:w-[60%]">
+        <Link href="/orders" className="hidden md:inline-block">
+          <span className="text-white hover:text-secondary transition-colors flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="lucide lucide-shopping-cart w-5 h-5 mr-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <circle cx="8" cy="21" r="1" />
+              <circle cx="19" cy="21" r="1" />
+              <path d="M2.05 3H4.2a2 2 0 0 1 2 1.72l.34 2.06m0 0L7.6 8.6A2 2 0 0 0 9.5 10h7.72a2 2 0 0 0 1.97-1.68l1.38-7.32A1 1 0 0 0 19.6 0H6.21" />
+            </svg>
+
+          </span>
+        </Link>
         <CustomButton
           title={user ? "Logout" : "Sign up"}
           onClick={handleAuthButtonClick}

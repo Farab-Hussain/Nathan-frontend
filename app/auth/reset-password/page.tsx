@@ -1,12 +1,14 @@
-'use client'
-import React, { useEffect, useState } from 'react';
+"use client"
+import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import Link from 'next/link';
 import AuthCard from '@/components/ui/auth/AuthCard';
 import PasswordInput from '@/components/ui/auth/PasswordInput';
 
-const ResetPasswordPage = () => {
+export const dynamic = 'force-dynamic';
+
+const ResetPasswordContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [form, setForm] = useState({
@@ -153,6 +155,12 @@ const ResetPasswordPage = () => {
   );
 };
 
-export default ResetPasswordPage;
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-black">Loading...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
+  );
+}
 
 

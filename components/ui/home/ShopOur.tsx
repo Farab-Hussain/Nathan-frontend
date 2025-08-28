@@ -3,6 +3,7 @@ import { useState } from "react";
 import Image from "next/image";
 import AnimatedText from "@/components/custom/AnimatedText";
 import AnimatedSection from "@/components/custom/AnimatedSection";
+import CustomButton from "@/components/custom/CustomButton";
 
 const productOptions = [
   "Traditional - 3 Red Twist",
@@ -19,7 +20,8 @@ const productOptions = [
 
 const ShopOur = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
+  // Only allow one selected option, so use number | null
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
   const handlePrevious = () => {
     setCurrentIndex((prevIndex) =>
@@ -34,13 +36,11 @@ const ShopOur = () => {
   };
 
   const handleCheckboxChange = (index: number) => {
-    setSelectedOptions((prev) => {
-      if (prev.includes(index)) {
-        return prev.filter((item) => item !== index);
-      } else {
-        return [...prev, index];
-      }
-    });
+    if (selectedOption === index) {
+      setSelectedOption(null); // Unselect if already selected
+    } else {
+      setSelectedOption(index);
+    }
   };
 
   return (
@@ -91,20 +91,25 @@ const ShopOur = () => {
                 style={{ transform: `translateY(-${currentIndex * 40}px)` }}
               >
                 {productOptions.map((option, index) => {
-                  const isSelected = selectedOptions.includes(index);
+                  const isSelected = selectedOption === index;
+                  const isDisabled = selectedOption !== null && selectedOption !== index;
 
                   return (
                     <div
                       key={index}
-                      className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors h-8 md:h-9 py-2 md:py-6"
-                      onClick={() => handleCheckboxChange(index)}
+                      className={`flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors h-8 md:h-9 py-2 md:py-6
+                        ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}
+                      `}
+                      onClick={() => {
+                        if (!isDisabled) handleCheckboxChange(index);
+                      }}
                     >
                       <div
                         className={`w-5 h-5 border-2 rounded flex items-center justify-center ${
                           isSelected
                             ? "border-green-500 bg-green-500"
                             : "border-gray-300"
-                        }`}
+                        } ${isDisabled ? "bg-gray-200" : ""}`}
                       >
                         {isSelected && (
                           <svg
@@ -175,6 +180,17 @@ const ShopOur = () => {
               </button>
             </div>
           </div>
+          {/* Buy Now Button */}
+          {/* <div className="mt-8 flex justify-center"> */}
+            <CustomButton
+              title="Buy Now"
+              className="bg-primary text-white px-8 py-3 text-lg font-semibold mt-3"
+              disabled={selectedOption === null}
+              // You can add onClick logic here for actual buy action
+              // For now, just a placeholder
+              // onClick={() => { if (selectedOption !== null) { ... } }}
+            />
+          {/* </div> */}
         </div>
       </AnimatedSection>
     </section>

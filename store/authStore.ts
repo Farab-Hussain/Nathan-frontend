@@ -201,8 +201,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   fetchMe: async () => {
     set({ loading: true, error: null });
     try {
-      const me = await axiosRequest<User>('/me', { method: 'GET' });
-      set({ user: me });
+      const data = await axiosRequest<{ user: User }>('/me', { method: 'GET' });
+      set({ user: data?.user ?? null });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to fetch profile.';
       set({ error: message, user: null });

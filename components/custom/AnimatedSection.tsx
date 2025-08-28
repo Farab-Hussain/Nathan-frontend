@@ -142,9 +142,12 @@ const AnimatedSection = ({
         end: triggerEnd,
         toggleActions: "play none none reverse",
         onEnter: onAnimationStart,
-        onComplete: onAnimationComplete,
       },
     });
+
+    if (onAnimationComplete) {
+      timeline.eventCallback("onComplete", onAnimationComplete);
+    }
 
     if (staggerChildren) {
       // Animate children with stagger

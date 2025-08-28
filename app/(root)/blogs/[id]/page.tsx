@@ -3,14 +3,8 @@ import BlogLayout from "@/components/shared/BlogLayout";
 import { getBlogById, blogPageData } from "@/constant/blogData";
 import { notFound } from "next/navigation";
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
-
-const Page = ({ params }: PageProps) => {
-  const { id } = params;
+const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params;
   
   // Get specific blog data based on ID
   const blog = getBlogById(id);

@@ -1,18 +1,36 @@
+"use client"
 import React from "react";
 import CustomButton from "../custom/CustomButton";
 import FaqList from "@/components/shared/FaqList";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { Links } from "@/constant";
 import Link from "next/link";
+import { useAuthStore } from "@/store/authStore";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/hooks/useUser";
 
 const Footer = () => {
+  const {logout} = useAuthStore()
+  const router = useRouter()
+  const {user} = useUser()
+  const handleAuthButtonClick = () =>{
+    if(user){
+      logout()
+      .then(()=>router.replace("/"))
+      .catch(()=>{})
+    }else{
+      router.push("/auth/register")
+    }
+  }
+
   return (
     <footer className="bg-primary layout  z-50 mb-10 h-auto min-h-[500px] w-full border-t border-white">
       <div className="flex flex-col md:flex-row justify-between items-start py-8 md:py-10 gap-8 md:gap-0">
         <div className="flex flex-col justify-center items-start  w-full md:w-[48%] h-full pb-8 md:pb-0 md:pr-6">
           <CustomButton
-            title="Sign in"
+            title={user ? "Logout" : "Sign up"}
             className="bg-white !text-primary font-inter font-bold rounded-md"
+            onClick={handleAuthButtonClick}
           />
           <p className="text-white text-16 font-inter font-bold pt-8 md:pt-10 w-full">
             If there are questions you want to ask, we will answer all your

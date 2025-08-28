@@ -1,10 +1,11 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import Link from 'next/link';
 import AuthCard from '@/components/ui/auth/AuthCard';
 import PasswordInput from '@/components/ui/auth/PasswordInput';
+import { useUser } from '@/hooks/useUser';
 
 const LoginPage = () => {
   const [form, setForm] = useState({
@@ -15,6 +16,20 @@ const LoginPage = () => {
   const [success, setSuccess] = useState('');
   const { login: loginAction, loading, error: storeError, clearError } = useAuthStore();
   const router = useRouter();
+  const { user, loading: userLoading } = useUser();
+
+  useEffect(() => {
+    if (userLoading) return;
+    if (user) {
+      const redirectUrl =
+        process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || '/';
+      if (typeof window !== 'undefined') {
+        window.location.href = redirectUrl;
+      } else {
+        router.replace(redirectUrl);
+      }
+    }
+  }, [user, userLoading, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -38,7 +53,7 @@ const LoginPage = () => {
       setSuccess('Login successful!');
       setTimeout(() => {
         const redirectUrl =
-          process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || 'http://localhost:3001/';
+          process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || '/';
         if (typeof window !== 'undefined') {
           window.location.href = redirectUrl;
         } else {

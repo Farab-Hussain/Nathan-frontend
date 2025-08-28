@@ -58,6 +58,7 @@ const WhoWeAre = () => {
           <CustomButton
             title="Start Fundraiser"
             className="mt-2 sm:mt-4 md:mt-6 lg:mt-8 xl:mt-[92px]"
+            href="/fundraising"
           />
         </div>
         <div className="h-full w-full flex flex-col justify-center items-center gap-6 sm:gap-8 md:gap-10 lg:gap-12 xl:gap-16">
