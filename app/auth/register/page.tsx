@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useAuthStore } from "@/store/authStore";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AuthCard from "@/components/ui/auth/AuthCard";
@@ -16,12 +16,7 @@ const RegisterPage = () => {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const {
-    register: registerAction,
-    loading,
-    error: storeError,
-    clearError,
-  } = useAuthStore();
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
 
@@ -42,14 +37,14 @@ const RegisterPage = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError("");
     setSuccess("");
-    clearError();
+    // no-op
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
-    clearError();
+    // no-op
 
     const name = form.name.trim();
     const email = form.email.trim().toLowerCase();
@@ -67,7 +62,9 @@ const RegisterPage = () => {
     }
 
     try {
-      await registerAction(name, email, password);
+      setLoading(true);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      await axios.post(`${API_URL}/auth/register`, { name, email, password }, { withCredentials: true });
       setSuccess("Registration successful!");
       setForm({ name: "", email: "", password: "", confirmPassword: "" });
       setTimeout(() => {
@@ -81,6 +78,8 @@ const RegisterPage = () => {
       const message =
         err instanceof Error ? err.message : "Registration failed.";
       setError(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -98,10 +97,8 @@ const RegisterPage = () => {
       }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {(error || storeError) && (
-          <div className="text-red-500 text-sm text-center">
-            {error || storeError}
-          </div>
+        {error && (
+          <div className="text-red-500 text-sm text-center">{error}</div>
         )}
         {success && (
           <div className="text-green-600 text-sm text-center">{success}</div>

@@ -1,28 +1,96 @@
-'use client'
-import React, { useEffect, useMemo, useState } from 'react';
-import { useOrdersStore } from '@/store/ordersStore';
-import { useUser } from '@/hooks/useUser';
+"use client";
+import React, { useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import { useUser } from "@/hooks/useUser";
+
+type Order = {
+  id: string;
+  userId: string;
+  status: string;
+  paymentStatus: string;
+  total: number;
+};
+
+type Pagination = { pages: number };
 
 const AdminOrdersPage = () => {
   const { user, loading: userLoading } = useUser();
-  const { adminOrders, adminPagination, loading, error, adminFetchOrders, adminUpdateStatus } = useOrdersStore();
-  const [status, setStatus] = useState('');
-  const [paymentStatus, setPaymentStatus] = useState('');
+  const [adminOrders, setAdminOrders] = useState<Order[]>([]);
+  const [adminPagination, setAdminPagination] = useState<Pagination | null>(
+    null
+  );
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    if (!userLoading && user?.role !== 'admin') {
-      if (typeof window !== 'undefined') window.location.href = '/';
+    if (!userLoading && user?.role !== "admin") {
+      if (typeof window !== "undefined") window.location.href = "/";
     }
   }, [user, userLoading]);
 
   useEffect(() => {
-    if (user?.role === 'admin') {
-      adminFetchOrders({ status: status || undefined, paymentStatus: paymentStatus || undefined, page, limit: 10 }).catch(() => {});
-    }
-  }, [user, adminFetchOrders, status, paymentStatus, page]);
+    if (user?.role !== "admin") return;
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    const controller = new AbortController();
+    (async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data } = await axios.get<{
+          orders: Order[];
+          pagination?: Pagination;
+        }>(`${API_URL}/orders/admin/all`, {
+          withCredentials: true,
+          signal: controller.signal,
+          params: {
+            status: status || undefined,
+            paymentStatus: paymentStatus || undefined,
+            page,
+            limit: 10,
+          },
+        });
+        setAdminOrders(Array.isArray(data.orders) ? data.orders : []);
+        setAdminPagination(data.pagination ?? { pages: 1 });
+      } catch (e) {
+        if (axios.isCancel(e)) return;
+        const message =
+          (e as { message?: string })?.message || "Failed to load orders";
+        setError(message);
+        setAdminOrders([]);
+        setAdminPagination({ pages: 1 });
+      } finally {
+        setLoading(false);
+      }
+    })();
+    return () => controller.abort();
+  }, [user, status, paymentStatus, page]);
 
-  const totalPages = useMemo(() => adminPagination?.pages ?? 1, [adminPagination]);
+  const adminUpdateStatus = async (
+    id: string,
+    payload: { status?: string; paymentStatus?: string }
+  ) => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    try {
+      await axios.put(`${API_URL}/orders/${id}/status`, payload, {
+        withCredentials: true,
+      });
+      setAdminOrders((prev) =>
+        prev.map((o) => (o.id === id ? { ...o, ...payload } : o))
+      );
+    } catch (e) {
+      const message =
+        (e as { message?: string })?.message || "Failed to update order";
+      setError(message);
+    }
+  };
+
+  const totalPages = useMemo(
+    () => adminPagination?.pages ?? 1,
+    [adminPagination]
+  );
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -31,7 +99,10 @@ const AdminOrdersPage = () => {
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <select
           value={status}
-          onChange={(e) => { setPage(1); setStatus(e.target.value); }}
+          onChange={(e) => {
+            setPage(1);
+            setStatus(e.target.value);
+          }}
           className="border border-gray-300 rounded px-3 py-2 text-black bg-white"
         >
           <option value="">All statuses</option>
@@ -43,7 +114,10 @@ const AdminOrdersPage = () => {
         </select>
         <select
           value={paymentStatus}
-          onChange={(e) => { setPage(1); setPaymentStatus(e.target.value); }}
+          onChange={(e) => {
+            setPage(1);
+            setPaymentStatus(e.target.value);
+          }}
           className="border border-gray-300 rounded px-3 py-2 text-black bg-white"
         >
           <option value="">All payments</option>
@@ -80,7 +154,9 @@ const AdminOrdersPage = () => {
                   <div className="flex items-center gap-2">
                     <select
                       defaultValue={o.status}
-                      onChange={(e) => adminUpdateStatus(o.id, { status: e.target.value })}
+                      onChange={(e) =>
+                        adminUpdateStatus(o.id, { status: e.target.value })
+                      }
                       className="border border-gray-300 rounded px-2 py-1 text-black bg-white"
                     >
                       <option value="pending">pending</option>
@@ -91,7 +167,11 @@ const AdminOrdersPage = () => {
                     </select>
                     <select
                       defaultValue={o.paymentStatus}
-                      onChange={(e) => adminUpdateStatus(o.id, { paymentStatus: e.target.value })}
+                      onChange={(e) =>
+                        adminUpdateStatus(o.id, {
+                          paymentStatus: e.target.value,
+                        })
+                      }
                       className="border border-gray-300 rounded px-2 py-1 text-black bg-white"
                     >
                       <option value="pending">pending</option>
@@ -115,7 +195,9 @@ const AdminOrdersPage = () => {
           >
             Prev
           </button>
-          <span className="text-black">Page {page} of {totalPages}</span>
+          <span className="text-black">
+            Page {page} of {totalPages}
+          </span>
           <button
             className="px-3 py-1 rounded border border-gray-300 text-black disabled:opacity-50"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -130,5 +212,3 @@ const AdminOrdersPage = () => {
 };
 
 export default AdminOrdersPage;
-
-

@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { useAuthStore } from '@/store/authStore';
+import axios from 'axios';
 import Link from 'next/link';
 import AuthCard from '@/components/ui/auth/AuthCard';
 
@@ -9,13 +9,13 @@ const ForgotPasswordPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [redirecting, setRedirecting] = useState(false);
-  const { forgotPassword, loading, error: storeError, clearError } = useAuthStore();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    clearError();
+    // no-op
 
     if (!email) {
       setError('Please enter your email.');
@@ -23,7 +23,9 @@ const ForgotPasswordPage = () => {
     }
 
     try {
-      await forgotPassword(email);
+      setLoading(true);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      await axios.post(`${API_URL}/auth/forgot-password`, { email }, { withCredentials: true });
       setSuccess('A 6-digit reset code has been sent to your email.');
       setRedirecting(true);
       setTimeout(() => {
@@ -35,6 +37,8 @@ const ForgotPasswordPage = () => {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Request failed.';
       setError(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -45,8 +49,8 @@ const ForgotPasswordPage = () => {
       footer={<Link href="/auth/login" className="text-primary hover:underline">Back to login</Link>}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {(error || storeError) && (
-          <div className="text-red-500 text-sm text-center">{error || storeError}</div>
+        {error && (
+          <div className="text-red-500 text-sm text-center">{error}</div>
         )}
         {success && <div className="text-green-600 text-sm text-center">{success}</div>}
         <div className="flex flex-col gap-1">

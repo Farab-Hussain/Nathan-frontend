@@ -3,25 +3,7 @@ import AnimatedText from "@/components/custom/AnimatedText";
 import React from "react";
 import AnimatedSection from "@/components/custom/AnimatedSection";
 
-const data = [
-  {
-    title: "3x",
-    subtitle: "increase in sales",
-    description:
-      "Groups that switch from traditional brochure fundraising to virtual fundraising see sales go up threefold.",
-  },
-  {
-    title: "$360",
-    subtitle: "average per seller",
-    description:
-      "An average seller should be able to make between 10-15 sales over a 5 day fundraiser.",
-  },
-  {
-    title: "$3,500",
-    subtitle: "average per team",
-    description: "Most teams of 20 sellers can expect to earn about $3,500.",
-  },
-];
+
 
 const Rope = () => {
   return (

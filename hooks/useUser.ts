@@ -18,14 +18,12 @@ export function useUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const base =
-      process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
-    const url = base ? `${base}/auth/me` : "/api/auth/me";
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
     Promise.resolve(
       axios
-        .get<MeResponse>(url, token ? { withCredentials: true, headers: { Authorization: `Bearer ${token}` } } : { withCredentials: true })
+        .get<MeResponse>(`${API_URL}/auth/me`, {
+          withCredentials: true,
+        })
         .then((res) => {
           setUser(res.data.user);
         })
@@ -35,5 +33,3 @@ export function useUser() {
 
   return { user, loading };
 }
-
-

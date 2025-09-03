@@ -23,22 +23,22 @@ const Card = ({ children, className = "" }: { children: React.ReactNode, classNa
 
 // Define a type for the order item
 type OrderItem = {
-  product?: {
-    name?: string;
-    imageUrl?: string;
-  };
+  id: string;
+  productId: string;
+  productName: string;
   quantity: number;
   price: number;
+  imageUrl?: string;
   total: number;
 };
 
 // Reusable OrderItemCard
 const OrderItemCard = ({ item }: { item: OrderItem }) => (
   <div className="flex items-center gap-4 bg-[#FFF7F4] rounded-lg p-3 border border-[#FF5D39]">
-    {item.product?.imageUrl ? (
+    {item.imageUrl ? (
       <Image
-        src={item.product.imageUrl ?? ''}
-        alt={item.product.name ?? 'Product image'}
+        src={item.imageUrl}
+        alt={item.productName}
         width={64}
         height={64}
         className="w-16 h-16 object-cover rounded-lg border-2 border-[#F1A900]"
@@ -47,7 +47,7 @@ const OrderItemCard = ({ item }: { item: OrderItem }) => (
       <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-[#F1A900]" />
     )}
     <div className="flex-1">
-      <div className="font-bold text-black">{item.product?.name || 'Custom item'}</div>
+      <div className="font-bold text-black">{item.productName}</div>
       <div className="text-sm text-[#FF5D39] font-semibold">{item.quantity} × ${item.price.toFixed(2)}</div>
     </div>
     <div className="text-lg font-bold text-[#F1A900]">${item.total.toFixed(2)}</div>
@@ -114,12 +114,7 @@ const OrderDetailPage = () => {
                 key={it.id}
                 item={{
                   ...it,
-                  product: it.product
-                    ? {
-                        name: it.product.name,
-                        imageUrl: it.product.imageUrl ?? undefined,
-                      }
-                    : undefined,
+                  total: it.quantity * it.price,
                 }}
               />
             ))}

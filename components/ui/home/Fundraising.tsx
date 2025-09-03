@@ -3,7 +3,7 @@ import CustomButton from "@/components/custom/CustomButton";
 import Image from "next/image";
 import AnimatedText from "@/components/custom/AnimatedText";
 import AnimatedSection from "@/components/custom/AnimatedSection";
-import router from "next/router";
+
 
 const Fundraising = () => {
   return (
@@ -15,7 +15,7 @@ const Fundraising = () => {
         delay={0.2}
       >
         <AnimatedText
-          text="Fundraising just got sweeter"
+          text="Fundraising   just  got  sweeter"
           className="font-archivo font-bold text-[2.5rem] sm:text-[3rem] md:text-[3.5rem] lg:text-[4rem] xl:text-[72px] leading-[110%] tracking-[0]"
           splitBy="word"
           duration={0.3}

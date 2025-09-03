@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import React, { useEffect, useState, useRef } from "react";
+import React from "react";
 import AnimatedText from "../../custom/AnimatedText";
 import AnimatedSection from "@/components/custom/AnimatedSection";
 

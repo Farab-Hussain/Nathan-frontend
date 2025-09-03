@@ -1,7 +1,7 @@
 "use client"
 import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import axios from 'axios';
 import Link from 'next/link';
 import AuthCard from '@/components/ui/auth/AuthCard';
 import PasswordInput from '@/components/ui/auth/PasswordInput';
@@ -21,7 +21,7 @@ const ResetPasswordContent = () => {
   const [success, setSuccess] = useState('');
   const [resendMsg, setResendMsg] = useState('');
   const [resending, setResending] = useState(false);
-  const { resetPassword, forgotPassword, loading, error: storeError, clearError } = useAuthStore();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const codeParam = searchParams.get('code') || '';
@@ -34,7 +34,7 @@ const ResetPasswordContent = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError('');
     setSuccess('');
-    clearError();
+    // no-op
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,7 +52,9 @@ const ResetPasswordContent = () => {
     }
 
     try {
-      await resetPassword(code, form.password, email || undefined);
+      setLoading(true);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      await axios.post(`${API_URL}/auth/reset-password`, { code, password: form.password, email: email || undefined }, { withCredentials: true });
       setSuccess('Password reset successful!');
       setTimeout(() => {
         router.push('/auth/login');
@@ -60,6 +62,8 @@ const ResetPasswordContent = () => {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Reset failed.';
       setError(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,7 +71,7 @@ const ResetPasswordContent = () => {
     setError('');
     setSuccess('');
     setResendMsg('');
-    clearError();
+    // no-op
     const normalizedEmail = (email || '').trim().toLowerCase();
     if (!normalizedEmail) {
       setError('Missing email. Go back and enter your email.');
@@ -75,7 +79,8 @@ const ResetPasswordContent = () => {
     }
     try {
       setResending(true);
-      await forgotPassword(normalizedEmail);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      await axios.post(`${API_URL}/auth/forgot-password`, { email: normalizedEmail }, { withCredentials: true });
       setResendMsg(`A new 6-digit code has been sent to ${normalizedEmail}.`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to resend code.';
@@ -92,8 +97,8 @@ const ResetPasswordContent = () => {
       footer={<Link href="/auth/login" className="text-primary hover:underline">Back to login</Link>}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {(error || storeError) && (
-          <div className="text-red-500 text-sm text-center">{error || storeError}</div>
+        {error && (
+          <div className="text-red-500 text-sm text-center">{error}</div>
         )}
         {success && <div className="text-green-600 text-sm text-center">{success}</div>}
         {resendMsg && <div className="text-green-600 text-sm text-center">{resendMsg}</div>}

@@ -5,19 +5,19 @@ import FaqList from "@/components/shared/FaqList";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { Links } from "@/constant";
 import Link from "next/link";
-import { useAuthStore } from "@/store/authStore";
+import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
 
 const Footer = () => {
-  const {logout} = useAuthStore()
   const router = useRouter()
   const {user} = useUser()
   const handleAuthButtonClick = () =>{
     if(user){
-      logout()
-      .then(()=>router.replace("/"))
-      .catch(()=>{})
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true })
+        .then(()=>router.replace("/"))
+        .catch(()=>{})
     }else{
       router.push("/auth/register")
     }

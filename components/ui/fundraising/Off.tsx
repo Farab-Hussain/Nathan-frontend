@@ -8,7 +8,6 @@ import React, { useState } from "react";
 
 const Off = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
 
   // Array of slider content - you can add more images/content here
   const sliderContent = [
@@ -46,15 +45,7 @@ const Off = () => {
     );
   };
 
-  const handleChange = (index: number) => {
-    setSelectedOptions((prev) => {
-      if (prev.includes(index)) {
-        return prev.filter((item) => item !== index);
-      } else {
-        return [...prev, index];
-      }
-    });
-  };
+
 
   return (
     <section className="w-full min-h-screen flex flex-col items-center justify-center bg-accent">

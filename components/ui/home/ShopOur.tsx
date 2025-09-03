@@ -1,27 +1,117 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import AnimatedText from "@/components/custom/AnimatedText";
 import AnimatedSection from "@/components/custom/AnimatedSection";
 import CustomButton from "@/components/custom/CustomButton";
 
-const productOptions = [
-  "Traditional - 3 Red Twist",
-  "Sour - Blue Raspberry, Fruit Rainbow, Apple",
-  "Sour - Watermelon, Cherry, Berry Delight",
-  "Sweet - Fruit Rainbow, Cotton Candy, Strawberry - Banana",
-  "Sweet - Watermelon, Berry Delight, Cherry",
-  "Traditional - 2 Red Twist",
-  "Sour - Green Apple, Blue Raspberry, Cherry",
-  "Sweet - Cotton Candy, Strawberry, Vanilla",
-  "Traditional - 4 Red Twist",
-  "Sour - Lemon, Lime, Orange",
-];
+// Product data structure matching the backend API
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  isActive?: boolean;
+  stock?: number;
+  flavors?: Array<{ name: string; quantity: number }>;
+  sku?: string;
+};
+
+// Product option type
+type ProductOption = {
+  id: string;
+  title: string;
+  kind: "Traditional" | "Sour" | "Sweet";
+  active: boolean;
+};
+
+// Empty fallback - will show loading state instead
+const fallbackProductOptions: ProductOption[] = [];
 
 const ShopOur = () => {
+  const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
-  // Only allow one selected option, so use number | null
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [productOptions, setProductOptions] = useState<ProductOption[]>(fallbackProductOptions);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch products from backend API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const response = await fetch('/api/products', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Ensure data is an array
+        if (Array.isArray(data)) {
+          const options = data.map((product: Product) => ({
+            id: product.id,
+            title: product.name,
+            kind: product.category as "Traditional" | "Sour" | "Sweet",
+            active: product.isActive || true
+          }));
+          setProductOptions(options);
+        } else if (data && Array.isArray(data.products)) {
+          const options = data.products.map((product: Product) => ({
+            id: product.id,
+            title: product.name,
+            kind: product.category as "Traditional" | "Sour" | "Sweet",
+            active: product.isActive || true
+          }));
+          setProductOptions(options);
+        } else if (data && Array.isArray(data.data)) {
+          const options = data.data.map((product: Product) => ({
+            id: product.id,
+            title: product.name,
+            kind: product.category as "Traditional" | "Sour" | "Sweet",
+            active: product.isActive || true
+          }));
+          setProductOptions(options);
+        } else {
+          console.error('Unexpected API response format:', data);
+          throw new Error('Invalid API response format');
+        }
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+        if (err instanceof Error) {
+          if (err.name === 'AbortError') {
+            setError('Request timed out. Please try again.');
+          } else {
+            setError('Failed to load products. Please try again later.');
+          }
+        } else {
+          setError('Failed to load products. Please try again later.');
+        }
+        // Don't use fallback data - keep empty array to show error state
+        setProductOptions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const handlePrevious = () => {
     setCurrentIndex((prevIndex) =>
@@ -40,6 +130,14 @@ const ShopOur = () => {
       setSelectedOption(null); // Unselect if already selected
     } else {
       setSelectedOption(index);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (selectedOption !== null) {
+      const selectedProduct = productOptions[selectedOption];
+      // Navigate to the specific product page
+      router.push(`/products/${selectedProduct.id}`);
     }
   };
 
@@ -83,20 +181,40 @@ const ShopOur = () => {
             Choose One of the following 3 packs:
           </h5>
 
+          {loading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-3 text-gray-600">Loading products...</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              <p className="font-bold">Error Loading Products</p>
+              <p>{error}</p>
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row gap-4 mt-4">
             {/* Checkbox List with Sliding Animation */}
             <div className="flex-1 overflow-hidden">
-              <div
-                className="space-y-2 transition-transform duration-300 ease-in-out h-40"
-                style={{ transform: `translateY(-${currentIndex * 40}px)` }}
-              >
-                {productOptions.map((option, index) => {
-                  const isSelected = selectedOption === index;
-                  const isDisabled = selectedOption !== null && selectedOption !== index;
+              {productOptions.length === 0 && !loading && !error && (
+                <div className="flex items-center justify-center py-8">
+                  <p className="text-gray-500">No products available</p>
+                </div>
+              )}
+              {productOptions.length > 0 && (
+                <div
+                  className="space-y-2 transition-transform duration-300 ease-in-out h-40"
+                  style={{ transform: `translateY(-${currentIndex * 40}px)` }}
+                >
+                  {productOptions.map((option, index) => {
+                    const isSelected = selectedOption === index;
+                    const isDisabled = selectedOption !== null && selectedOption !== index;
 
-                  return (
+                    return (
                     <div
-                      key={index}
+                      key={option.id}
                       className={`flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors h-8 md:h-9 py-2 md:py-6
                         ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}
                       `}
@@ -132,12 +250,13 @@ const ShopOur = () => {
                             : "text-gray-700"
                         }`}
                       >
-                        {option}
+                        {option.title}
                       </span>
                     </div>
                   );
                 })}
               </div>
+              )}
             </div>
 
             {/* Vertical Navigation Buttons */}
@@ -181,16 +300,14 @@ const ShopOur = () => {
             </div>
           </div>
           {/* Buy Now Button */}
-          {/* <div className="mt-8 flex justify-center"> */}
+          <div className="mt-8 flex justify-center">
             <CustomButton
               title="Buy Now"
-              className="bg-primary text-white px-8 py-3 text-lg font-semibold mt-3"
+              className="bg-primary text-white px-8 py-3 text-lg font-semibold"
               disabled={selectedOption === null}
-              // You can add onClick logic here for actual buy action
-              // For now, just a placeholder
-              // onClick={() => { if (selectedOption !== null) { ... } }}
+              onClick={handleBuyNow}
             />
-          {/* </div> */}
+          </div>
         </div>
       </AnimatedSection>
     </section>

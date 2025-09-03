@@ -1,12 +1,9 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import Home from "./Home/page";
-import LoadingScreen from "@/components/custom/LoadingScreen";
 import Lenis from "lenis";
 
 const Page = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [showHome, setShowHome] = useState(false);
 
   useEffect(() => {
     const lenis = new Lenis();

@@ -1,37 +1,85 @@
 'use client'
 import React, { useEffect, useMemo, useState } from 'react';
-import { useCartStore } from '@/store/cartStore';
-import { useOrdersStore } from '@/store/ordersStore';
 import Image from 'next/image';
+import axios from 'axios';
 
 const ORANGE = '#FF5D39';
 const YELLOW = '#F1A900';
 const WHITE = '#FFFFFF';
 const BLACK = '#000000';
 
+type CartItem = {
+  id: string;
+  productId: string;
+  title: string;
+  imageUrl?: string;
+  quantity: number;
+  total: number;
+};
+
 const CartPage = () => {
-  const { items, loading, error, fetchCart, updateItem, removeItem, clearCart } = useCartStore();
-  const { createOrder, loading: orderLoading, error: orderError } = useOrdersStore();
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [orderLoading, setOrderLoading] = useState<boolean>(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
   const [address, setAddress] = useState('');
 
-  useEffect(() => {
-    fetchCart().catch(() => {});
-  }, [fetchCart]);
+  const fetchCart = () => {
+    try {
+      setLoading(true);
+      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('cart_items') : null;
+      const parsed: CartItem[] = raw ? JSON.parse(raw) : [];
+      setItems(Array.isArray(parsed) ? parsed : []);
+      setError(null);
+    } catch (e: unknown) {
+      const message = (e as { message?: string })?.message || 'Failed to load cart';
+      setError(message);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const subtotal = useMemo(() => items.reduce((sum, i) => sum + (i.total || 0), 0), [items]);
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  const safeItems = useMemo(() => (Array.isArray(items) ? items : []), [items]);
+  const subtotal = useMemo(() => safeItems.reduce((sum, i) => sum + (i.total || 0), 0), [safeItems]);
+
+  const persist = (next: CartItem[]) => {
+    if (typeof window !== 'undefined') window.localStorage.setItem('cart_items', JSON.stringify(next));
+    setItems(next);
+  };
+
+  const updateItem = async (id: string, payload: { quantity?: number; total?: number }) => {
+    const next = safeItems.map((i) => (i.id === id ? { ...i, ...payload } : i));
+    persist(next);
+  };
+
+  const removeItem = (id: string) => {
+    persist(safeItems.filter((i) => i.id !== id));
+  };
+
+  const clearCart = () => {
+    persist([]);
+  };
 
   const handleQuantity = async (id: string, quantity: number, pricePerItem?: number) => {
     const qty = Math.max(1, quantity);
-    const item = items.find((i) => i.id === id);
+    const item = safeItems.find((i) => i.id === id);
     const unit = pricePerItem || (item && item.total && item.quantity ? item.total / item.quantity : 0);
     const total = Math.max(0, unit * qty);
     await updateItem(id, { quantity: qty, total });
   };
 
   const checkout = async () => {
+    setOrderError(null);
     try {
-      const orderItems = items.map((i) => {
+      setOrderLoading(true);
+      const orderItems = safeItems.map((i) => {
         const unit = i.quantity ? i.total / i.quantity : i.total;
         return {
           productId: i.productId || i.id,
@@ -40,19 +88,27 @@ const CartPage = () => {
           total: Number(i.total || 0),
         };
       });
-      const total = items.reduce((sum, i) => sum + (i.total || 0), 0);
-      await createOrder({
-        shippingAddress: address ? { address } : undefined,
-        orderNotes: notes || undefined,
-        orderItems,
-        total: Number(total.toFixed(2)),
-      });
-      await clearCart();
+      const total = safeItems.reduce((sum, i) => sum + (i.total || 0), 0);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      await axios.post(
+        `${API_URL}/orders`,
+        {
+          shippingAddress: address ? { address } : undefined,
+          orderNotes: notes || undefined,
+          orderItems,
+          total: Number(total.toFixed(2)),
+        },
+        { withCredentials: true }
+      );
+      clearCart();
       setNotes('');
       setAddress('');
       alert('Order placed successfully.');
-    } catch {
-      // handled in stores
+    } catch (e: unknown) {
+      const message = (e as { message?: string })?.message || 'Failed to place order';
+      setOrderError(message);
+    } finally {
+      setOrderLoading(false);
     }
   };
 
@@ -103,7 +159,7 @@ const CartPage = () => {
           </div>
         )}
 
-        {!loading && items.length === 0 && (
+        {!loading && safeItems.length === 0 && (
           <div className="text-center py-20">
             <div className="mx-auto h-24 w-24 mb-4" style={{ color: '#E5E5E5' }}>
               <svg fill="none" viewBox="0 0 24 24" stroke={BLACK}>
@@ -132,10 +188,11 @@ const CartPage = () => {
         )}
 
         {/* Cart Items */}
-        {items.length > 0 && (
+        {safeItems.length > 0 && (
           <div className="space-y-6 mb-8">
-            {items.map((item) => {
-              const unit = item.quantity ? item.total / item.quantity : item.total;
+            {safeItems.map((item) => {
+              const unitRaw = item && (item.quantity ? (Number(item.total || 0) / Number(item.quantity || 1)) : Number(item.total || 0));
+              const unit = Number(unitRaw || 0);
               return (
                 <div
                   key={item.id}
@@ -185,10 +242,7 @@ const CartPage = () => {
                           <h3 className="text-xl font-semibold mb-2" style={{ color: BLACK }}>
                             {item.title}
                           </h3>
-                          <p
-                            className="text-lg font-medium mb-4"
-                            style={{ color: ORANGE }}
-                          >
+                          <p className="text-lg font-medium mb-4" style={{ color: ORANGE }}>
                             ${unit.toFixed(2)} each
                           </p>
                         </div>
@@ -239,7 +293,7 @@ const CartPage = () => {
                           <input
                             type="number"
                             min={1}
-                            value={item.quantity}
+                            value={item.quantity || 1}
                             onChange={(e) => handleQuantity(item.id, Number(e.target.value) || 1, unit)}
                             className="w-16 text-center font-medium"
                             style={{
@@ -267,7 +321,7 @@ const CartPage = () => {
                         </div>
                         <div className="text-right">
                           <span className="text-2xl font-bold" style={{ color: BLACK }}>
-                            ${item.total.toFixed(2)}
+                            ${Number(item.total || 0).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -280,7 +334,7 @@ const CartPage = () => {
         )}
 
         {/* Checkout Section */}
-        {items.length > 0 && (
+        {safeItems.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Order Details */}
             <div className="lg:col-span-2 space-y-6">

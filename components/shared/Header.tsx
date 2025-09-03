@@ -1,114 +1,331 @@
 "use client";
-import React, { useState } from "react";
+import { navLinks } from "@/constant/index";
 import Image from "next/image";
-import { navLinks } from "@/constant";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { AlignLeft, X } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
 import CustomButton from "@/components/custom/CustomButton";
-import { useAuthStore } from "@/store/authStore";
+import { ShoppingCart, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
+import axios from "axios";
+
+// Define types for navLinks and subLinks
+type SubLink = {
+  label: string;
+  href?: string;
+};
+
+type NavLink = {
+  label: string;
+  href?: string;
+  navLinks?: SubLink[];
+};
 
 const Header = () => {
-  const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
-  const { logout } = useAuthStore();
-  const { user } = useUser();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ;
+  const { user, loading } = useUser();
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState<string | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const router = useRouter();
 
-  const handleAuthButtonClick = () => {
+  const handleClick = () => {
     if (user) {
-      logout()
-        .then(() => router.replace("/"))
-        .catch(() => {});
+      handleLogout();
     } else {
-      router.push("/auth/register");
+      router.push("/auth/login");
     }
   };
-  return (
-    <header className="z-50 h-auto min-h-[80px] md:h-[114px] w-full layout flex justify-between items-center py-4 px-4 md:px-0">
-      <div className="flex justify-between items-center w-full md:w-[50%] gap-4 md:gap-10">
-        <div className="flex justify-between items-center gap-4 md:hidden">
-          <AlignLeft
-            onClick={() => setIsOpen(!isOpen)}
-            className="text-white"
-          />
-          {isOpen && (
-            <div className="flex justify-between items-start gap-4 absolute top-0 left-0 w-1/2 h-screen z-50 bg-primary border-r border-white p-4 transition-all duration-700 pt-11">
-              <div className="flex flex-col justify-between items-start gap-4">
-                {navLinks.map((link) => {
-                  const isActive = pathname === link.href;
-                  return (
-                    <Link
-                      href={link.href}
-                      key={link.label}
-                      className="no-underline"
-                    >
-                      <span
-                        className={`text-16 font-inter transition-all duration-300 ${
-                          isActive ? "text-secondary" : "text-white"
-                        } hover:text-secondary active:text-secondary focus:text-secondary`}
-                      >
-                        {link.label}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-              <X onClick={() => setIsOpen(!isOpen)} className="text-white" />
-            </div>
-          )}
-        </div>
-        <Link href="/">
-          <Image
-            src="/assets/svg/logo.svg"
-            alt="logo"
-            width={110}
-            height={110}
-            className="w-[80px] h-[80px] md:w-[110px] md:h-[110px]"
-          />
-        </Link>
-        <div className="justify-between items-center gap-6 md:gap-10 hidden md:flex">
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <Link href={link.href} key={link.label} className="no-underline">
-                <span
-                  className={`text-16 font-inter transition-all duration-300 ${
-                    isActive ? "text-secondary" : "text-white"
-                  } hover:text-secondary active:text-secondary focus:text-secondary`}
-                >
-                  {link.label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-      <div className="flex justify-end items-center gap-4 w-full md:w-[60%]">
-        <Link href="/orders" className="hidden md:inline-block">
-          <span className="text-white hover:text-secondary transition-colors flex items-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="lucide lucide-shopping-cart w-5 h-5 mr-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <circle cx="8" cy="21" r="1" />
-              <circle cx="19" cy="21" r="1" />
-              <path d="M2.05 3H4.2a2 2 0 0 1 2 1.72l.34 2.06m0 0L7.6 8.6A2 2 0 0 0 9.5 10h7.72a2 2 0 0 0 1.97-1.68l1.38-7.32A1 1 0 0 0 19.6 0H6.21" />
-            </svg>
 
-          </span>
-        </Link>
-        <CustomButton
-          title={user ? "Logout" : "Sign up"}
-          onClick={handleAuthButtonClick}
-          className="bg-white !text-primary font-inter font-bold rounded-md px-4 py-2 md:px-6 md:py-4 text-sm md:text-base"
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
+      window.location.reload();
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      Object.keys(dropdownRefs.current).forEach((key) => {
+        const ref = dropdownRefs.current[key];
+        if (ref && !ref.contains(event.target as Node)) {
+          setOpenDropdown(null);
+        }
+      });
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Prevent body scroll when mobile nav is open
+  useEffect(() => {
+    if (mobileNavOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileNavOpen]);
+
+  if (loading) return null;
+
+  return (
+    <header className="w-full h-24 bg-primary z-50">
+      <div className="layout">
+        {/* Main header flex: logo left, nav center, actions right */}
+        <div className="flex h-full items-center justify-between py-3 w-full">
+          {/* Logo - left */}
+          <div className="flex-shrink-0">
+            <Link href="/" className="block">
+              <Image
+                src="/assets/svg/logo.svg"
+                alt="logo"
+                width={140}
+                height={48}
+                className="object-contain"
+                priority
+              />
+            </Link>
+          </div>
+          {/* Nav Links - center (hidden on mobile) */}
+          <nav className="hidden lg:flex items-center justify-start bg- gap-6 xl:gap-10 ml-6">
+            {(navLinks as NavLink[])
+              .filter((link) => {
+                if (
+                  link.href?.startsWith("/dashboard") &&
+                  (!user || user.role !== "admin")
+                ) {
+                  return false;
+                }
+                return true;
+              })
+              .map((link) =>
+                link.navLinks && Array.isArray(link.navLinks) ? (
+                  <div
+                    key={link.label}
+                    className="relative group"
+                    ref={el => {
+                      dropdownRefs.current[link.label] = el;
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="text-base xl:text-lg font-poppins flex items-center gap-1 px-2 py-1 rounded transition"
+                      onClick={() =>
+                        setOpenDropdown(
+                          openDropdown === link.label ? null : link.label
+                        )
+                      }
+                      onMouseEnter={() => setOpenDropdown(link.label)}
+                      onMouseLeave={() => setOpenDropdown(null)}
+                    >
+                      {link.label}
+                      <svg
+                        className="w-4 h-4 ml-1"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+                    {/* Dropdown */}
+                    <div
+                      className={`absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 transition-all duration-150 ${
+                        openDropdown === link.label ? "block" : "hidden"
+                      }`}
+                      onMouseEnter={() => setOpenDropdown(link.label)}
+                      onMouseLeave={() => setOpenDropdown(null)}
+                    >
+                      {link.navLinks.map((sub: SubLink) => (
+                        <Link
+                          href={sub.href ?? "/"}
+                          key={sub.label}
+                          className="block px-4 py-2 text-gray-800 transition"
+                          onClick={() => setOpenDropdown(null)}
+                        >
+                          {sub.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <Link
+                    href={link.href ?? "/"}
+                    key={link.label}
+                    className="text-base xl:text-lg font-poppins px-2 py-1 rounded transition"
+                  >
+                    {link.label}
+                  </Link>
+                )
+              )}
+            {user?.role === "admin" && (
+              <Link
+                href="/dashboard"
+                className="text-base xl:text-lg font-poppins px-2 py-1 rounded transition"
+              >
+                Dashboard
+              </Link>
+            )}
+          </nav>
+          {/* Actions - right */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Link href={"/cart"} className="p-2 rounded  transition">
+              <ShoppingCart className="w-6 h-6" />
+            </Link>
+            <div className="hidden lg:block">
+              <CustomButton
+                title={user ? "Logout" : "Login"}
+                onClick={handleClick}
+              />
+            </div>
+            {/* Mobile Nav Toggle */}
+            <button
+              className="lg:hidden ml-2 p-2 rounded focus:outline-none focus:ring-2 focus:ring-gray-300"
+              aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+              onClick={() => setMobileNavOpen((prev) => !prev)}
+            >
+              {mobileNavOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+        </div>
+        {/* Mobile Nav */}
+        {/* Overlay for mobile nav */}
+        <div
+          className={`fixed inset-0 z-40 bg-black/65 bg-opacity-40 transition-opacity duration-200 ${
+            mobileNavOpen ? "block" : "hidden"
+          } lg:hidden`}
+          onClick={() => setMobileNavOpen(false)}
         />
+        <div
+          className={`fixed top-0 right-0 z-50 h-full w-4/5 max-w-xs bg-primary shadow-lg transform transition-transform duration-300 ease-in-out
+            ${mobileNavOpen ? "translate-x-0" : "translate-x-full"} lg:hidden flex flex-col`}
+          style={{ minHeight: "100vh" }}
+        >
+          <div className="flex items-center justify-between w-full px-4 py-4 border-b border-gray-200">
+            <Link href="/" onClick={() => setMobileNavOpen(false)}>
+              <Image
+                src="/assets/svg/logo.svg"
+                alt="logo"
+                width={120}
+                height={40}
+                className="object-contain"
+                priority
+              />
+            </Link>
+            <button
+              className="p-2 rounded focus:outline-none focus:ring-2 focus:ring-gray-300"
+              aria-label="Close menu"
+              onClick={() => setMobileNavOpen(false)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          {/* Cart icon and login/logout button for mobile only */}
+          <nav className="flex flex-col items-start gap-2 mt-4 w-full px-2">
+            {(navLinks as NavLink[])
+              .filter((link) => {
+                if (
+                  link.href?.startsWith("/dashboard") &&
+                  (!user || user.role !== "admin")
+                ) {
+                  return false;
+                }
+                return true;
+              })
+              .map((link) =>
+                link.navLinks && Array.isArray(link.navLinks) ? (
+                  <div key={link.label} className="w-full">
+                    <button
+                      className="flex items-center justify-between w-full text-base font-poppins py-2 px-2 border-b border-gray-200"
+                      onClick={() =>
+                        setMobileDropdownOpen(
+                          mobileDropdownOpen === link.label
+                            ? null
+                            : link.label
+                        )
+                      }
+                    >
+                      {link.label}
+                      <svg
+                        className={`w-4 h-4 ml-1 transition-transform ${
+                          mobileDropdownOpen === link.label
+                            ? "rotate-180"
+                            : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+                    {mobileDropdownOpen === link.label && (
+                      <div className="flex flex-col w-full bg-gray-50 rounded-b-md">
+                        {link.navLinks.map((sub: SubLink) => (
+                          <Link
+                            href={sub.href ?? "/"}
+                            key={sub.label}
+                            className="block px-6 py-2 text-gray-800 hover:bg-gray-100 text-left"
+                            onClick={() => setMobileNavOpen(false)}
+                          >
+                            {sub.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    href={link.href ?? "/"}
+                    key={link.label}
+                    className="text-base font-poppins w-full text-left px-2 py-2 border-b border-gray-200"
+                    onClick={() => setMobileNavOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                )
+              )}
+            {user?.role === "admin" && (
+              <Link
+                href="/dashboard"
+                className="text-base font-poppins w-full text-left px-2 py-2 border-b border-gray-200"
+                onClick={() => setMobileNavOpen(false)}
+              >
+                Dashboard
+              </Link>
+            )}
+          </nav>
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100">
+            <Link href={"/cart"} onClick={() => setMobileNavOpen(false)}>
+              <ShoppingCart className="w-6 h-6" />
+            </Link>
+            <CustomButton
+              title={user ? "Logout" : "Login"}
+              onClick={() => {
+                setMobileNavOpen(false);
+                handleClick();
+              }}
+              className="ml-2"
+            />
+          </div>
+        </div>
       </div>
     </header>
   );

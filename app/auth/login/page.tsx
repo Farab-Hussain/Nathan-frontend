@@ -1,12 +1,10 @@
 'use client'
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import axios from 'axios';
 import Link from 'next/link';
 import AuthCard from '@/components/ui/auth/AuthCard';
 import PasswordInput from '@/components/ui/auth/PasswordInput';
-import { useUser } from '@/hooks/useUser';
-
 const LoginPage = () => {
   const [form, setForm] = useState({
     email: '',
@@ -14,28 +12,14 @@ const LoginPage = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const { login: loginAction, loading, error: storeError, clearError } = useAuthStore();
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
-
-  useEffect(() => {
-    if (userLoading) return;
-    if (user) {
-      const redirectUrl =
-        process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || '/';
-      if (typeof window !== 'undefined') {
-        window.location.href = redirectUrl;
-      } else {
-        router.replace(redirectUrl);
-      }
-    }
-  }, [user, userLoading, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError('');
     setSuccess('');
-    clearError();
+    // no-op
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,11 +33,12 @@ const LoginPage = () => {
     }
 
     try {
-      await loginAction(form.email, form.password);
+      setLoading(true);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      await axios.post(`${API_URL}/auth/login`, { email: form.email, password: form.password }, { withCredentials: true });
       setSuccess('Login successful!');
       setTimeout(() => {
-        const redirectUrl =
-          process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || '/';
+        const redirectUrl = process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || '/';
         if (typeof window !== 'undefined') {
           window.location.href = redirectUrl;
         } else {
@@ -63,6 +48,8 @@ const LoginPage = () => {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed.';
       setError(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,8 +65,8 @@ const LoginPage = () => {
       }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {(error || storeError) && (
-          <div className="text-red-500 text-sm text-center">{error || storeError}</div>
+        {error && (
+          <div className="text-red-500 text-sm text-center">{error}</div>
         )}
         {success && <div className="text-green-600 text-sm text-center">{success}</div>}
 

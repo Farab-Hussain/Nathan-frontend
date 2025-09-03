@@ -1,26 +1,28 @@
 'use client'
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/authStore';
+import axios from 'axios';
 import AuthCard from '@/components/ui/auth/AuthCard';
 
 const LogoutPage = () => {
   const [status, setStatus] = useState('Logging out...');
-  const { logout, error: storeError } = useAuthStore();
+  const [storeError, setStoreError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const doLogout = async () => {
       try {
-        await logout();
+        const API_URL = process.env.NEXT_PUBLIC_API_URL;
+        await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
         setStatus('Logged out successfully.');
         setTimeout(() => router.replace('/'), 600);
-      } catch {
+      } catch (e: unknown) {
         setStatus('');
+        setStoreError((e as Error)?.message || 'Logout failed');
       }
     };
     doLogout();
-  }, [logout, router]);
+  }, [router]);
 
   return (
     <AuthCard title="Logging out" subtitle="We\'re ending your session" footer={null}>
