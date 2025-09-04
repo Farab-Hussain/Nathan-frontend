@@ -114,14 +114,18 @@ const ShopOur = () => {
   }, []);
 
   const handlePrevious = () => {
+    // Show 4 at a time; allow scrolling only if more than 4
+    if (productOptions.length <= 4) return;
     setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? productOptions.length - 5 : prevIndex - 1
+      prevIndex === 0 ? productOptions.length - 4 : prevIndex - 1
     );
   };
 
   const handleNext = () => {
+    // Show 4 at a time; allow scrolling only if more than 4
+    if (productOptions.length <= 4) return;
     setCurrentIndex((prevIndex) =>
-      prevIndex >= productOptions.length - 5 ? 0 : prevIndex + 1
+      prevIndex >= productOptions.length - 4 ? 0 : prevIndex + 1
     );
   };
 
@@ -205,7 +209,7 @@ const ShopOur = () => {
               )}
               {productOptions.length > 0 && (
                 <div
-                  className="space-y-2 transition-transform duration-300 ease-in-out h-40"
+                  className="transition-transform duration-300 ease-in-out h-[160px]"
                   style={{ transform: `translateY(-${currentIndex * 40}px)` }}
                 >
                   {productOptions.map((option, index) => {
@@ -215,7 +219,7 @@ const ShopOur = () => {
                     return (
                     <div
                       key={option.id}
-                      className={`flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors h-8 md:h-9 py-2 md:py-6
+                      className={`flex items-center gap-3 cursor-pointer hover:bg-gray-50 px-2 rounded transition-colors h-10
                         ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}
                       `}
                       onClick={() => {

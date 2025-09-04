@@ -50,7 +50,8 @@ const AddProductsPage = () => {
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [search, setSearch] = useState<string>("");
   const [preview, setPreview] = useState<string | null>(null);
-  const [availableFlavors] = useState<Array<{id: string, name: string}>>([
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [availableFlavors] = useState<Array<{ id: string; name: string }>>([
     { id: "red_twist", name: "Red Twist" },
     { id: "blue_raspberry", name: "Blue Raspberry" },
     { id: "fruit_rainbow", name: "Fruit Rainbow" },
@@ -90,12 +91,14 @@ const AddProductsPage = () => {
           setProducts(Array.isArray(data.products) ? data.products : []);
           setError(null);
         } catch (e2) {
-          const message = (e2 as { message?: string })?.message || 'Failed to load products';
+          const message =
+            (e2 as { message?: string })?.message || "Failed to load products";
           setError(message);
           setProducts([]);
         }
       } else {
-        const message = (e as { message?: string })?.message || 'Failed to load products';
+        const message =
+          (e as { message?: string })?.message || "Failed to load products";
         setError(message);
         setProducts([]);
       }
@@ -179,60 +182,65 @@ const AddProductsPage = () => {
 
   const addFlavor = () => {
     if (form.flavors && form.flavors.length < 3) {
-      setForm(prev => ({
+      setForm((prev) => ({
         ...prev,
-        flavors: [...(prev.flavors || []), { id: "", name: "", quantity: 1 }]
+        flavors: [...(prev.flavors || []), { id: "", name: "", quantity: 1 }],
       }));
     }
   };
 
   const removeFlavor = (index: number) => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
-      flavors: prev.flavors?.filter((_, i) => i !== index) || []
+      flavors: prev.flavors?.filter((_, i) => i !== index) || [],
     }));
   };
 
-  const updateFlavor = (index: number, field: keyof Flavor, value: string | number) => {
-    setForm(prev => ({
+  const updateFlavor = (
+    index: number,
+    field: keyof Flavor,
+    value: string | number
+  ) => {
+    setForm((prev) => ({
       ...prev,
-      flavors: prev.flavors?.map((flavor, i) => 
-        i === index ? { ...flavor, [field]: value } : flavor
-      ) || []
+      flavors:
+        prev.flavors?.map((flavor, i) =>
+          i === index ? { ...flavor, [field]: value } : flavor
+        ) || [],
     }));
   };
-
-
 
   const createProduct = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
     setSaving(true);
     setError(null);
     try {
-      const payload = {
-        name: form.name,
-        price: Number(form.price || 0),
-        stock: Number(form.stock || 0),
-        category: form.category,
-        description: form.description,
-        imageUrl: form.imageUrl || preview || undefined,
-        imageBase64: preview || undefined,
-        isActive: !!form.isActive,
-        sku: form.sku || undefined,
-        flavors: form.flavors || undefined,
-      };
+      const fd = new FormData();
+      fd.append('name', String(form.name || ''));
+      fd.append('price', String(Number(form.price || 0)));
+      fd.append('stock', String(Number(form.stock || 0)));
+      fd.append('category', String(form.category || ''));
+      if (form.description) fd.append('description', form.description);
+      fd.append('isActive', String(!!form.isActive));
+      if (form.sku) fd.append('sku', form.sku);
+      if (Array.isArray(form.flavors)) fd.append('flavors', JSON.stringify(form.flavors));
+      if (imageFile) fd.append('productImage', imageFile);
+      if (!imageFile && form.imageUrl) fd.append('imageUrl', form.imageUrl);
+
       const { data: dataResp } = await axios.post<Product>(
         `${API_URL}/products/admin/products`,
-        payload,
+        fd,
         {
           withCredentials: true,
-          headers: { "Content-Type": "application/json" },
+          // Let browser set correct multipart boundary
         }
       );
       const data = dataResp as Product;
       setProducts((prev) => [data, ...prev]);
       resetForm();
+      if (preview?.startsWith('blob:')) URL.revokeObjectURL(preview);
       setPreview(null);
+      setImageFile(null);
     } catch (e) {
       const message =
         (e as { message?: string })?.message || "Failed to create product";
@@ -252,37 +260,38 @@ const AddProductsPage = () => {
         setSaving(false);
         return;
       }
-      const payload = {
-        name: form.name,
-        price: Number(form.price || 0),
-        stock: Number(form.stock || 0),
-        category: form.category,
-        description: form.description,
-        imageUrl: form.imageUrl || preview || undefined,
-        imageBase64: preview || undefined,
-        isActive: !!form.isActive,
-        sku: form.sku || undefined,
-        flavors: form.flavors || undefined,
-      };
+      const fd = new FormData();
+      fd.append('name', String(form.name || ''));
+      fd.append('price', String(Number(form.price || 0)));
+      fd.append('stock', String(Number(form.stock || 0)));
+      fd.append('category', String(form.category || ''));
+      if (form.description) fd.append('description', form.description);
+      fd.append('isActive', String(!!form.isActive));
+      if (form.sku) fd.append('sku', form.sku);
+      if (Array.isArray(form.flavors)) fd.append('flavors', JSON.stringify(form.flavors));
+      if (imageFile) fd.append('productImage', imageFile);
+      if (!imageFile && form.imageUrl) fd.append('imageUrl', form.imageUrl);
       let dataResp: Product;
       try {
+        // Primary: slug/id under /products/admin/:id
         const { data } = await axios.put<Product>(
           `${API_URL}/products/admin/${id}`,
-          payload,
+          fd,
           {
             withCredentials: true,
-            headers: { "Content-Type": "application/json" },
+            // Let browser set multipart boundary
           }
         );
         dataResp = data;
       } catch (e) {
         if (axios.isAxiosError(e) && e.response?.status === 404) {
+          // Fallback: legacy mount with /products/admin/products/:id
           const { data } = await axios.put<Product>(
-            `${API_URL}/admin/${id}`,
-            payload,
+            `${API_URL}/products/admin/products/${id}`,
+            fd,
             {
               withCredentials: true,
-              headers: { "Content-Type": "application/json" },
+              // Let browser set multipart boundary
             }
           );
           dataResp = data;
@@ -292,9 +301,13 @@ const AddProductsPage = () => {
       }
       const data = dataResp as Product;
       setProducts((prev) => prev.map((p) => (p.id === id ? data : p)));
+      // Refresh from backend to avoid stale UI (and bust image cache)
+      await fetchProducts();
       setOpenId(null);
       resetForm();
+      if (preview?.startsWith('blob:')) URL.revokeObjectURL(preview);
       setPreview(null);
+      setImageFile(null);
     } catch (e) {
       const message =
         (e as { message?: string })?.message || "Failed to update product";
@@ -326,6 +339,7 @@ const AddProductsPage = () => {
         category: overrides.category ?? row.category,
         description: overrides.description ?? row.description,
         imageUrl: overrides.imageUrl ?? row.imageUrl,
+        imageBase64: (overrides as { imageBase64?: string }).imageBase64 || undefined,
         isActive: overrides.isActive ?? row.isActive ?? true,
         sku: overrides.sku ?? row.sku,
         flavors: overrides.flavors ?? row.flavors,
@@ -340,7 +354,7 @@ const AddProductsPage = () => {
       let dataResp: Product;
       try {
         const { data } = await axios.put<Product>(
-          `${API_URL}/products/admin/${id}`,
+          `${API_URL}/products/admin/products/${id}`,
           payload,
           {
             withCredentials: true,
@@ -351,7 +365,7 @@ const AddProductsPage = () => {
       } catch (e) {
         if (axios.isAxiosError(e) && e.response?.status === 404) {
           const { data } = await axios.put<Product>(
-            `${API_URL}/admin/${id}`,
+            `${API_URL}/products/admin/products/${id}`,
             payload,
             {
               withCredentials: true,
@@ -390,7 +404,7 @@ const AddProductsPage = () => {
       } catch (e) {
         if (axios.isAxiosError(e) && e.response?.status === 404) {
           // Fallback to alternative mount: /admin/products/:id
-          await axios.delete(`${API_URL}/products/admin/${id}`, {
+          await axios.delete(`${API_URL}/products/admin/products/${id}`, {
             withCredentials: true,
           });
         } else {
@@ -548,7 +562,9 @@ const AddProductsPage = () => {
                     <select
                       className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39] flex-1"
                       value={flavor.id}
-                      onChange={(e) => updateFlavor(index, 'id', e.target.value)}
+                      onChange={(e) =>
+                        updateFlavor(index, "id", e.target.value)
+                      }
                     >
                       <option value="">Select flavor</option>
                       {availableFlavors.map((f) => (
@@ -564,7 +580,13 @@ const AddProductsPage = () => {
                       className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39] w-20"
                       placeholder="Qty"
                       value={flavor.quantity}
-                      onChange={(e) => updateFlavor(index, 'quantity', parseInt(e.target.value) || 1)}
+                      onChange={(e) =>
+                        updateFlavor(
+                          index,
+                          "quantity",
+                          parseInt(e.target.value) || 1
+                        )
+                      }
                     />
                     <button
                       type="button"
@@ -577,7 +599,8 @@ const AddProductsPage = () => {
                 ))}
                 {(!form.flavors || form.flavors.length === 0) && (
                   <div className="text-sm text-gray-500 italic">
-                    No flavors added. Click &quot;Add Flavor&quot; to add up to 3 flavors.
+                    No flavors added. Click &quot;Add Flavor&quot; to add up to
+                    3 flavors.
                   </div>
                 )}
               </div>
@@ -612,11 +635,17 @@ const AddProductsPage = () => {
                 onChange={(e) => {
                   const file = e.target.files?.[0] || null;
                   if (file) {
-                    const url = URL.createObjectURL(file);
-                    setPreview(url);
-                    setForm((f) => ({ ...f, imageUrl: "" }));
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const base64 = reader.result as string;
+                      setImageBase64(base64);
+                      setPreview(base64);
+                      setForm((f) => ({ ...f, imageUrl: "" }));
+                    };
+                    reader.readAsDataURL(file);
                   } else {
                     setPreview(null);
+                    setImageBase64(null);
                   }
                 }}
                 className="block text-black text-sm"
@@ -657,13 +686,44 @@ const AddProductsPage = () => {
               !openId ||
               !form.name ||
               !form.category ||
-              !form.sku ||
-              Number(form.price || 0) <= 0 ||
-              !form.flavors ||
-              form.flavors.length === 0
+              Number(form.price || 0) <= 0
             }
             onClick={() => {
-              if (openId) updateProduct(openId);
+              if (!openId) return;
+              const row = products.find((p) => p.id === openId);
+              if (!row) return;
+              // Build overrides without empty-string fields to avoid clearing data
+              const overrides: Partial<Product> = {
+                name: form.name || undefined,
+                category: form.category || undefined,
+                price:
+                  typeof form.price === "number"
+                    ? form.price
+                    : Number(form.price || 0),
+                stock:
+                  typeof form.stock === "number"
+                    ? form.stock
+                    : Number(form.stock || 0),
+                description:
+                  form.description && form.description.trim() !== ""
+                    ? form.description
+                    : undefined,
+                sku: form.sku && form.sku.trim() !== "" ? form.sku : undefined,
+                isActive:
+                  typeof form.isActive === "boolean"
+                    ? form.isActive
+                    : row.isActive,
+                flavors:
+                  form.flavors && form.flavors.length > 0
+                    ? form.flavors
+                    : undefined,
+                // Do not pass imageUrl here unless explicitly set to avoid wiping existing image
+                imageUrl:
+                  form.imageUrl && form.imageUrl.trim() !== ""
+                    ? form.imageUrl
+                    : undefined,
+              };
+              updateProductByRow(row, overrides);
             }}
             className="px-4 py-2 rounded bg-[#F1A900] text-black disabled:opacity-60"
           >
@@ -747,10 +807,14 @@ const AddProductsPage = () => {
                     ${Number(p.price || 0).toFixed(2)}
                   </td>
                   <td className="px-4 py-2 text-black">{p.category}</td>
-                  <td className="px-4 py-2 text-black text-sm">{p.sku || "-"}</td>
+                  <td className="px-4 py-2 text-black text-sm">
+                    {p.sku || "-"}
+                  </td>
                   <td className="px-4 py-2 text-black">{p.stock || 0}</td>
                   <td className="px-4 py-2 text-black text-sm">
-                    {p.flavors?.map(f => `${f.name} (${f.quantity})`).join(", ") || "-"}
+                    {p.flavors
+                      ?.map((f) => `${f.name} (${f.quantity})`)
+                      .join(", ") || "-"}
                   </td>
                   <td className="px-4 py-2">
                     <span

@@ -1,109 +1,118 @@
 'use client'
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import axios from 'axios';
+import { useCartStore } from '@/store/cartStore';
+import { useOrdersStore } from '@/store/ordersStore';
 
 const ORANGE = '#FF5D39';
 const YELLOW = '#F1A900';
 const WHITE = '#FFFFFF';
 const BLACK = '#000000';
 
-type CartItem = {
-  id: string;
-  productId: string;
-  title: string;
-  imageUrl?: string;
-  quantity: number;
-  total: number;
-};
-
 const CartPage = () => {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const { 
+    items, 
+    loading, 
+    error, 
+    updateQuantity, 
+    removeItem, 
+    clearCart, 
+    getTotal, 
+    loadFromBackend 
+  } = useCartStore();
+  
+  const { createOrder } = useOrdersStore();
   const [orderLoading, setOrderLoading] = useState<boolean>(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
-  const [address, setAddress] = useState('');
-
-  const fetchCart = () => {
-    try {
-      setLoading(true);
-      const raw = typeof window !== 'undefined' ? window.localStorage.getItem('cart_items') : null;
-      const parsed: CartItem[] = raw ? JSON.parse(raw) : [];
-      setItems(Array.isArray(parsed) ? parsed : []);
-      setError(null);
-    } catch (e: unknown) {
-      const message = (e as { message?: string })?.message || 'Failed to load cart';
-      setError(message);
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchCart();
-  }, []);
+    loadFromBackend();
+  }, [loadFromBackend]);
 
-  const safeItems = useMemo(() => (Array.isArray(items) ? items : []), [items]);
-  const subtotal = useMemo(() => safeItems.reduce((sum, i) => sum + (i.total || 0), 0), [safeItems]);
-
-  const persist = (next: CartItem[]) => {
-    if (typeof window !== 'undefined') window.localStorage.setItem('cart_items', JSON.stringify(next));
-    setItems(next);
+  const handleQuantity = async (itemId: string, quantity: number) => {
+    await updateQuantity(itemId, quantity);
   };
 
-  const updateItem = async (id: string, payload: { quantity?: number; total?: number }) => {
-    const next = safeItems.map((i) => (i.id === id ? { ...i, ...payload } : i));
-    persist(next);
+  const handleRemoveItem = async (itemId: string) => {
+    await removeItem(itemId);
   };
 
-  const removeItem = (id: string) => {
-    persist(safeItems.filter((i) => i.id !== id));
-  };
-
-  const clearCart = () => {
-    persist([]);
-  };
-
-  const handleQuantity = async (id: string, quantity: number, pricePerItem?: number) => {
-    const qty = Math.max(1, quantity);
-    const item = safeItems.find((i) => i.id === id);
-    const unit = pricePerItem || (item && item.total && item.quantity ? item.total / item.quantity : 0);
-    const total = Math.max(0, unit * qty);
-    await updateItem(id, { quantity: qty, total });
+  const handleClearCart = async () => {
+    await clearCart();
   };
 
   const checkout = async () => {
     setOrderError(null);
     try {
       setOrderLoading(true);
-      const orderItems = safeItems.map((i) => {
-        const unit = i.quantity ? i.total / i.quantity : i.total;
-        return {
-          productId: i.productId || i.id,
-          quantity: i.quantity,
-          price: Number(unit || 0),
-          total: Number(i.total || 0),
-        };
-      });
-      const total = safeItems.reduce((sum, i) => sum + (i.total || 0), 0);
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      await axios.post(
-        `${API_URL}/orders`,
-        {
-          shippingAddress: address ? { address } : undefined,
-          orderNotes: notes || undefined,
-          orderItems,
-          total: Number(total.toFixed(2)),
-        },
-        { withCredentials: true }
-      );
-      clearCart();
+      
+      console.log('=== CHECKOUT DEBUG ===');
+      console.log('Cart items count:', items.length);
+      console.log('Cart items:', items);
+      console.log('Product IDs in cart:', items.map(item => item.productId));
+      console.log('Total:', getTotal());
+      
+      if (items.length === 0) {
+        throw new Error('Cart is empty');
+      }
+
+      // Enhanced product verification with detailed logging
+      try {
+        const productIds = items.map(item => item.productId);
+        console.log('🔍 Verifying products exist in backend:', productIds);
+        
+        // Check if products exist by fetching them from backend
+        const response = await fetch('/api/products');
+        console.log('📡 API Response status:', response.status);
+        
+        if (response.ok) {
+          const products = await response.json();
+          console.log('📦 Backend products response:', products);
+          
+          const availableProductIds = Array.isArray(products) 
+            ? products.map((p: { id: string }) => p.id)
+            : products.products?.map((p: { id: string }) => p.id) || [];
+          
+          console.log('✅ Available product IDs in backend:', availableProductIds);
+          
+          const missingProducts = productIds.filter(id => !availableProductIds.includes(id));
+          if (missingProducts.length > 0) {
+            console.error('❌ Missing products in backend:', missingProducts);
+            throw new Error(`Products not found in backend: ${missingProducts.join(', ')}`);
+          } else {
+            console.log('✅ All products verified in backend');
+          }
+        } else {
+          console.warn('⚠️ API response not OK:', response.status, response.statusText);
+        }
+      } catch (verifyError) {
+        console.warn('⚠️ Could not verify products with backend:', verifyError);
+        // Continue anyway - backend will handle validation
+      }
+      
+      // Try the format that matches the backend database
+      const orderData = {
+        orderItems: items.map((item) => ({
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        total: getTotal(),
+        // Add any additional fields the backend might expect
+        status: 'pending' as const,
+        notes: notes || '',
+      };
+
+      console.log('Sending order data:', orderData);
+      console.log('Order items structure:', orderData.orderItems);
+      await createOrder(orderData);
+      await clearCart();
       setNotes('');
-      setAddress('');
-      alert('Order placed successfully.');
+      alert('Order placed successfully! Redirecting to your profile to view the order.');
+      // Redirect to profile page after successful order
+      window.location.href = '/profile';
     } catch (e: unknown) {
       const message = (e as { message?: string })?.message || 'Failed to place order';
       setOrderError(message);
@@ -159,7 +168,7 @@ const CartPage = () => {
           </div>
         )}
 
-        {!loading && safeItems.length === 0 && (
+        {!loading && items.length === 0 && (
           <div className="text-center py-20">
             <div className="mx-auto h-24 w-24 mb-4" style={{ color: '#E5E5E5' }}>
               <svg fill="none" viewBox="0 0 24 24" stroke={BLACK}>
@@ -188,11 +197,10 @@ const CartPage = () => {
         )}
 
         {/* Cart Items */}
-        {safeItems.length > 0 && (
+        {items.length > 0 && (
           <div className="space-y-6 mb-8">
-            {safeItems.map((item) => {
-              const unitRaw = item && (item.quantity ? (Number(item.total || 0) / Number(item.quantity || 1)) : Number(item.total || 0));
-              const unit = Number(unitRaw || 0);
+            {items.map((item) => {
+              const unit = item.price;
               return (
                 <div
                   key={item.id}
@@ -209,7 +217,7 @@ const CartPage = () => {
                         <div className="relative">
                           <Image
                             src={item.imageUrl}
-                            alt={item.title}
+                            alt={item.productName}
                             width={120}
                             height={120}
                             className="w-30 h-30 object-cover rounded-xl shadow-md"
@@ -240,14 +248,14 @@ const CartPage = () => {
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <h3 className="text-xl font-semibold mb-2" style={{ color: BLACK }}>
-                            {item.title}
+                            {item.productName}
                           </h3>
                           <p className="text-lg font-medium mb-4" style={{ color: ORANGE }}>
                             ${unit.toFixed(2)} each
                           </p>
                         </div>
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => handleRemoveItem(item.id)}
                           className="flex-shrink-0 p-2 rounded-full transition-colors duration-200"
                           style={{
                             color: BLACK,
@@ -281,7 +289,7 @@ const CartPage = () => {
                               color: BLACK,
                               background: 'transparent',
                             }}
-                            onClick={() => handleQuantity(item.id, Math.max(1, (item.quantity || 1) - 1), unit)}
+                            onClick={() => handleQuantity(item.id, Math.max(1, item.quantity - 1))}
                             aria-label="Decrease quantity"
                             onMouseOver={e => (e.currentTarget.style.color = ORANGE)}
                             onMouseOut={e => (e.currentTarget.style.color = BLACK)}
@@ -294,7 +302,7 @@ const CartPage = () => {
                             type="number"
                             min={1}
                             value={item.quantity || 1}
-                            onChange={(e) => handleQuantity(item.id, Number(e.target.value) || 1, unit)}
+                            onChange={(e) => handleQuantity(item.id, Number(e.target.value) || 1)}
                             className="w-16 text-center font-medium"
                             style={{
                               color: BLACK,
@@ -309,7 +317,7 @@ const CartPage = () => {
                               color: BLACK,
                               background: 'transparent',
                             }}
-                            onClick={() => handleQuantity(item.id, (item.quantity || 1) + 1, unit)}
+                            onClick={() => handleQuantity(item.id, item.quantity + 1)}
                             aria-label="Increase quantity"
                             onMouseOver={e => (e.currentTarget.style.color = ORANGE)}
                             onMouseOut={e => (e.currentTarget.style.color = BLACK)}
@@ -321,7 +329,7 @@ const CartPage = () => {
                         </div>
                         <div className="text-right">
                           <span className="text-2xl font-bold" style={{ color: BLACK }}>
-                            ${Number(item.total || 0).toFixed(2)}
+                            ${(item.price * item.quantity).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -334,7 +342,7 @@ const CartPage = () => {
         )}
 
         {/* Checkout Section */}
-        {safeItems.length > 0 && (
+        {items.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Order Details */}
             <div className="lg:col-span-2 space-y-6">
@@ -375,27 +383,7 @@ const CartPage = () => {
                     />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: BLACK, opacity: 0.8 }}>
-                      Shipping Address
-                    </label>
-                    <textarea
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="w-full rounded-xl px-4 py-3"
-                      style={{
-                        border: `1px solid #E5E5E5`,
-                        color: BLACK,
-                        background: WHITE,
-                        transition: 'border 0.2s, box-shadow 0.2s',
-                        outline: 'none',
-                      }}
-                      rows={3}
-                      placeholder="Enter your shipping address..."
-                      onFocus={e => (e.currentTarget.style.border = `1.5px solid ${ORANGE}`)}
-                      onBlur={e => (e.currentTarget.style.border = `1px solid #E5E5E5`)}
-                    />
-                  </div>
+
                 </div>
               </div>
             </div>
@@ -419,7 +407,7 @@ const CartPage = () => {
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between items-center py-3" style={{ borderBottom: '1px solid #F3F3F3' }}>
                     <span style={{ color: BLACK, opacity: 0.7 }}>Subtotal</span>
-                    <span className="text-xl font-bold" style={{ color: BLACK }}>${subtotal.toFixed(2)}</span>
+                    <span className="text-xl font-bold" style={{ color: BLACK }}>${getTotal().toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center py-3" style={{ borderBottom: '1px solid #F3F3F3' }}>
                     <span style={{ color: BLACK, opacity: 0.7 }}>Shipping</span>
@@ -430,7 +418,7 @@ const CartPage = () => {
                       Total
                     </span>
                     <span className="text-2xl font-bold" style={{ color: ORANGE }}>
-                      ${subtotal.toFixed(2)}
+                      ${getTotal().toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -472,7 +460,7 @@ const CartPage = () => {
                   </button>
                   
                   <button
-                    onClick={() => clearCart()}
+                    onClick={handleClearCart}
                     className="w-full font-semibold py-3 rounded-xl transition-all duration-200"
                     style={{
                       border: `2px solid ${ORANGE}`,

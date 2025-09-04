@@ -23,7 +23,7 @@ const Card = ({ children, className = "" }: { children: React.ReactNode, classNa
 
 // Define a type for the order item
 type OrderItem = {
-  id: string;
+  id?: string;
   productId: string;
   productName: string;
   quantity: number;
@@ -89,7 +89,7 @@ const OrderDetailPage = () => {
       <Card className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
           <h1 className="text-3xl font-extrabold text-[#FF5D39] tracking-tight">
-            Order <span className="text-black">#{order.id.slice(0, 8)}</span>
+            Order <span className="text-black">#{order.id?.slice(0, 8) || 'Unknown'}</span>
           </h1>
           <div className="flex gap-2">
             <Badge color="#FF5D39">{order.status}</Badge>
@@ -109,7 +109,7 @@ const OrderDetailPage = () => {
         <div>
           <div className="text-lg font-bold text-black mb-2">Items</div>
           <div className="space-y-3">
-            {order.orderItems.map((it) => (
+            {order.orderItems?.map((it) => (
               <OrderItemCard
                 key={it.id}
                 item={{

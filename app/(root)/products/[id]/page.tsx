@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useCartStore } from "@/store/cartStore";
+import { useWishlistStore } from "@/store/wishlistStore";
 const ORANGE = "#FF5D39";
 const BLACK = "#111111";
 
@@ -22,7 +24,6 @@ type Product = {
 
 const ProductDetailPage = () => {
   const params = useParams();
-  const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
@@ -30,6 +31,13 @@ const ProductDetailPage = () => {
   const [error, setError] = useState<string | null>(null);
   
   const id = typeof params?.id === "string" ? params.id : "";
+
+  const normalizeImageSrc = (src?: string | null, updatedAt?: string) => {
+    if (!src) return "/assets/images/slider.png";
+    const path = src.startsWith("/uploads") ? src : src.startsWith("uploads") ? `/${src}` : src;
+    const cacheBuster = updatedAt ? `?t=${new Date(updatedAt).getTime()}` : "";
+    return `${path}${cacheBuster}`;
+  };
 
   // Fetch product from backend API
   useEffect(() => {
@@ -76,51 +84,51 @@ const ProductDetailPage = () => {
     fetchProduct();
   }, [id]);
 
+  const router = useRouter();
+  const { addItem } = useCartStore();
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlistStore();
+  
   const handleAddToCart = async () => {
     if (!product) return;
     
     setAddingToCart(true);
     try {
-      // Add to localStorage cart (demo mode)
-      const cartItems = JSON.parse(localStorage.getItem("cart_items") || "[]");
-      const newItem = {
-        id: product.id,
+      await addItem({
         productId: product.id,
-        title: product.name,
+        productName: product.name,
         quantity,
-        total: product.price * quantity,
-        sku: product.sku,
-        imageUrl: product.imageUrl
-      };
-
-      type CartItem = {
-        id: string;
-        productId: string;
-        title: string;
-        quantity: number;
-        total: number;
-        sku: string;
-        imageUrl: string;
-      };
-
-      const existingIndex = cartItems.findIndex((item: CartItem) => item.id === product.id);
-      if (existingIndex >= 0) {
-        cartItems[existingIndex].quantity += quantity;
-        cartItems[existingIndex].total = cartItems[existingIndex].quantity * product.price;
-      } else {
-        cartItems.push(newItem);
-      }
+        price: product.price,
+        imageUrl: product.imageUrl || undefined,
+        sku: product.sku
+      });
       
-      localStorage.setItem("cart_items", JSON.stringify(cartItems));
-      alert("Added to cart! (Demo mode)");
-      
-      // Redirect to cart
-      router.push("/cart");
+      alert('Product added to cart! Redirecting to cart...');
+      // Redirect to cart page after successful addition
+      router.push('/cart');
     } catch (error) {
-      console.error("Failed to add to cart:", error);
-      alert("Failed to add to cart. Please try again.");
+      console.error('Failed to add to cart:', error);
+      alert('Failed to add product to cart. Please try again.');
     } finally {
       setAddingToCart(false);
+    }
+  };
+
+  const handleWishlistToggle = () => {
+    if (!product) return;
+    
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+      alert('Removed from wishlist!');
+    } else {
+      addToWishlist({
+        productId: product.id,
+        productName: product.name,
+        price: product.price,
+        imageUrl: product.imageUrl || undefined,
+        sku: product.sku,
+        category: product.category
+      });
+      alert('Added to wishlist!');
     }
   };
 
@@ -177,21 +185,15 @@ const ProductDetailPage = () => {
           {/* Product Image */}
           <div className="relative">
             <div className="rounded-2xl overflow-hidden border-2 border-gray-100 shadow-md bg-white relative group">
-              {product.imageUrl ? (
-                <Image
-                  src={product.imageUrl}
-                  alt={product.name}
-                  width={1000}
-                  height={750}
-                  className="w-full h-[28rem] object-cover transition-transform duration-300 group-hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, 600px"
-                  priority
-                />
-              ) : (
-                <div className="w-full h-[28rem] bg-gray-100 flex items-center justify-center text-4xl text-gray-300">
-                  🍬
-                </div>
-              )}
+              <Image
+                src={normalizeImageSrc(product.imageUrl, (product as any).updatedAt)}
+                alt={product.name}
+                width={1000}
+                height={750}
+                className="w-full h-[28rem] object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 600px"
+                priority
+              />
               <span
                 className="absolute top-4 left-4 text-white text-xs px-3 py-1 rounded-full shadow font-semibold"
                 style={{
@@ -298,17 +300,37 @@ const ProductDetailPage = () => {
                 )}
               </div>
 
-              <button
-                type="button"
-                disabled={addingToCart || (product.stock !== undefined && product.stock <= 0)}
-                onClick={handleAddToCart}
-                className="w-full px-6 py-3 rounded-lg text-white font-bold text-lg shadow-lg hover:opacity-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                style={{ background: ORANGE }}
-              >
-                {addingToCart ? "Adding..." : 
-                 product.stock !== undefined && product.stock <= 0 ? "Out of Stock" : 
-                 "Add to Cart"}
-              </button>
+              <div className="flex gap-3 mb-4">
+                <button
+                  type="button"
+                  disabled={addingToCart || (product.stock !== undefined && product.stock <= 0)}
+                  onClick={handleAddToCart}
+                  className="flex-1 px-6 py-3 rounded-lg text-white font-bold text-lg shadow-lg hover:opacity-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                  style={{ background: ORANGE }}
+                >
+                  {addingToCart ? "Adding..." : 
+                   product.stock !== undefined && product.stock <= 0 ? "Out of Stock" : 
+                   "Add to Cart"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleWishlistToggle}
+                  className={`px-4 py-3 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#FF5D39] ${
+                    isInWishlist(product.id) 
+                      ? 'border-red-500 text-red-500 hover:bg-red-50' 
+                      : 'border-gray-300 text-gray-600 hover:border-[#FF5D39] hover:text-[#FF5D39]'
+                  }`}
+                >
+                  <svg 
+                    className="w-6 h-6" 
+                    fill={isInWishlist(product.id) ? "currentColor" : "none"} 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </button>
+              </div>
 
               {/* Features */}
               <div className="mt-6 grid grid-cols-1 gap-3 text-sm text-gray-600">

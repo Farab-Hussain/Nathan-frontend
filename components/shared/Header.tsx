@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useRef, useEffect } from "react";
 import CustomButton from "@/components/custom/CustomButton";
-import { ShoppingCart, Menu, X } from "lucide-react";
+import { ShoppingCart, Menu, X, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
 import axios from "axios";
@@ -184,6 +184,14 @@ const Header = () => {
             <Link href={"/cart"} className="p-2 rounded  transition">
               <ShoppingCart className="w-6 h-6" />
             </Link>
+            <Link href="/wishlist" className="p-2 rounded transition">
+              <Heart className="w-6 h-6" />
+            </Link>
+            {user && (
+              <Link href="/profile" className="hidden lg:block text-white hover:opacity-80 transition-opacity">
+                Profile
+              </Link>
+            )}
             <div className="hidden lg:block">
               <CustomButton
                 title={user ? "Logout" : "Login"}
@@ -302,6 +310,15 @@ const Header = () => {
                   </Link>
                 )
               )}
+            {user && (
+              <Link
+                href="/profile"
+                className="text-base font-poppins w-full text-left px-2 py-2 border-b border-gray-200"
+                onClick={() => setMobileNavOpen(false)}
+              >
+                Profile
+              </Link>
+            )}
             {user?.role === "admin" && (
               <Link
                 href="/dashboard"
