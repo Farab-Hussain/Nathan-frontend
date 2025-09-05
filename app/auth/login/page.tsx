@@ -46,8 +46,23 @@ const LoginPage = () => {
         }
       }, 600);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed.';
-      setError(message);
+      // Prefer server-provided message; map common statuses to friendly text
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const serverMsg = (err.response?.data as { message?: string } | undefined)?.message;
+        if (serverMsg) {
+          setError(serverMsg);
+        } else if (status === 400 || status === 401) {
+          setError('Invalid credentials');
+        } else if (status === 429) {
+          setError('Too many attempts. Please try again later.');
+        } else {
+          setError('Login failed. Please try again.');
+        }
+      } else {
+        const message = err instanceof Error ? err.message : 'Login failed.';
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }

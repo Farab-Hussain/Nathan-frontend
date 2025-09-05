@@ -29,12 +29,20 @@ type Flavor = {
   quantity: number;
 };
 
+type FlavorDTO = {
+  id: string;
+  name?: string | null;
+  quantity?: number | null;
+};
+
 const AddProductsPage = () => {
   const { user, loading: userLoading } = useUser();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [pagination, setPagination] = useState<{ page: number; limit: number; total: number; pages: number } | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Product>>({
     name: "",
@@ -63,6 +71,70 @@ const AddProductsPage = () => {
     { id: "strawberry_banana", name: "Strawberry Banana" },
   ]);
 
+  const getFlavorNameById = (id: string): string => {
+    const found = availableFlavors.find((f) => f.id === id);
+    return found ? found.name : id;
+  };
+
+  const formatFlavors = (flavors?: Array<FlavorDTO>): string => {
+    if (!Array.isArray(flavors) || flavors.length === 0) return "-";
+    return flavors
+      .map((f) => {
+        const name = (f.name && String(f.name).trim() !== "")
+          ? String(f.name)
+          : getFlavorNameById(String(f.id));
+        const qtyRaw = typeof f.quantity === "number" ? f.quantity : Number(f.quantity || 1);
+        const quantity = Number.isFinite(qtyRaw) && qtyRaw > 0 ? Number(qtyRaw) : 1;
+        return `${name} (${quantity})`;
+      })
+      .join(", ");
+  };
+
+  // Extract/normalize flavors from various backend shapes
+  type UnknownFlavor = { id?: string; name?: string; flavor?: string; quantity?: number; qty?: number };
+  const extractFlavors = (raw: unknown): FlavorDTO[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+      // Could be string[] or object[]
+      if (raw.length === 0) return [];
+      if (typeof raw[0] === "string") {
+        return (raw as string[]).map((name, idx) => ({ id: String(idx), name, quantity: 1 }));
+      }
+      return (raw as Array<UnknownFlavor>).map((f, idx) => ({
+        id: String(f?.id ?? idx),
+        name: (typeof f?.name === 'string' && f.name) ? f.name : (typeof f?.flavor === 'string' ? f.flavor : undefined),
+        quantity: typeof f?.quantity === 'number' ? f.quantity : Number(f?.qty ?? 1),
+      }));
+    }
+    if (typeof raw === 'string') {
+      const str = raw.trim();
+      // Try JSON first
+      try {
+        const parsed = JSON.parse(str);
+        return extractFlavors(parsed);
+      } catch {}
+      // Fallback: comma-separated names
+      return str.split(',').map((s, idx) => ({ id: String(idx), name: s.trim(), quantity: 1 }));
+    }
+    // Unknown shape
+    return [];
+  };
+
+  const normalizeFlavorsForSave = (flavors?: Array<FlavorDTO | Flavor>): Flavor[] => {
+    if (!Array.isArray(flavors)) return [];
+    return flavors.map((f) => {
+      const id = String((f as FlavorDTO).id);
+      const name = (f as FlavorDTO).name && String((f as FlavorDTO).name).trim() !== ""
+        ? String((f as FlavorDTO).name)
+        : getFlavorNameById(id);
+      const qtyRaw = (f as FlavorDTO).quantity;
+      const quantity = typeof qtyRaw === "number" ? qtyRaw : Number(qtyRaw || 1);
+      return { id, name, quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1 };
+    });
+  };
+
+  //
+
   useEffect(() => {
     if (!userLoading && user?.role !== "admin") {
       if (typeof window !== "undefined") window.location.href = "/";
@@ -74,33 +146,51 @@ const AddProductsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      // Use admin endpoint that returns ALL products (active + inactive)
-      const { data } = await axios.get<{ products: Product[] }>(
-        `${API_URL}/products/admin/all`,
+      const params = new URLSearchParams();
+      params.set("page", String(page));
+      params.set("limit", String(limit));
+      const q = String(search || "").trim();
+      if (q) params.set("search", q);
+      const cat = String(categoryFilter || "").trim();
+      if (cat) params.set("category", cat);
+
+      const { data } = await axios.get<{ products: Product[]; pagination?: { page: number; limit: number; total: number; pages: number } }>(
+        `${API_URL}/products/admin/all?${params.toString()}`,
         { withCredentials: true }
       );
       setProducts(Array.isArray(data.products) ? data.products : []);
+      setPagination(data.pagination || null);
     } catch (e) {
       // Fallback: try alternate mount
       if (axios.isAxiosError(e) && e.response?.status === 404) {
         try {
-          const { data } = await axios.get<{ products: Product[] }>(
-            `${API_URL}/admin/all`,
+          const params = new URLSearchParams();
+          params.set("page", String(page));
+          params.set("limit", String(limit));
+          const q = String(search || "").trim();
+          if (q) params.set("search", q);
+          const cat = String(categoryFilter || "").trim();
+          if (cat) params.set("category", cat);
+          const { data } = await axios.get<{ products: Product[]; pagination?: { page: number; limit: number; total: number; pages: number } }>(
+            `${API_URL}/admin/all?${params.toString()}`,
             { withCredentials: true }
           );
           setProducts(Array.isArray(data.products) ? data.products : []);
+          setPagination(data.pagination || null);
           setError(null);
         } catch (e2) {
           const message =
             (e2 as { message?: string })?.message || "Failed to load products";
           setError(message);
           setProducts([]);
+          setPagination(null);
         }
       } else {
         const message =
           (e as { message?: string })?.message || "Failed to load products";
         setError(message);
         setProducts([]);
+        setPagination(null);
       }
     } finally {
       setLoading(false);
@@ -145,28 +235,12 @@ const AddProductsPage = () => {
       fetchProducts();
       fetchCategories();
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, page, limit, categoryFilter, search]);
 
-  const pageSize = 10;
-  const filteredByCategory = useMemo(
-    () =>
-      categoryFilter
-        ? products.filter((p) => p.category === categoryFilter)
-        : products,
-    [products, categoryFilter]
-  );
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return filteredByCategory;
-    return filteredByCategory.filter((p) => p.name.toLowerCase().includes(q));
-  }, [filteredByCategory, search]);
   const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(filtered.length / pageSize)),
-    [filtered.length]
-  );
-  const current = useMemo(
-    () => filtered.slice((page - 1) * pageSize, page * pageSize),
-    [filtered, page]
+    () => Math.max(1, pagination?.pages || 1),
+    [pagination?.pages]
   );
 
   const resetForm = () =>
@@ -201,13 +275,21 @@ const AddProductsPage = () => {
     field: keyof Flavor,
     value: string | number
   ) => {
-    setForm((prev) => ({
-      ...prev,
-      flavors:
-        prev.flavors?.map((flavor, i) =>
-          i === index ? { ...flavor, [field]: value } : flavor
-        ) || [],
-    }));
+    setForm((prev) => {
+      const nextFlavors = [...(prev.flavors || [])];
+      const current = nextFlavors[index] || { id: "", name: "", quantity: 1 };
+      if (field === "id") {
+        const selected = availableFlavors.find((f) => f.id === value);
+        nextFlavors[index] = {
+          ...current,
+          id: String(value || ""),
+          name: selected?.name || current.name || "",
+        };
+      } else {
+        nextFlavors[index] = { ...current, [field]: value } as Flavor;
+      }
+      return { ...prev, flavors: nextFlavors };
+    });
   };
 
   const createProduct = async () => {
@@ -216,16 +298,18 @@ const AddProductsPage = () => {
     setError(null);
     try {
       const fd = new FormData();
-      fd.append('name', String(form.name || ''));
-      fd.append('price', String(Number(form.price || 0)));
-      fd.append('stock', String(Number(form.stock || 0)));
-      fd.append('category', String(form.category || ''));
-      if (form.description) fd.append('description', form.description);
-      fd.append('isActive', String(!!form.isActive));
-      if (form.sku) fd.append('sku', form.sku);
-      if (Array.isArray(form.flavors)) fd.append('flavors', JSON.stringify(form.flavors));
-      if (imageFile) fd.append('productImage', imageFile);
-      if (!imageFile && form.imageUrl) fd.append('imageUrl', form.imageUrl);
+      fd.append("name", String(form.name || ""));
+      fd.append("price", String(Number(form.price || 0)));
+      fd.append("stock", String(Number(form.stock || 0)));
+      fd.append("category", String(form.category || ""));
+      if (form.description) fd.append("description", form.description);
+      fd.append("isActive", String(!!form.isActive));
+      if (form.sku) fd.append("sku", form.sku);
+      if (Array.isArray(form.flavors)) {
+        fd.append("flavors", JSON.stringify(normalizeFlavorsForSave(form.flavors)));
+      }
+      if (imageFile) fd.append("productImage", imageFile);
+      if (!imageFile && form.imageUrl) fd.append("imageUrl", form.imageUrl);
 
       const { data: dataResp } = await axios.post<Product>(
         `${API_URL}/products/admin/products`,
@@ -238,7 +322,7 @@ const AddProductsPage = () => {
       const data = dataResp as Product;
       setProducts((prev) => [data, ...prev]);
       resetForm();
-      if (preview?.startsWith('blob:')) URL.revokeObjectURL(preview);
+      if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
       setPreview(null);
       setImageFile(null);
     } catch (e) {
@@ -250,72 +334,7 @@ const AddProductsPage = () => {
     }
   };
 
-  const updateProduct = async (id: string) => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    setSaving(true);
-    setError(null);
-    try {
-      if (!id) {
-        setError("Missing product id");
-        setSaving(false);
-        return;
-      }
-      const fd = new FormData();
-      fd.append('name', String(form.name || ''));
-      fd.append('price', String(Number(form.price || 0)));
-      fd.append('stock', String(Number(form.stock || 0)));
-      fd.append('category', String(form.category || ''));
-      if (form.description) fd.append('description', form.description);
-      fd.append('isActive', String(!!form.isActive));
-      if (form.sku) fd.append('sku', form.sku);
-      if (Array.isArray(form.flavors)) fd.append('flavors', JSON.stringify(form.flavors));
-      if (imageFile) fd.append('productImage', imageFile);
-      if (!imageFile && form.imageUrl) fd.append('imageUrl', form.imageUrl);
-      let dataResp: Product;
-      try {
-        // Primary: slug/id under /products/admin/:id
-        const { data } = await axios.put<Product>(
-          `${API_URL}/products/admin/${id}`,
-          fd,
-          {
-            withCredentials: true,
-            // Let browser set multipart boundary
-          }
-        );
-        dataResp = data;
-      } catch (e) {
-        if (axios.isAxiosError(e) && e.response?.status === 404) {
-          // Fallback: legacy mount with /products/admin/products/:id
-          const { data } = await axios.put<Product>(
-            `${API_URL}/products/admin/products/${id}`,
-            fd,
-            {
-              withCredentials: true,
-              // Let browser set multipart boundary
-            }
-          );
-          dataResp = data;
-        } else {
-          throw e;
-        }
-      }
-      const data = dataResp as Product;
-      setProducts((prev) => prev.map((p) => (p.id === id ? data : p)));
-      // Refresh from backend to avoid stale UI (and bust image cache)
-      await fetchProducts();
-      setOpenId(null);
-      resetForm();
-      if (preview?.startsWith('blob:')) URL.revokeObjectURL(preview);
-      setPreview(null);
-      setImageFile(null);
-    } catch (e) {
-      const message =
-        (e as { message?: string })?.message || "Failed to update product";
-      setError(message);
-    } finally {
-      setSaving(false);
-    }
-  };
+  // removed unused updateProduct function
 
   // Update using row data to avoid stale form state
   const updateProductByRow = async (
@@ -339,10 +358,11 @@ const AddProductsPage = () => {
         category: overrides.category ?? row.category,
         description: overrides.description ?? row.description,
         imageUrl: overrides.imageUrl ?? row.imageUrl,
-        imageBase64: (overrides as { imageBase64?: string }).imageBase64 || undefined,
+        imageBase64:
+          (overrides as { imageBase64?: string }).imageBase64 || undefined,
         isActive: overrides.isActive ?? row.isActive ?? true,
         sku: overrides.sku ?? row.sku,
-        flavors: overrides.flavors ?? row.flavors,
+        flavors: normalizeFlavorsForSave(overrides.flavors ?? row.flavors),
       };
 
       // Optimistic update
@@ -353,8 +373,9 @@ const AddProductsPage = () => {
 
       let dataResp: Product;
       try {
+        // Primary route
         const { data } = await axios.put<Product>(
-          `${API_URL}/products/admin/products/${id}`,
+          `${API_URL}/products/admin/${id}`,
           payload,
           {
             withCredentials: true,
@@ -364,6 +385,7 @@ const AddProductsPage = () => {
         dataResp = data;
       } catch (e) {
         if (axios.isAxiosError(e) && e.response?.status === 404) {
+          // Fallback legacy mount
           const { data } = await axios.put<Product>(
             `${API_URL}/products/admin/products/${id}`,
             payload,
@@ -398,12 +420,13 @@ const AddProductsPage = () => {
     setError(null);
     try {
       try {
-        await axios.delete(`${API_URL}/products/admin/products/${id}`, {
+        // Primary route (mirrors updateProduct primary)
+        await axios.delete(`${API_URL}/products/admin/${id}`, {
           withCredentials: true,
         });
       } catch (e) {
         if (axios.isAxiosError(e) && e.response?.status === 404) {
-          // Fallback to alternative mount: /admin/products/:id
+          // Fallback legacy mount
           await axios.delete(`${API_URL}/products/admin/products/${id}`, {
             withCredentials: true,
           });
@@ -426,21 +449,14 @@ const AddProductsPage = () => {
       <h1 className="text-3xl font-extrabold text-black mb-6">Products</h1>
 
       {error && (
-        <div
-          className="mb-4 p-3 rounded border"
-          style={{
-            background: "#FFF4F1",
-            borderColor: "#FF5D39",
-            color: "#FF5D39",
-          }}
-        >
+        <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-700">
           {error}
         </div>
       )}
 
       {/* Create / Edit form */}
-      <div className="rounded-2xl border shadow bg-white p-5 mb-8">
-        <div className="flex items-center justify-between mb-4">
+      <div className="rounded-2xl border shadow bg-white p-6 mb-8">
+        <div className="flex items-center justify-between mb-5">
           <h2 className="text-xl font-bold text-black">
             {openId ? "Edit product" : "Add new product"}
           </h2>
@@ -458,6 +474,10 @@ const AddProductsPage = () => {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <div className="text-sm font-semibold text-black/80 mb-2">Product details</div>
+              <div className="h-px w-full bg-gray-200 mb-3" />
+            </div>
             <div className="flex flex-col gap-1">
               <label className="text-sm text-black/70">Name</label>
               <input
@@ -481,54 +501,59 @@ const AddProductsPage = () => {
                 }
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black/70">Stock</label>
-              <input
-                className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                placeholder="0"
-                type="number"
-                value={form.stock || 0}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, stock: Number(e.target.value) }))
-                }
-              />
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm text-black/70">Stock</label>
+                <input
+                  className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                  placeholder="0"
+                  type="number"
+                  value={form.stock || 0}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, stock: Number(e.target.value) }))
+                  }
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm text-black/70">SKU</label>
+                <input
+                  className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                  placeholder="e.g., 3P-SWE-WAT-BERDEL-CHE"
+                  value={form.sku || ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, sku: e.target.value }))
+                  }
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 md:col-span-2">
               <label className="text-sm text-black/70">Category</label>
-              <select
-                className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                value={form.category || ""}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, category: e.target.value }))
-                }
-              >
-                <option value="">Select category</option>
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <input
-                className="border rounded px-3 py-2 bg-white text-black mt-2 focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                placeholder="Or type new category"
-                value={form.category || ""}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, category: e.target.value }))
-                }
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <select
+                  className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                  value={form.category || ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, category: e.target.value }))
+                  }
+                >
+                  <option value="">Select category</option>
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                  placeholder="Or type new category"
+                  value={form.category || ""}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, category: e.target.value }))
+                  }
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-sm text-black/70">SKU</label>
-              <input
-                className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                placeholder="e.g., 3P-SWE-WAT-BERDEL-CHE"
-                value={form.sku || ""}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, sku: e.target.value }))
-                }
-              />
-            </div>
+            
             <div className="flex flex-col gap-1 md:col-span-2">
               {/* Image URL input removed as per instructions; already provided elsewhere */}
             </div>
@@ -558,49 +583,49 @@ const AddProductsPage = () => {
               </div>
               <div className="space-y-2">
                 {form.flavors?.map((flavor, index) => (
-                  <div key={index} className="flex gap-2 items-center">
-                    <select
-                      className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39] flex-1"
-                      value={flavor.id}
-                      onChange={(e) =>
-                        updateFlavor(index, "id", e.target.value)
-                      }
-                    >
-                      <option value="">Select flavor</option>
-                      {availableFlavors.map((f) => (
-                        <option key={f.id} value={f.id}>
-                          {f.name}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      min="1"
-                      max="3"
-                      className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39] w-20"
-                      placeholder="Qty"
-                      value={flavor.quantity}
-                      onChange={(e) =>
-                        updateFlavor(
-                          index,
-                          "quantity",
-                          parseInt(e.target.value) || 1
-                        )
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeFlavor(index)}
-                      className="px-2 py-2 text-red-500 hover:text-red-700"
-                    >
-                      ✕
-                    </button>
+                  <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                    <div className="col-span-8 sm:col-span-9">
+                      <select
+                        className="w-full border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                        value={flavor.id}
+                        onChange={(e) => updateFlavor(index, "id", e.target.value)}
+                      >
+                        <option value="">Select flavor</option>
+                        {availableFlavors.map((f) => (
+                          <option key={f.id} value={f.id}>
+                            {f.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-span-3 sm:col-span-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max="3"
+                        className="w-full border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                        placeholder="Qty"
+                        value={flavor.quantity}
+                        onChange={(e) =>
+                          updateFlavor(index, "quantity", parseInt(e.target.value) || 1)
+                        }
+                      />
+                    </div>
+                    <div className="col-span-1 text-right">
+                      <button
+                        type="button"
+                        onClick={() => removeFlavor(index)}
+                        className="px-2 py-2 text-red-500 hover:text-red-700"
+                        aria-label="Remove flavor"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {(!form.flavors || form.flavors.length === 0) && (
                   <div className="text-sm text-gray-500 italic">
-                    No flavors added. Click &quot;Add Flavor&quot; to add up to
-                    3 flavors.
+                    No flavors added. Click &quot;Add Flavor&quot; to add up to 3 flavors.
                   </div>
                 )}
               </div>
@@ -635,17 +660,15 @@ const AddProductsPage = () => {
                 onChange={(e) => {
                   const file = e.target.files?.[0] || null;
                   if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      const base64 = reader.result as string;
-                      setImageBase64(base64);
-                      setPreview(base64);
-                      setForm((f) => ({ ...f, imageUrl: "" }));
-                    };
-                    reader.readAsDataURL(file);
+                    setImageFile(file);
+                    const blobUrl = URL.createObjectURL(file);
+                    setPreview(blobUrl);
+                    setForm((f) => ({ ...f, imageUrl: "" }));
                   } else {
+                    if (preview?.startsWith("blob:"))
+                      URL.revokeObjectURL(preview);
                     setPreview(null);
-                    setImageBase64(null);
+                    setImageFile(null);
                   }
                 }}
                 className="block text-black text-sm"
@@ -663,7 +686,7 @@ const AddProductsPage = () => {
             </label>
           </div>
         </div>
-        <div className="mt-5 flex flex-wrap items-center gap-3">
+        <div className="mt-5 flex flex-wrap items-center gap-3 justify-end">
           <button
             disabled={
               saving ||
@@ -732,7 +755,7 @@ const AddProductsPage = () => {
           <button
             disabled={saving}
             onClick={resetForm}
-            className="px-4 py-2 rounded border"
+            className="px-4 py-2 rounded border border-gray-300 text-black bg-white hover:bg-gray-50"
           >
             Reset
           </button>
@@ -765,12 +788,24 @@ const AddProductsPage = () => {
             </option>
           ))}
         </select>
+        <select
+          className="border rounded px-3 py-2 bg-white text-black"
+          value={limit}
+          onChange={(e) => {
+            setPage(1);
+            setLimit(parseInt(e.target.value) || 10);
+          }}
+        >
+          <option value={10}>10 per page</option>
+          <option value={20}>20 per page</option>
+          <option value={50}>50 per page</option>
+        </select>
       </div>
 
       {/* Products table */}
       <div className="overflow-x-auto border border-gray-200 rounded">
         <table className="min-w-full text-left">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 sticky top-0  z-20">
             <tr>
               <th className="px-4 py-2 text-black">Image</th>
               <th className="px-4 py-2 text-black">Name</th>
@@ -783,12 +818,15 @@ const AddProductsPage = () => {
               <th className="px-4 py-2 text-black">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {current.map((p, idx) => {
+          <tbody className="divide-y divide-gray-100">
+            {products.map((p, idx) => {
               // Use only 'id' for Product type, remove reference to '_id'
               const pid = p.id || "";
               return (
-                <tr key={pid || idx} className="border-t border-gray-200">
+                <tr
+                  key={pid || idx}
+                  className={idx % 2 === 0 ? "bg-white" : "bg-gray-50 hover:bg-gray-100"}
+                >
                   <td className="px-4 py-2">
                     {p.imageUrl ? (
                       <Image
@@ -812,9 +850,14 @@ const AddProductsPage = () => {
                   </td>
                   <td className="px-4 py-2 text-black">{p.stock || 0}</td>
                   <td className="px-4 py-2 text-black text-sm">
-                    {p.flavors
-                      ?.map((f) => `${f.name} (${f.quantity})`)
-                      .join(", ") || "-"}
+                    {formatFlavors(
+                      extractFlavors(
+                        (p as unknown as { flavors?: unknown }).flavors ??
+                        (p as unknown as { flavours?: unknown }).flavours ??
+                        (p as unknown as { flavor?: unknown }).flavor ??
+                        (p as unknown as { options?: unknown }).options
+                      )
+                    )}
                   </td>
                   <td className="px-4 py-2">
                     <span

@@ -123,13 +123,13 @@ const CartPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-[#FF5D39] to-[#F1A900] bg-clip-text text-transparent">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-[#FF5D39] to-[#F1A900] bg-clip-text text-transparent">
             Your Shopping Cart
           </h1>
-          <p className="text-lg" style={{ color: BLACK, opacity: 0.7 }}>
+          <p className="text-base sm:text-lg" style={{ color: BLACK, opacity: 0.7 }}>
             Review your items and complete your purchase
           </p>
         </div>
@@ -157,7 +157,7 @@ const CartPage = () => {
         )}
 
         {loading && (
-          <div className="flex justify-center items-center py-20">
+          <div className="flex justify-center items-center py-16 sm:py-20">
             <div
               className="animate-spin rounded-full h-12 w-12 border-b-2"
               style={{ borderColor: ORANGE }}
@@ -169,20 +169,20 @@ const CartPage = () => {
         )}
 
         {!loading && items.length === 0 && (
-          <div className="text-center py-20">
-            <div className="mx-auto h-24 w-24 mb-4" style={{ color: '#E5E5E5' }}>
+          <div className="text-center py-16 sm:py-20">
+            <div className="mx-auto h-20 w-20 sm:h-24 sm:w-24 mb-4" style={{ color: '#E5E5E5' }}>
               <svg fill="none" viewBox="0 0 24 24" stroke={BLACK}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m6 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: BLACK }}>
+            <h3 className="text-lg sm:text-xl font-semibold mb-2" style={{ color: BLACK }}>
               Your cart is empty
             </h3>
-            <p className="mb-6" style={{ color: BLACK, opacity: 0.7 }}>
+            <p className="mb-6 text-sm sm:text-base" style={{ color: BLACK, opacity: 0.7 }}>
               Looks like you haven&apos;t added any items to your cart yet.
             </p>
             <button
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg"
+              className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg"
               style={{
                 background: ORANGE,
                 color: WHITE,
@@ -198,7 +198,7 @@ const CartPage = () => {
 
         {/* Cart Items */}
         {items.length > 0 && (
-          <div className="space-y-6 mb-8">
+          <div className="space-y-4 sm:space-y-6 mb-8">
             {items.map((item) => {
               const unit = item.price;
               return (
@@ -210,7 +210,7 @@ const CartPage = () => {
                     borderColor: '#F3F3F3',
                   }}
                 >
-                  <div className="flex gap-6 p-6">
+                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-6">
                     {/* Product Image */}
                     <div className="flex-shrink-0">
                       {item.imageUrl ? (
@@ -245,12 +245,12 @@ const CartPage = () => {
 
                     {/* Product Details */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start">
+                      <div className="flex justify-between items-start gap-3">
                         <div className="flex-1">
-                          <h3 className="text-xl font-semibold mb-2" style={{ color: BLACK }}>
+                          <h3 className="text-lg sm:text-xl font-semibold mb-2" style={{ color: BLACK }}>
                             {item.productName}
                           </h3>
-                          <p className="text-lg font-medium mb-4" style={{ color: ORANGE }}>
+                          <p className="text-base sm:text-lg font-medium mb-4" style={{ color: ORANGE }}>
                             ${unit.toFixed(2)} each
                           </p>
                         </div>
@@ -277,7 +277,7 @@ const CartPage = () => {
                       </div>
 
                       {/* Quantity Controls */}
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         <div
                           className="flex items-center rounded-xl p-1"
                           style={{ background: '#F8F8F8' }}
@@ -294,7 +294,7 @@ const CartPage = () => {
                             onMouseOver={e => (e.currentTarget.style.color = ORANGE)}
                             onMouseOut={e => (e.currentTarget.style.color = BLACK)}
                           >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                             </svg>
                           </button>
@@ -303,7 +303,7 @@ const CartPage = () => {
                             min={1}
                             value={item.quantity || 1}
                             onChange={(e) => handleQuantity(item.id, Number(e.target.value) || 1)}
-                            className="w-16 text-center font-medium"
+                            className="w-14 sm:w-16 text-center font-medium text-sm sm:text-base"
                             style={{
                               color: BLACK,
                               background: 'transparent',
@@ -322,13 +322,13 @@ const CartPage = () => {
                             onMouseOver={e => (e.currentTarget.style.color = ORANGE)}
                             onMouseOut={e => (e.currentTarget.style.color = BLACK)}
                           >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
                           </button>
                         </div>
                         <div className="text-right">
-                          <span className="text-2xl font-bold" style={{ color: BLACK }}>
+                          <span className="text-xl sm:text-2xl font-bold" style={{ color: BLACK }}>
                             ${(item.price * item.quantity).toFixed(2)}
                           </span>
                         </div>
@@ -343,18 +343,18 @@ const CartPage = () => {
 
         {/* Checkout Section */}
         {items.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             {/* Order Details */}
             <div className="lg:col-span-2 space-y-6">
               <div
-                className="rounded-2xl shadow-lg border p-6"
+                className="rounded-2xl shadow-lg border p-4 sm:p-6"
                 style={{
                   background: WHITE,
                   borderColor: '#F3F3F3',
                 }}
               >
-                <h2 className="text-2xl font-bold mb-6 flex items-center" style={{ color: BLACK }}>
-                  <svg className="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke={ORANGE}>
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center" style={{ color: BLACK }}>
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" fill="none" viewBox="0 0 24 24" stroke={ORANGE}>
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   Order Details
@@ -368,7 +368,7 @@ const CartPage = () => {
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      className="w-full rounded-xl px-4 py-3"
+                      className="w-full rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base"
                       style={{
                         border: `1px solid #E5E5E5`,
                         color: BLACK,
@@ -391,33 +391,33 @@ const CartPage = () => {
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <div
-                className="rounded-2xl shadow-lg border p-6 sticky top-6"
+                className="rounded-2xl shadow-lg border p-4 sm:p-6 sticky top-4 sm:top-6"
                 style={{
                   background: WHITE,
                   borderColor: '#F3F3F3',
                 }}
               >
-                <h2 className="text-2xl font-bold mb-6 flex items-center" style={{ color: BLACK }}>
-                  <svg className="w-6 h-6 mr-3" fill="none" viewBox="0 0 24 24" stroke={YELLOW}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center" style={{ color: BLACK }}>
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" fill="none" viewBox="0 0 24 24" stroke={YELLOW}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 00-2 2z" />
                   </svg>
                   Order Summary
                 </h2>
 
                 <div className="space-y-4 mb-6">
-                  <div className="flex justify-between items-center py-3" style={{ borderBottom: '1px solid #F3F3F3' }}>
+                  <div className="flex justify-between items-center py-2.5 sm:py-3" style={{ borderBottom: '1px solid #F3F3F3' }}>
                     <span style={{ color: BLACK, opacity: 0.7 }}>Subtotal</span>
-                    <span className="text-xl font-bold" style={{ color: BLACK }}>${getTotal().toFixed(2)}</span>
+                    <span className="text-lg sm:text-xl font-bold" style={{ color: BLACK }}>${getTotal().toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between items-center py-3" style={{ borderBottom: '1px solid #F3F3F3' }}>
+                  <div className="flex justify-between items-center py-2.5 sm:py-3" style={{ borderBottom: '1px solid #F3F3F3' }}>
                     <span style={{ color: BLACK, opacity: 0.7 }}>Shipping</span>
                     <span style={{ color: BLACK }}>Free</span>
                   </div>
-                  <div className="flex justify-between items-center py-3">
-                    <span className="text-lg font-semibold" style={{ color: BLACK }}>
+                  <div className="flex justify-between items-center py-2.5 sm:py-3">
+                    <span className="text-base sm:text-lg font-semibold" style={{ color: BLACK }}>
                       Total
                     </span>
-                    <span className="text-2xl font-bold" style={{ color: ORANGE }}>
+                    <span className="text-xl sm:text-2xl font-bold" style={{ color: ORANGE }}>
                       ${getTotal().toFixed(2)}
                     </span>
                   </div>
@@ -439,7 +439,7 @@ const CartPage = () => {
                   <button
                     onClick={checkout}
                     disabled={orderLoading}
-                    className="w-full font-semibold py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full font-semibold py-3.5 sm:py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-sm sm:text-base"
                     style={{
                       background: `linear-gradient(90deg, ${ORANGE}, ${YELLOW})`,
                       color: WHITE,
@@ -483,16 +483,16 @@ const CartPage = () => {
                 </div>
 
                 <div
-                  className="mt-6 p-4 rounded-lg"
+                  className="mt-4 sm:mt-6 p-3 sm:p-4 rounded-lg"
                   style={{
                     background: `${YELLOW}10`,
                   }}
                 >
                   <div className="flex items-start">
-                    <svg className="w-5 h-5 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke={YELLOW}>
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke={YELLOW}>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="text-sm" style={{ color: BLACK, opacity: 0.8 }}>
+                    <p className="text-xs sm:text-sm" style={{ color: BLACK, opacity: 0.8 }}>
                       Secure checkout powered by industry-standard encryption. Your payment information is protected.
                     </p>
                   </div>

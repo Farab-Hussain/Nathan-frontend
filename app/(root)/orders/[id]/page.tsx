@@ -25,20 +25,30 @@ const Card = ({ children, className = "" }: { children: React.ReactNode, classNa
 type OrderItem = {
   id?: string;
   productId: string;
-  productName: string;
+  productName?: string;
   quantity: number;
   price: number;
   imageUrl?: string;
   total: number;
 };
 
+type ProductRef = {
+  id?: string;
+  name?: string | null;
+  imageUrl?: string | null;
+  sku?: string | null;
+};
+
+type BackendOrderItem = OrderItem & { product?: ProductRef };
+
 // Reusable OrderItemCard
-const OrderItemCard = ({ item }: { item: OrderItem }) => (
+type DisplayOrderItem = OrderItem & { product?: ProductRef };
+const OrderItemCard = ({ item }: { item: DisplayOrderItem }) => (
   <div className="flex items-center gap-4 bg-[#FFF7F4] rounded-lg p-3 border border-[#FF5D39]">
     {item.imageUrl ? (
       <Image
         src={item.imageUrl}
-        alt={item.productName}
+        alt={item.productName || item.product?.name || 'Product'}
         width={64}
         height={64}
         className="w-16 h-16 object-cover rounded-lg border-2 border-[#F1A900]"
@@ -47,7 +57,10 @@ const OrderItemCard = ({ item }: { item: OrderItem }) => (
       <div className="w-16 h-16 bg-gray-100 rounded-lg border-2 border-[#F1A900]" />
     )}
     <div className="flex-1">
-      <div className="font-bold text-black">{item.productName}</div>
+      <div className="font-bold text-black">{item.productName || item.product?.name || 'Product'}</div>
+      {item.product?.sku && (
+        <div className="text-xs text-gray-500">SKU: {item.product.sku}</div>
+      )}
       <div className="text-sm text-[#FF5D39] font-semibold">{item.quantity} × ${item.price.toFixed(2)}</div>
     </div>
     <div className="text-lg font-bold text-[#F1A900]">${item.total.toFixed(2)}</div>
@@ -96,10 +109,11 @@ const OrderDetailPage = () => {
             <Badge color="#F1A900">{order.paymentStatus}</Badge>
           </div>
         </div>
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-2">
           <span className="text-lg font-semibold text-black">Total</span>
           <span className="text-2xl font-bold text-[#F1A900]">${order.total.toFixed(2)}</span>
         </div>
+        <div className="text-sm text-gray-600 mb-4">Placed on {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'Unknown date'}</div>
         {order.orderNotes && (
           <div className="mb-4">
             <span className="font-semibold text-black">Notes: </span>
@@ -109,15 +123,22 @@ const OrderDetailPage = () => {
         <div>
           <div className="text-lg font-bold text-black mb-2">Items</div>
           <div className="space-y-3">
-            {order.orderItems?.map((it) => (
-              <OrderItemCard
-                key={it.id}
-                item={{
-                  ...it,
-                  total: it.quantity * it.price,
-                }}
-              />
-            ))}
+            {order.orderItems?.map((it) => {
+              const item = it as BackendOrderItem;
+              const derivedImage = item.imageUrl || item.product?.imageUrl || undefined;
+              const derivedName = item.productName || item.product?.name || 'Product';
+              return (
+                <OrderItemCard
+                  key={item.id}
+                  item={{
+                    ...item,
+                    productName: derivedName,
+                    imageUrl: derivedImage,
+                    total: item.quantity * item.price,
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
       </Card>

@@ -246,16 +246,10 @@ const ProfilePage = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center">
                       <p className="text-sm text-gray-600">
                         {order.orderItems?.length || 0} item{order.orderItems?.length !== 1 ? 's' : ''}
                       </p>
-                      <Link 
-                        href={`/orders/${order.id}`}
-                        className="text-[#FF5D39] hover:underline text-sm font-medium"
-                      >
-                        View Details →
-                      </Link>
                     </div>
                   </div>
                 ))}

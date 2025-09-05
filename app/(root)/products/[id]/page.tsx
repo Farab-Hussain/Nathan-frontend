@@ -20,6 +20,7 @@ type Product = {
   stock?: number;
   flavors?: Array<{ name: string; quantity: number }>;
   sku?: string;
+  updatedAt?: string;
 };
 
 const ProductDetailPage = () => {
@@ -173,7 +174,7 @@ const ProductDetailPage = () => {
     <div className="w-full min-h-screen layout py-10 bg-shop-bg">
       <div className="max-w-6xl mx-auto px-4">
         {/* Navigation */}
-        <nav className="text-sm mb-6 flex items-center gap-2 text-white">
+        <nav className="text-xs sm:text-sm mb-6 flex items-center gap-2 text-white">
           <Link href="/shop" className="hover:underline">
             Shop
           </Link>
@@ -186,12 +187,12 @@ const ProductDetailPage = () => {
           <div className="relative">
             <div className="rounded-2xl overflow-hidden border-2 border-gray-100 shadow-md bg-white relative group">
               <Image
-                src={normalizeImageSrc(product.imageUrl, (product as any).updatedAt)}
+                src={normalizeImageSrc(product.imageUrl, product.updatedAt)}
                 alt={product.name}
                 width={1000}
                 height={750}
-                className="w-full h-[28rem] object-cover transition-transform duration-300 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, 600px"
+                className="w-full h-64 sm:h-80 md:h-[28rem] object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 80vw, 600px"
                 priority
               />
               <span
@@ -210,23 +211,23 @@ const ProductDetailPage = () => {
           {/* Product Details */}
           <div className="flex flex-col justify-between">
             <div>
-              <h1 className="text-4xl font-extrabold text-black mb-3">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-black mb-3">
                 {product.name}
               </h1>
               
               {/* SKU */}
-              <div className="text-sm text-gray-500 mb-4 font-mono">
+              <div className="text-xs sm:text-sm text-gray-500 mb-4 font-mono">
                 SKU: {product.sku}
               </div>
 
               {/* Price */}
               <div className="flex items-center gap-4 mb-6">
-                <span className="text-3xl font-bold" style={{ color: ORANGE }}>
+                <span className="text-2xl sm:text-3xl font-bold" style={{ color: ORANGE }}>
                   ${product.price.toFixed(2)}
                 </span>
-                <span className="text-sm text-gray-500">per 3-pack</span>
+                <span className="text-xs sm:text-sm text-gray-500">per 3-pack</span>
                 {product.stock !== undefined && (
-                  <span className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                  <span className={`text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ${
                     product.stock > 20
                       ? "bg-green-100 text-green-700"
                       : product.stock > 10
@@ -239,17 +240,17 @@ const ProductDetailPage = () => {
               </div>
 
               {/* Description */}
-              <p className="text-gray-700 mb-6 leading-relaxed text-lg">
+              <p className="text-gray-700 mb-6 leading-relaxed text-base sm:text-lg">
                 {product.description}
               </p>
 
               {/* Flavors */}
               <div className="mb-6">
-                <h3 className="font-semibold text-black mb-3">Contains:</h3>
+                <h3 className="font-semibold text-black mb-3 text-sm sm:text-base">Contains:</h3>
                 <div className="space-y-2">
                   {Array.isArray(product.flavors) && product.flavors.length > 0 ? (
                     product.flavors.map((flavor, index) => (
-                      <div key={index} className="flex items-center gap-2">
+                      <div key={index} className="flex items-center gap-2 text-sm">
                         <span className="w-2 h-2 rounded-full bg-primary"></span>
                         <span className="text-gray-700">
                           {flavor.name} {flavor.quantity > 1 && `×${flavor.quantity}`}
@@ -257,7 +258,7 @@ const ProductDetailPage = () => {
                       </div>
                     ))
                   ) : (
-                    <span className="text-gray-500">No flavors listed.</span>
+                    <span className="text-gray-500 text-sm">No flavors listed.</span>
                   )}
                 </div>
               </div>
@@ -265,12 +266,12 @@ const ProductDetailPage = () => {
 
             {/* Add to Cart Section */}
             <div>
-              <div className="flex items-center gap-4 mb-6">
-                <span className="text-black font-medium">Quantity</span>
+              <div className="flex items-center gap-3 sm:gap-4 mb-6">
+                <span className="text-black font-medium text-sm sm:text-base">Quantity</span>
                 <div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
                   <button
                     type="button"
-                    className="px-4 py-2 text-xl hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                    className="px-3 sm:px-4 py-2 text-lg sm:text-xl hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
                     style={{ color: ORANGE }}
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   >
@@ -282,11 +283,11 @@ const ProductDetailPage = () => {
                     max={product.stock || 99}
                     value={quantity}
                     onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock || 99, Number(e.target.value) || 1)))}
-                    className="w-16 text-center text-black bg-white focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-lg font-semibold"
+                    className="w-14 sm:w-16 text-center text-black bg-white focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-base sm:text-lg font-semibold"
                   />
                   <button
                     type="button"
-                    className="px-4 py-2 text-xl hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                    className="px-3 sm:px-4 py-2 text-lg sm:text-xl hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
                     style={{ color: ORANGE }}
                     onClick={() => setQuantity((q) => Math.min(product.stock || 99, q + 1))}
                   >
@@ -294,7 +295,7 @@ const ProductDetailPage = () => {
                   </button>
                 </div>
                 {product.stock !== undefined && (
-                  <span className="text-sm text-gray-500">
+                  <span className="text-xs sm:text-sm text-gray-500">
                     Max: {product.stock}
                   </span>
                 )}
@@ -305,7 +306,7 @@ const ProductDetailPage = () => {
                   type="button"
                   disabled={addingToCart || (product.stock !== undefined && product.stock <= 0)}
                   onClick={handleAddToCart}
-                  className="flex-1 px-6 py-3 rounded-lg text-white font-bold text-lg shadow-lg hover:opacity-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-white font-bold text-base sm:text-lg shadow-lg hover:opacity-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
                   style={{ background: ORANGE }}
                 >
                   {addingToCart ? "Adding..." : 
@@ -315,14 +316,14 @@ const ProductDetailPage = () => {
                 <button
                   type="button"
                   onClick={handleWishlistToggle}
-                  className={`px-4 py-3 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#FF5D39] ${
+                  className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#FF5D39] ${
                     isInWishlist(product.id) 
                       ? 'border-red-500 text-red-500 hover:bg-red-50' 
                       : 'border-gray-300 text-gray-600 hover:border-[#FF5D39] hover:text-[#FF5D39]'
                   }`}
                 >
                   <svg 
-                    className="w-6 h-6" 
+                    className="w-5 h-5 sm:w-6 sm:h-6" 
                     fill={isInWishlist(product.id) ? "currentColor" : "none"} 
                     stroke="currentColor" 
                     viewBox="0 0 24 24"

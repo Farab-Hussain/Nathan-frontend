@@ -75,9 +75,20 @@ const RegisterPage = () => {
         }
       }, 600);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Registration failed.";
-      setError(message);
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const serverMsg = (err.response?.data as { message?: string } | undefined)?.message;
+        if (serverMsg) {
+          setError(serverMsg);
+        } else if (status === 400 || status === 409) {
+          setError("Invalid details or email already in use");
+        } else {
+          setError("Registration failed. Please try again.");
+        }
+      } else {
+        const message = err instanceof Error ? err.message : "Registration failed.";
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }

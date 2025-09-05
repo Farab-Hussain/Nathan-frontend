@@ -60,8 +60,20 @@ const ResetPasswordContent = () => {
         router.push('/auth/login');
       }, 800);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Reset failed.';
-      setError(message);
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const serverMsg = (err.response?.data as { message?: string } | undefined)?.message;
+        if (serverMsg) {
+          setError(serverMsg);
+        } else if (status === 400) {
+          setError('Invalid or expired code');
+        } else {
+          setError('Reset failed. Please try again.');
+        }
+      } else {
+        const message = err instanceof Error ? err.message : 'Reset failed.';
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
@@ -83,8 +95,13 @@ const ResetPasswordContent = () => {
       await axios.post(`${API_URL}/auth/forgot-password`, { email: normalizedEmail }, { withCredentials: true });
       setResendMsg(`A new 6-digit code has been sent to ${normalizedEmail}.`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unable to resend code.';
-      setError(message);
+      if (axios.isAxiosError(err)) {
+        const serverMsg = (err.response?.data as { message?: string } | undefined)?.message;
+        setError(serverMsg || 'Unable to resend code. Please try again.');
+      } else {
+        const message = err instanceof Error ? err.message : 'Unable to resend code.';
+        setError(message);
+      }
     } finally {
       setResending(false);
     }

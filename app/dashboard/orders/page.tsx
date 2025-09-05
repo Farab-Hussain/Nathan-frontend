@@ -9,6 +9,7 @@ type Order = {
   status: string;
   paymentStatus: string;
   total: number;
+  user?: { id?: string; name?: string | null; email?: string | null };
 };
 
 type Pagination = { pages: number };
@@ -24,12 +25,26 @@ const AdminOrdersPage = () => {
   const [status, setStatus] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [debouncedStatus, setDebouncedStatus] = useState("");
+  const [debouncedPaymentStatus, setDebouncedPaymentStatus] = useState("");
 
   useEffect(() => {
     if (!userLoading && user?.role !== "admin") {
       if (typeof window !== "undefined") window.location.href = "/";
     }
   }, [user, userLoading]);
+
+  // Debounce status/paymentStatus changes to reduce requests
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedStatus(status), 300);
+    return () => clearTimeout(t);
+  }, [status]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedPaymentStatus(paymentStatus), 300);
+    return () => clearTimeout(t);
+  }, [paymentStatus]);
 
   useEffect(() => {
     if (user?.role !== "admin") return;
@@ -46,10 +61,10 @@ const AdminOrdersPage = () => {
           withCredentials: true,
           signal: controller.signal,
           params: {
-            status: status || undefined,
-            paymentStatus: paymentStatus || undefined,
+            status: debouncedStatus || undefined,
+            paymentStatus: debouncedPaymentStatus || undefined,
             page,
-            limit: 10,
+            limit,
           },
         });
         setAdminOrders(Array.isArray(data.orders) ? data.orders : []);
@@ -66,7 +81,7 @@ const AdminOrdersPage = () => {
       }
     })();
     return () => controller.abort();
-  }, [user, status, paymentStatus, page]);
+  }, [user, debouncedStatus, debouncedPaymentStatus, page, limit]);
 
   const adminUpdateStatus = async (
     id: string,
@@ -125,14 +140,38 @@ const AdminOrdersPage = () => {
           <option value="paid">paid</option>
           <option value="failed">failed</option>
         </select>
+        <select
+          value={limit}
+          onChange={(e) => {
+            setPage(1);
+            setLimit(parseInt(e.target.value) || 10);
+          }}
+          className="border border-gray-300 rounded px-3 py-2 text-black bg-white"
+        >
+          <option value={10}>10 per page</option>
+          <option value={20}>20 per page</option>
+          <option value={50}>50 per page</option>
+        </select>
       </div>
 
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-      {loading && <div className="text-black">Loading...</div>}
+      {error && (
+        <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-700">
+          {error}
+        </div>
+      )}
+      {loading && (
+        <div className="w-full">
+          <div className="animate-pulse space-y-3">
+            <div className="h-4 bg-gray-200 rounded" />
+            <div className="h-4 bg-gray-200 rounded" />
+            <div className="h-4 bg-gray-200 rounded" />
+          </div>
+        </div>
+      )}
 
       <div className="overflow-x-auto border border-gray-200 rounded">
         <table className="min-w-full text-left">
-          <thead className="bg-gray-50">
+          <thead className="bg-gray-50 sticky top-0 z-20">
             <tr>
               <th className="px-4 py-2 text-black">Order</th>
               <th className="px-4 py-2 text-black">User</th>
@@ -142,13 +181,42 @@ const AdminOrdersPage = () => {
               <th className="px-4 py-2 text-black">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            {adminOrders.map((o) => (
-              <tr key={o.id} className="border-t border-gray-200">
+          <tbody className="divide-y divide-gray-100">
+            {adminOrders.map((o, idx) => (
+              <tr
+                key={o.id}
+                className={idx % 2 === 0 ? "bg-white" : "bg-gray-50 hover:bg-gray-100"}
+              >
                 <td className="px-4 py-2 text-black">{o.id.slice(0, 8)}</td>
-                <td className="px-4 py-2 text-black">{o.userId}</td>
-                <td className="px-4 py-2 text-black">{o.status}</td>
-                <td className="px-4 py-2 text-black">{o.paymentStatus}</td>
+                <td className="px-4 py-2 text-black">
+                  {o.user?.name || o.user?.email || o.userId}
+                </td>
+                <td className="px-4 py-2">
+                  <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                    o.status === "pending"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : o.status === "confirmed"
+                      ? "bg-blue-100 text-blue-800"
+                      : o.status === "shipped"
+                      ? "bg-indigo-100 text-indigo-800"
+                      : o.status === "delivered"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-gray-200 text-gray-800"
+                  }`}>
+                    {o.status}
+                  </span>
+                </td>
+                <td className="px-4 py-2">
+                  <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                    o.paymentStatus === "pending"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : o.paymentStatus === "paid"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}>
+                    {o.paymentStatus}
+                  </span>
+                </td>
                 <td className="px-4 py-2 text-black">${o.total.toFixed(2)}</td>
                 <td className="px-4 py-2">
                   <div className="flex items-center gap-2">

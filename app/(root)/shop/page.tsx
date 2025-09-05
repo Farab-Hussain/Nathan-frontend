@@ -21,6 +21,7 @@ type Product = {
   stock?: number;
   flavors?: Array<{ name: string; quantity: number }>;
   sku?: string;
+  updatedAt?: string;
 };
 
 const ShopPage = () => {
@@ -136,23 +137,23 @@ const ShopPage = () => {
         color: BLACK,
       }}
     >
-      <div className="flex items-center gap-3 mb-10">
-        <h1 className="text-4xl font-extrabold tracking-tight">
+      <div className="flex items-center gap-3 mb-8 sm:mb-10">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
           <span className="inline-block text-shop-gradient font-extrabold drop-shadow text-white">
             Shop Packages
           </span>
         </h1>
       </div>
 
-      <div className="mb-8">
-        <p className="text-white text-lg mb-4">
+      <div className="mb-6 sm:mb-8">
+        <p className="text-white text-base sm:text-lg mb-4">
           Choose from our carefully curated licorice rope packages. Each package
           contains 3 delicious flavors for the perfect tasting experience.
         </p>
       </div>
 
       {/* Package grid: 4 cards per row on large screens, tighter spacing */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
         {Array.isArray(packages) &&
           packages.map((pkg) => (
             <div
@@ -163,17 +164,17 @@ const ShopPage = () => {
                 <Link href={`/products/${pkg.id}`} className="block">
                   {(
                     <Image
-                      src={normalizeImageSrc(pkg.imageUrl, (pkg as any).updatedAt)}
+                      src={normalizeImageSrc(pkg.imageUrl, pkg.updatedAt)}
                       alt={pkg.name}
                       width={640}
                       height={480}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="w-full aspect-[4/3] object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-2xl"
                     />
                   )}
                 </Link>
                 <span
-                  className="absolute top-4 left-4 text-sm font-bold px-3 py-1 rounded-full shadow"
+                  className="absolute top-3 sm:top-4 left-3 sm:left-4 text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 rounded-full shadow"
                   style={{
                     background:
                       pkg.category === "Traditional"
@@ -190,7 +191,7 @@ const ShopPage = () => {
                   {pkg.category}
                 </span>
                 <span
-                  className="absolute top-4 right-4 text-lg font-bold px-3 py-1 rounded-full shadow"
+                  className="absolute top-3 sm:top-4 right-3 sm:right-4 text-sm sm:text-lg font-bold px-2.5 sm:px-3 py-1 rounded-full shadow"
                   style={{
                     background: ORANGE,
                     color: "white",
@@ -201,15 +202,15 @@ const ShopPage = () => {
                 </span>
               </div>
               {/* Make the content area grow to push the button to the bottom */}
-              <div className="p-6 flex flex-col flex-1 gap-4">
+              <div className="p-4 sm:p-6 flex flex-col flex-1 gap-3 sm:gap-4">
                 <div>
                   <h3
-                    className="font-extrabold text-xl mb-2"
+                    className="font-extrabold text-lg sm:text-xl mb-2"
                     style={{ color: BLACK }}
                   >
                     {pkg.name}
                   </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-3">
+                  <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-3">
                     {pkg.description}
                   </p>
 
@@ -262,10 +263,10 @@ const ShopPage = () => {
                   )}
                 </div>
                 {/* The button is always at the bottom due to flex-1 above */}
-                <div className="pt-4 mt-auto">
+                <div className="pt-2 sm:pt-4 mt-auto">
                   <CustomButton
                     title="View Details"
-                    className="w-full !bg-shop-gradient !text-white font-bold py-3 rounded-lg shadow-lg transition-all hover:opacity-90"
+                    className="w-full !bg-shop-gradient !text-white font-bold py-2.5 sm:py-3 rounded-lg shadow-lg transition-all hover:opacity-90"
                     onClick={() => viewPackage(pkg.id)}
                   />
                 </div>

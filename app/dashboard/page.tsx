@@ -141,28 +141,28 @@ const DashboardPage = () => {
   }, [orders, now]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-extrabold text-black mb-6">Dashboard</h1>
+    <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-black mb-4 sm:mb-6">Dashboard</h1>
 
       {/* Quick navigation */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <a
           href="/dashboard/orders"
-          className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF2EE] to-white p-5 hover:shadow-md transition"
+          className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF2EE] to-white p-4 sm:p-5 hover:shadow-md transition"
         >
-          <div className="text-black/70 text-sm">Manage</div>
-          <div className="text-xl font-bold text-black">Orders</div>
-          <div className="mt-2 text-sm text-black/60">
+          <div className="text-black/70 text-xs sm:text-sm">Manage</div>
+          <div className="text-lg sm:text-xl font-bold text-black">Orders</div>
+          <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-black/60">
             View and update order statuses
           </div>
         </a>
         <a
           href="/dashboard/addProducts"
-          className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF8E5] to-white p-5 hover:shadow-md transition"
+          className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF8E5] to-white p-4 sm:p-5 hover:shadow-md transition"
         >
-          <div className="text-black/70 text-sm">Manage</div>
-          <div className="text-xl font-bold text-black">Products</div>
-          <div className="mt-2 text-sm text-black/60">
+          <div className="text-black/70 text-xs sm:text-sm">Manage</div>
+          <div className="text-lg sm:text-xl font-bold text-black">Products</div>
+          <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-black/60">
             Add, edit, and delete products
           </div>
         </a>
@@ -182,51 +182,51 @@ const DashboardPage = () => {
       )}
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF2EE] to-white p-5">
-          <div className="text-black/70 text-sm">Today Revenue</div>
-          <div className="mt-2 text-3xl font-extrabold text-[#FF5D39]">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF2EE] to-white p-4 sm:p-5">
+          <div className="text-black/70 text-xs sm:text-sm">Today Revenue</div>
+          <div className="mt-1 sm:mt-2 text-2xl sm:text-3xl font-extrabold text-[#FF5D39]">
             ${totals.daily.toFixed(2)}
           </div>
-          <div className="mt-1 text-xs text-black/50">Paid orders only</div>
+          <div className="mt-1 text-[10px] sm:text-xs text-black/50">Paid orders only</div>
         </div>
-        <div className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF8E5] to-white p-5">
-          <div className="text-black/70 text-sm">This Month</div>
-          <div className="mt-2 text-3xl font-extrabold text-[#F1A900]">
+        <div className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF8E5] to-white p-4 sm:p-5">
+          <div className="text-black/70 text-xs sm:text-sm">This Month</div>
+          <div className="mt-1 sm:mt-2 text-2xl sm:text-3xl font-extrabold text-[#F1A900]">
             ${totals.monthly.toFixed(2)}
           </div>
-          <div className="mt-1 text-xs text-black/50">Paid orders only</div>
+          <div className="mt-1 text-[10px] sm:text-xs text-black/50">Paid orders only</div>
         </div>
-        <div className="rounded-2xl border shadow bg-gradient-to-br from-[#F3F4F6] to-white p-5">
-          <div className="text-black/70 text-sm">This Year</div>
-          <div className="mt-2 text-3xl font-extrabold text-black">
+        <div className="rounded-2xl border shadow bg-gradient-to-br from-[#F3F4F6] to-white p-4 sm:p-5">
+          <div className="text-black/70 text-xs sm:text-sm">This Year</div>
+          <div className="mt-1 sm:mt-2 text-2xl sm:text-3xl font-extrabold text-black">
             ${totals.yearly.toFixed(2)}
           </div>
-          <div className="mt-1 text-xs text-black/50">Paid orders only</div>
+          <div className="mt-1 text-[10px] sm:text-xs text-black/50">Paid orders only</div>
         </div>
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-2xl border shadow bg-white p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold text-black">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="rounded-2xl border shadow bg-white p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <h2 className="text-base sm:text-lg font-bold text-black">
               Revenue (Last 7 days)
             </h2>
           </div>
-          <div className="h-48 flex items-end gap-2">
+          <div className="h-40 sm:h-48 flex items-end gap-1.5 sm:gap-2">
             {last7Days.map((b) => (
               <Bar key={b.label} value={b.value} label={b.label} />
             ))}
           </div>
         </div>
-        <div className="rounded-2xl border shadow bg-white p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold text-black">
+        <div className="rounded-2xl border shadow bg-white p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <h2 className="text-base sm:text-lg font-bold text-black">
               Revenue (Last 12 months)
             </h2>
           </div>
-          <div className="h-48 flex items-end gap-2">
+          <div className="h-40 sm:h-48 flex items-end gap-1.5 sm:gap-2">
             {last12Months.map((b, i) => (
               <Bar key={`${b.label}-${i}`} value={b.value} label={b.label} />
             ))}
@@ -234,7 +234,7 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {loading && <div className="mt-6 text-black">Loading analytics...</div>}
+      {loading && <div className="mt-4 sm:mt-6 text-sm sm:text-base text-black">Loading analytics...</div>}
     </div>
   );
 };

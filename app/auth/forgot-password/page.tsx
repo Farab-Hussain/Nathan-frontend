@@ -35,8 +35,20 @@ const ForgotPasswordPage = () => {
         }
       }, 800);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Request failed.';
-      setError(message);
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        const serverMsg = (err.response?.data as { message?: string } | undefined)?.message;
+        if (serverMsg) {
+          setError(serverMsg);
+        } else if (status === 404) {
+          setError('Email not found');
+        } else {
+          setError('Unable to send reset code. Please try again.');
+        }
+      } else {
+        const message = err instanceof Error ? err.message : 'Request failed.';
+        setError(message);
+      }
     } finally {
       setLoading(false);
     }
