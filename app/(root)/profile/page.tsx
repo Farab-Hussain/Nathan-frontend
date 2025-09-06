@@ -193,20 +193,20 @@ const ProfilePage = () => {
         {/* Orders Tab */}
         {activeTab === 'orders' && (
           <div className="bg-white rounded-2xl shadow-lg border p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-black">Order History</h2>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-black">Order History</h2>
+                <span className="block sm:inline text-sm text-gray-600 mt-1 sm:mt-0 sm:ml-2">
                   {orders.length} order{orders.length !== 1 ? 's' : ''} found
                 </span>
-                <button
-                  onClick={() => fetchOrders({ page: 1, limit: 50 })}
-                  disabled={ordersLoading}
-                  className="px-4 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
-                >
-                  {ordersLoading ? 'Refreshing...' : 'Refresh'}
-                </button>
               </div>
+              <button
+                onClick={() => fetchOrders({ page: 1, limit: 50 })}
+                disabled={ordersLoading}
+                className="w-full sm:w-auto px-4 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
+              >
+                {ordersLoading ? 'Refreshing...' : 'Refresh'}
+              </button>
             </div>
             
             {ordersLoading ? (

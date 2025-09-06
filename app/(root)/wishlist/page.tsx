@@ -155,17 +155,17 @@ const WishlistPage = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <button
                         onClick={() => handleMoveToCart(item)}
-                        className="flex-1 flex items-center justify-center gap-2 bg-[#FF5D39] text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity"
+                        className="w-full sm:flex-1 flex items-center justify-center gap-2 bg-[#FF5D39] text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity"
                       >
                         <ShoppingCart className="w-4 h-4" />
                         Move to Cart
                       </button>
                       <Link
                         href={`/products/${item.productId}`}
-                        className="flex-1 text-center border border-[#FF5D39] text-[#FF5D39] font-semibold py-3 rounded-lg hover:bg-[#FF5D39] hover:text-white transition-colors"
+                        className="w-full sm:flex-1 text-center border border-[#FF5D39] text-[#FF5D39] font-semibold py-3 rounded-lg hover:bg-[#FF5D39] hover:text-white transition-colors"
                       >
                         View Details
                       </Link>

@@ -21,7 +21,7 @@ const Fundraising = () => {
           duration={0.3}
           stagger={0.1}
         />
-        <p className="text-16 font-inter font-medium max-w-full md:max-w-md leading-[150%] tracking-[0] pb-20 relative z-10">
+        <p className="text-16 font-inter font-medium max-w-full md:max-w-md leading-[150%] tracking-[0] pb-6 sm:pb-16 md:pb-20 relative z-10">
           Sell Southern Sweet & Sour Licorice Ropes and keep 50% of every sale.
           No fees, no minimums, just success.
         </p>
@@ -38,11 +38,11 @@ const Fundraising = () => {
               md:left-0 md:ml-[260px] md:translate-x-0 md:absolute
               left-1/2 -translate-x-1/2
               rotate-3 z-10 
-              mb-6 sm:mb-0 
+              mb-2 sm:mb-0 
             "
           />
         </div>
-        <div className="mt-6 sm:mt-8 w-full sm:w-auto">
+        <div className="mt-3 sm:mt-6 w-full sm:w-auto">
           <CustomButton
             title="Get Started Now"
             className="bg-primary text-white w-full sm:w-auto relative z-10"
