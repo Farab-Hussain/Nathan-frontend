@@ -49,6 +49,7 @@ const ShopPage = () => {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           signal: controller.signal,
         });
 

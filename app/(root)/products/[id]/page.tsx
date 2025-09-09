@@ -51,7 +51,9 @@ const ProductDetailPage = () => {
 
       try {
         setLoading(true);
-        const response = await fetch(`/api/products/${id}`);
+        const response = await fetch(`/api/products/${id}`, {
+          credentials: "include"
+        });
         
         if (!response.ok) {
           if (response.status === 404) {

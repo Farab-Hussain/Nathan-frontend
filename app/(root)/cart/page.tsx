@@ -77,7 +77,9 @@ const CartPage = () => {
         console.log("🔍 Verifying products exist in backend:", productIds);
 
         // Check if products exist by fetching them from backend
-        const response = await fetch("/api/products");
+        const response = await fetch("/api/products", {
+          credentials: "include"
+        });
         console.log("📡 API Response status:", response.status);
 
         if (response.ok) {
