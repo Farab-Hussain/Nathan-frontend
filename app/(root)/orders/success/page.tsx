@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 const ORANGE = "#FF5D39";
@@ -7,7 +7,7 @@ const YELLOW = "#F1A900";
 const WHITE = "#FFFFFF";
 const BLACK = "#000000";
 
-export default function OrderSuccessPage() {
+function OrderSuccessContent() {
   const search = useSearchParams();
   const router = useRouter();
   const [seconds, setSeconds] = useState(5);
@@ -67,6 +67,21 @@ export default function OrderSuccessPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function OrderSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: ORANGE }}></div>
+          <p style={{ color: BLACK, opacity: 0.7 }}>Loading...</p>
+        </div>
+      </div>
+    }>
+      <OrderSuccessContent />
+    </Suspense>
   );
 }
 

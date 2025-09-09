@@ -25,7 +25,7 @@ const CartPage = () => {
   const [orderLoading, setOrderLoading] = useState<boolean>(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
-  const [shipping, setShipping] = useState({
+  const [shipping] = useState({
     name: "",
     email: "",
     phone: "",
