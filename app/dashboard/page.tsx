@@ -31,7 +31,8 @@ const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!userLoading && user?.role !== "admin") {
+    // Only redirect if user is loaded and not an admin
+    if (!userLoading && user && user.role !== "admin") {
       if (typeof window !== "undefined") window.location.href = "/";
     }
   }, [user, userLoading]);
@@ -139,6 +140,36 @@ const DashboardPage = () => {
       value: (buckets[k] / max) * 100,
     }));
   }, [orders, now]);
+
+  // Show loading state while user is being loaded
+  if (userLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
+          <p className="text-black text-lg">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if user is loaded but not admin
+  if (!userLoading && user && user.role !== "admin") {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-black mb-4">Access Denied</h1>
+          <p className="text-black opacity-70 mb-6">You need admin privileges to access this page.</p>
+          <a 
+            href="/"
+            className="inline-block bg-[#FF5D39] text-white font-bold px-6 py-3 rounded-lg shadow-lg hover:opacity-90 transition-all"
+          >
+            Go Home
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">

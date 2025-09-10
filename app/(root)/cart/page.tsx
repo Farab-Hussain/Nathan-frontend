@@ -170,6 +170,7 @@ const CartPage = () => {
       // Create Stripe Checkout Session
       const resp = await fetch("/payments/create-checkout-session", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId: created.id,
@@ -179,8 +180,7 @@ const CartPage = () => {
           successUrl: `${window.location.origin}/profile?order=${created.id}&session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/cart`,
         }),
-        credentials: "include",
-      });
+       });
       if (!resp.ok) throw new Error("Unable to start checkout");
       const data = await resp.json();
       if (!data?.url) throw new Error("Invalid checkout session");

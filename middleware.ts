@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { jwtVerify } from "jose";
 
 // List of routes that should only be accessible to guests (not logged in)
 const GUEST_ONLY_PATHS = [
@@ -23,22 +22,7 @@ function matchesPath(path: string, patterns: string[]) {
   return patterns.some((pattern) => path.startsWith(pattern));
 }
 
-type DecodedPayload = { role?: string } & Record<string, unknown>;
-
-async function verifyJWT(
-  token: string | undefined
-): Promise<DecodedPayload | null> {
-  if (!token) return null;
-  try {
-    const { payload } = await jwtVerify(
-      token,
-      new TextEncoder().encode(process.env.JWT_SECRET!)
-    );
-    return payload as DecodedPayload;
-  } catch {
-    return null;
-  }
-}
+// JWT verification is handled by the backend API
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const rawToken =
@@ -46,29 +30,28 @@ export async function middleware(req: NextRequest) {
     req.cookies.get("auth_token")?.value ||
     req.cookies.get("jwt")?.value ||
     req.cookies.get("accessToken")?.value;
-  // Treat presence of any auth cookie as logged-in to avoid client-side flicker
+  
+  // Simply check for presence of auth cookie - let client-side handle role verification
   const hasAuthCookie = !!rawToken;
-  const payload = await verifyJWT(rawToken);
-  const isLoggedIn = hasAuthCookie || !!payload;
-  const role = payload?.role;
 
   // 1. Redirect logged-in users away from guest-only pages
-  if (isLoggedIn && matchesPath(pathname, GUEST_ONLY_PATHS)) {
+  if (hasAuthCookie && matchesPath(pathname, GUEST_ONLY_PATHS)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // 2. Require login for protected pages
-  if (!isLoggedIn && matchesPath(pathname, AUTH_REQUIRED_PATHS)) {
+  // 2. Require login for protected pages (basic check)
+  if (!hasAuthCookie && matchesPath(pathname, AUTH_REQUIRED_PATHS)) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
+  
+  // 3. For admin pages, allow access if user has auth cookie - client will verify role
   if (matchesPath(pathname, ADMIN_ONLY_PATHS)) {
-    // Allow any authenticated user to reach dashboard; client enforces admin role
-    if (!isLoggedIn) {
+    if (!hasAuthCookie) {
       return NextResponse.redirect(new URL("/auth/login", req.url));
     }
   }
 
-  // 3. Allow all other requests
+  // 4. Allow all other requests
   return NextResponse.next();
 }
 

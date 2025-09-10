@@ -49,10 +49,10 @@ const ShopOur = () => {
         
         const response = await fetch('/api/products', {
           method: 'GET',
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
-          credentials: 'include',
           signal: controller.signal,
         });
         

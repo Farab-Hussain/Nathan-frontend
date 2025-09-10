@@ -22,7 +22,7 @@ const ProfilePage = () => {
       setProfileForm({
         name: user.name || '',
         email: user.email || '',
-        phone: '',
+        phone: (user as any).phone || '',
       });
     }
   }, [user]);
@@ -69,9 +69,34 @@ const ProfilePage = () => {
   }
 
   const handleProfileUpdate = async () => {
-    // TODO: Implement profile update API call
-    setEditMode(false);
-    alert('Profile updated successfully!');
+    try {
+      const response = await fetch('/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: profileForm.name,
+          phone: profileForm.phone,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update the user data in the store or refetch
+        setEditMode(false);
+        alert('Profile updated successfully!');
+        // Optionally refresh the page or update local state
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message || 'Failed to update profile'}`);
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
+    }
   };
 
   const getStatusColor = (status: string): string => {
@@ -161,7 +186,7 @@ const ProfilePage = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
                   />
                 ) : (
-                  <p className="text-black">Not provided</p>
+                  <p className="text-black">{(user as any).phone || 'Not provided'}</p>
                 )}
               </div>
 
