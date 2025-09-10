@@ -16,6 +16,7 @@ const ProfilePage = () => {
     email: '',
     phone: '',
   });
+  const [updatingProfile, setUpdatingProfile] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -199,9 +200,17 @@ const ProfilePage = () => {
               <div className="mt-6 flex gap-3">
                 <button
                   onClick={handleProfileUpdate}
-                  className="px-6 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity"
+                  disabled={updatingProfile}
+                  className="px-6 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Save Changes
+                  {updatingProfile ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </div>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </button>
                 <button
                   onClick={() => setEditMode(false)}

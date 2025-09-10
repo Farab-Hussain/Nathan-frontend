@@ -30,7 +30,7 @@ const AdminOrdersPage = () => {
   const [debouncedPaymentStatus, setDebouncedPaymentStatus] = useState("");
 
   useEffect(() => {
-    if (!userLoading && user?.role !== "admin") {
+    if (!userLoading && (!user || user.role !== "admin")) {
       if (typeof window !== "undefined") window.location.href = "/";
     }
   }, [user, userLoading]);
@@ -106,6 +106,18 @@ const AdminOrdersPage = () => {
     () => adminPagination?.pages ?? 1,
     [adminPagination]
   );
+
+  // Show loading while checking authentication
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
+          <p className="text-black text-lg">Loading orders...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">

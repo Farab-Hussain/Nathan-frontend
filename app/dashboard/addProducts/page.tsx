@@ -54,6 +54,7 @@ const AddProductsPage = () => {
     flavors: [],
   });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<{ [key: string]: boolean }>({});
   const [categories, setCategories] = useState<string[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [search, setSearch] = useState<string>("");
@@ -136,10 +137,11 @@ const AddProductsPage = () => {
   //
 
   useEffect(() => {
-    if (!userLoading && user?.role !== "admin") {
+    if (!userLoading && (!user || user.role !== "admin")) {
       if (typeof window !== "undefined") window.location.href = "/";
     }
   }, [user, userLoading]);
+
 
   const fetchProducts = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -242,6 +244,18 @@ const AddProductsPage = () => {
     () => Math.max(1, pagination?.pages || 1),
     [pagination?.pages]
   );
+
+  // Show loading while checking authentication
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
+          <p className="text-black text-lg">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
 
   const resetForm = () =>
     setForm({
@@ -416,7 +430,7 @@ const AddProductsPage = () => {
 
   const deleteProduct = async (id: string) => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    setSaving(true);
+    setDeleting(prev => ({ ...prev, [id]: true }));
     setError(null);
     try {
       try {
@@ -440,7 +454,7 @@ const AddProductsPage = () => {
         (e as { message?: string })?.message || "Failed to delete product";
       setError(message);
     } finally {
-      setSaving(false);
+      setDeleting(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -882,10 +896,18 @@ const AddProductsPage = () => {
                         Edit
                       </button>
                       <button
-                        className="px-3 py-1 rounded border text-white hover:opacity-90 bg-primary"
+                        className="px-3 py-1 rounded border text-white hover:opacity-90 bg-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                        disabled={deleting[pid]}
                         onClick={() => deleteProduct(pid)}
                       >
-                        Delete
+                        {deleting[pid] ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                            Deleting...
+                          </div>
+                        ) : (
+                          "Delete"
+                        )}
                       </button>
                       <button
                         className="px-3 py-1 rounded border  bg-secondary"

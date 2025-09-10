@@ -23,10 +23,11 @@ type NavLink = {
 
 const Header = () => {
   const API_URL = process.env.NEXT_PUBLIC_API_URL ;
-  const { user, loading } = useUser();
+  const { user, loading, clearUser } = useUser();
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const router = useRouter();
 
@@ -39,11 +40,18 @@ const Header = () => {
   };
 
   const handleLogout = async () => {
+    setLogoutLoading(true);
     try {
       await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
+      clearUser(); // Clear user state immediately
       window.location.reload();
     } catch (err) {
       console.error("Logout failed:", err);
+      // Even if logout fails, clear local state
+      clearUser();
+      window.location.reload();
+    } finally {
+      setLogoutLoading(false);
     }
   };
 
@@ -196,6 +204,8 @@ const Header = () => {
               <CustomButton
                 title={user ? "Logout" : "Login"}
                 onClick={handleClick}
+                loading={logoutLoading}
+                loadingText={user ? "Logging out..." : "Loading..."}
               />
             </div>
             {/* Mobile Nav Toggle */}
@@ -340,6 +350,8 @@ const Header = () => {
                 handleClick();
               }}
               className="ml-2"
+              loading={logoutLoading}
+              loadingText={user ? "Logging out..." : "Loading..."}
             />
           </div>
         </div>

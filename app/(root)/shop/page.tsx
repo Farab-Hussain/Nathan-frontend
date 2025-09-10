@@ -28,6 +28,7 @@ const ShopPage = () => {
   const router = useRouter();
   const [packages, setPackages] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [retryLoading, setRetryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const normalizeImageSrc = (src?: string | null, updatedAt?: string) => {
     if (!src) return "/assets/images/slider.png";
@@ -121,10 +122,21 @@ const ShopPage = () => {
             <p>{error}</p>
           </div>
           <button
-            onClick={() => window.location.reload()}
-            className="bg-white text-black font-bold px-8 py-3 rounded-lg shadow-lg hover:bg-gray-100 transition-all"
+            onClick={() => {
+              setRetryLoading(true);
+              window.location.reload();
+            }}
+            disabled={retryLoading}
+            className="bg-white text-black font-bold px-8 py-3 rounded-lg shadow-lg hover:bg-gray-100 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Try Again
+            {retryLoading ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black mr-2"></div>
+                Retrying...
+              </div>
+            ) : (
+              "Try Again"
+            )}
           </button>
         </div>
       </div>

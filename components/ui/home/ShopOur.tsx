@@ -38,6 +38,7 @@ const ShopOur = () => {
   const [productOptions, setProductOptions] = useState<ProductOption[]>(fallbackProductOptions);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [buyNowLoading, setBuyNowLoading] = useState(false);
 
   // Fetch products from backend API
   useEffect(() => {
@@ -140,9 +141,12 @@ const ShopOur = () => {
 
   const handleBuyNow = () => {
     if (selectedOption !== null) {
+      setBuyNowLoading(true);
       const selectedProduct = productOptions[selectedOption];
       // Navigate to the specific product page
       router.push(`/products/${selectedProduct.id}`);
+      // Reset loading after navigation
+      setTimeout(() => setBuyNowLoading(false), 1000);
     }
   };
 
@@ -309,7 +313,9 @@ const ShopOur = () => {
             <CustomButton
               title="Buy Now"
               className="bg-primary text-white px-8 py-3 text-lg font-semibold"
-              disabled={selectedOption === null}
+              disabled={selectedOption === null || buyNowLoading}
+              loading={buyNowLoading}
+              loadingText="Redirecting..."
               onClick={handleBuyNow}
             />
           </div>
