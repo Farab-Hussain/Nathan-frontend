@@ -23,14 +23,16 @@ const LoadingButton = ({
   style,
 }: LoadingButtonProps) => {
   const isDisabled = disabled || loading;
-  const displayText = loading ? (loadingText || "Loading...") : children;
+  const displayText = loading ? loadingText || "Loading..." : children;
 
   return (
     <button
       type={type}
       disabled={isDisabled}
       onClick={onClick}
-      className={`${className} ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`${className} ${
+        isDisabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+      }`}
       style={style}
     >
       {loading && (
