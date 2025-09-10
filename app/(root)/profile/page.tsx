@@ -22,7 +22,7 @@ const ProfilePage = () => {
       setProfileForm({
         name: user.name || '',
         email: user.email || '',
-        phone: (user as any).phone || '',
+        phone: (user as { phone?: string }).phone || '',
       });
     }
   }, [user]);
@@ -83,7 +83,6 @@ const ProfilePage = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
         // Update the user data in the store or refetch
         setEditMode(false);
         alert('Profile updated successfully!');
@@ -186,7 +185,7 @@ const ProfilePage = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
                   />
                 ) : (
-                  <p className="text-black">{(user as any).phone || 'Not provided'}</p>
+                  <p className="text-black">{(user as { phone?: string }).phone || 'Not provided'}</p>
                 )}
               </div>
 

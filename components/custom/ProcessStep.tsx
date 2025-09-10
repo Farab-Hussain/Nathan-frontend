@@ -27,7 +27,7 @@ export default function ProcessSteps() {
       ease: 'power2.inOut',
     })
 
-    stepRefs.current.forEach((el, i) => {
+    stepRefs.current.forEach((el) => {
       if (el) {
         tl.fromTo(
           el,

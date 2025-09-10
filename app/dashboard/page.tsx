@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import axios from "axios";
 import { useUser } from "@/hooks/useUser";
 
@@ -160,12 +161,12 @@ const DashboardPage = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-black mb-4">Access Denied</h1>
           <p className="text-black opacity-70 mb-6">You need admin privileges to access this page.</p>
-          <a 
+          <Link 
             href="/"
             className="inline-block bg-[#FF5D39] text-white font-bold px-6 py-3 rounded-lg shadow-lg hover:opacity-90 transition-all"
           >
             Go Home
-          </a>
+          </Link>
         </div>
       </div>
     );
