@@ -22,8 +22,22 @@ const WishlistPage = () => {
   } = useWishlistStore();
   
   const { addItem } = useCartStore();
+  const [loadingStates, setLoadingStates] = React.useState<{
+    clearAll: boolean;
+    movingToCart: { [key: string]: boolean };
+    removing: { [key: string]: boolean };
+  }>({
+    clearAll: false,
+    movingToCart: {},
+    removing: {}
+  });
 
   const handleMoveToCart = async (item: WishlistItem) => {
+    setLoadingStates(prev => ({
+      ...prev,
+      movingToCart: { ...prev.movingToCart, [item.productId]: true }
+    }));
+    
     try {
       await addItem({
         productId: item.productId,
@@ -39,6 +53,40 @@ const WishlistPage = () => {
       router.push('/cart');
     } catch {
       alert('Failed to add item to cart. Please try again.');
+    } finally {
+      setLoadingStates(prev => ({
+        ...prev,
+        movingToCart: { ...prev.movingToCart, [item.productId]: false }
+      }));
+    }
+  };
+
+  const handleClearAll = async () => {
+    setLoadingStates(prev => ({ ...prev, clearAll: true }));
+    try {
+      await clearWishlist();
+    } catch (error) {
+      console.error('Error clearing wishlist:', error);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, clearAll: false }));
+    }
+  };
+
+  const handleRemoveItem = async (productId: string) => {
+    setLoadingStates(prev => ({
+      ...prev,
+      removing: { ...prev.removing, [productId]: true }
+    }));
+    
+    try {
+      await removeItem(productId);
+    } catch (error) {
+      console.error('Error removing item:', error);
+    } finally {
+      setLoadingStates(prev => ({
+        ...prev,
+        removing: { ...prev.removing, [productId]: false }
+      }));
     }
   };
 
@@ -85,11 +133,21 @@ const WishlistPage = () => {
                 {getItemCount()} item{getItemCount() !== 1 ? 's' : ''} in your wishlist
               </p>
               <button
-                onClick={clearWishlist}
-                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                onClick={handleClearAll}
+                disabled={loadingStates.clearAll}
+                className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <Trash2 className="w-4 h-4" />
-                Clear All
+                {loadingStates.clearAll ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                    Clearing...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Clear All
+                  </>
+                )}
               </button>
             </div>
 
@@ -121,10 +179,15 @@ const WishlistPage = () => {
                       </div>
                     )}
                     <button
-                      onClick={() => removeItem(item.productId)}
-                      className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors"
+                      onClick={() => handleRemoveItem(item.productId)}
+                      disabled={loadingStates.removing[item.productId]}
+                      className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      <Trash2 className="w-4 h-4 text-red-600" />
+                      {loadingStates.removing[item.productId] ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                      ) : (
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      )}
                     </button>
                   </div>
 
@@ -158,10 +221,20 @@ const WishlistPage = () => {
                     <div className="flex flex-col sm:flex-row gap-3">
                       <button
                         onClick={() => handleMoveToCart(item)}
-                        className="w-full sm:flex-1 flex items-center justify-center gap-2 bg-[#FF5D39] text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity"
+                        disabled={loadingStates.movingToCart[item.productId]}
+                        className="w-full sm:flex-1 flex items-center justify-center gap-2 bg-[#FF5D39] text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        <ShoppingCart className="w-4 h-4" />
-                        Move to Cart
+                        {loadingStates.movingToCart[item.productId] ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Moving...
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="w-4 h-4" />
+                            Move to Cart
+                          </>
+                        )}
                       </button>
                       <Link
                         href={`/products/${item.productId}`}

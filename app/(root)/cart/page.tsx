@@ -24,6 +24,7 @@ const CartPage = () => {
   const { createOrder } = useOrdersStore();
   const [orderLoading, setOrderLoading] = useState<boolean>(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [clearCartLoading, setClearCartLoading] = useState<boolean>(false);
   const [notes, setNotes] = useState("");
   const [shipping] = useState({
     name: "",
@@ -50,7 +51,12 @@ const CartPage = () => {
   };
 
   const handleClearCart = async () => {
-    await clearCart();
+    setClearCartLoading(true);
+    try {
+      await clearCart();
+    } finally {
+      setClearCartLoading(false);
+    }
   };
 
   const checkout = async () => {
@@ -281,7 +287,7 @@ const CartPage = () => {
               Looks like you haven&apos;t added any items to your cart yet.
             </p>
             <button
-              className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg"
+              className="inline-flex items-center px-5 sm:px-6 py-2.5 sm:py-3 border border-transparent text-sm sm:text-base font-medium rounded-lg cursor-pointer"
               style={{
                 background: ORANGE,
                 color: WHITE,
@@ -687,16 +693,19 @@ const CartPage = () => {
 
                   <button
                     onClick={handleClearCart}
-                    className="w-full font-semibold py-3 rounded-xl transition-all duration-200"
+                    disabled={clearCartLoading}
+                    className="w-full font-semibold py-3 rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
                     style={{
                       border: `2px solid ${ORANGE}`,
                       color: ORANGE,
                       background: WHITE,
                     }}
                     onMouseOver={(e) => {
-                      e.currentTarget.style.background = `${ORANGE}10`;
-                      e.currentTarget.style.borderColor = YELLOW;
-                      e.currentTarget.style.color = YELLOW;
+                      if (!clearCartLoading) {
+                        e.currentTarget.style.background = `${ORANGE}10`;
+                        e.currentTarget.style.borderColor = YELLOW;
+                        e.currentTarget.style.color = YELLOW;
+                      }
                     }}
                     onMouseOut={(e) => {
                       e.currentTarget.style.background = WHITE;
@@ -704,7 +713,17 @@ const CartPage = () => {
                       e.currentTarget.style.color = ORANGE;
                     }}
                   >
-                    Clear Cart
+                    {clearCartLoading ? (
+                      <div className="flex items-center justify-center">
+                        <div
+                          className="animate-spin rounded-full h-4 w-4 border-b-2 mr-2"
+                          style={{ borderColor: ORANGE }}
+                        ></div>
+                        Clearing...
+                      </div>
+                    ) : (
+                      "Clear Cart"
+                    )}
                   </button>
                 </div>
 

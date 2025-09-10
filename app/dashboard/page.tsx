@@ -32,8 +32,8 @@ const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Only redirect if user is loaded and not an admin
-    if (!userLoading && user && user.role !== "admin") {
+    // Only redirect if user is loaded and either no user or not an admin
+    if (!userLoading && (!user || user.role !== "admin")) {
       if (typeof window !== "undefined") window.location.href = "/";
     }
   }, [user, userLoading]);

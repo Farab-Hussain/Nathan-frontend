@@ -54,6 +54,7 @@ const AddProductsPage = () => {
     flavors: [],
   });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<{ [key: string]: boolean }>({});
   const [categories, setCategories] = useState<string[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [search, setSearch] = useState<string>("");
@@ -136,10 +137,11 @@ const AddProductsPage = () => {
   //
 
   useEffect(() => {
-    if (!userLoading && user?.role !== "admin") {
+    if (!userLoading && (!user || user.role !== "admin")) {
       if (typeof window !== "undefined") window.location.href = "/";
     }
   }, [user, userLoading]);
+
 
   const fetchProducts = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -242,6 +244,18 @@ const AddProductsPage = () => {
     () => Math.max(1, pagination?.pages || 1),
     [pagination?.pages]
   );
+
+  // Show loading while checking authentication
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
+          <p className="text-black text-lg">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
 
   const resetForm = () =>
     setForm({
@@ -416,7 +430,7 @@ const AddProductsPage = () => {
 
   const deleteProduct = async (id: string) => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    setSaving(true);
+    setDeleting(prev => ({ ...prev, [id]: true }));
     setError(null);
     try {
       try {
@@ -440,7 +454,7 @@ const AddProductsPage = () => {
         (e as { message?: string })?.message || "Failed to delete product";
       setError(message);
     } finally {
-      setSaving(false);
+      setDeleting(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -466,7 +480,7 @@ const AddProductsPage = () => {
                 setOpenId(null);
                 resetForm();
               }}
-              className="text-sm text-black underline"
+              className="text-sm text-black underline cursor-pointer"
             >
               Cancel edit
             </button>
@@ -576,7 +590,7 @@ const AddProductsPage = () => {
                   type="button"
                   onClick={addFlavor}
                   disabled={(form.flavors?.length || 0) >= 3}
-                  className="text-sm text-[#FF5D39] hover:underline disabled:opacity-50"
+                  className="text-sm text-[#FF5D39] hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   + Add Flavor
                 </button>
@@ -615,7 +629,7 @@ const AddProductsPage = () => {
                       <button
                         type="button"
                         onClick={() => removeFlavor(index)}
-                        className="px-2 py-2 text-red-500 hover:text-red-700"
+                        className="px-2 py-2 text-red-500 hover:text-red-700 cursor-pointer"
                         aria-label="Remove flavor"
                       >
                         ✕
@@ -699,7 +713,7 @@ const AddProductsPage = () => {
               !!openId
             }
             onClick={createProduct}
-            className="px-4 py-2 rounded bg-[#FF5D39] text-white disabled:opacity-60"
+            className="px-4 py-2 rounded bg-[#FF5D39] text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {saving ? "Saving..." : "Add product"}
           </button>
@@ -748,14 +762,14 @@ const AddProductsPage = () => {
               };
               updateProductByRow(row, overrides);
             }}
-            className="px-4 py-2 rounded bg-[#F1A900] text-black disabled:opacity-60"
+            className="px-4 py-2 rounded bg-[#F1A900] text-black cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {saving ? "Saving..." : "Save changes"}
           </button>
           <button
             disabled={saving}
             onClick={resetForm}
-            className="px-4 py-2 rounded border border-gray-300 text-black bg-white hover:bg-gray-50"
+            className="px-4 py-2 rounded border border-gray-300 text-black bg-white hover:bg-gray-50 cursor-pointer disabled:cursor-not-allowed"
           >
             Reset
           </button>
@@ -873,7 +887,7 @@ const AddProductsPage = () => {
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-2">
                       <button
-                        className="px-3 py-1 rounded border text-white hover:opacity-90 bg-secondary"
+                        className="px-3 py-1 rounded border text-white hover:opacity-90 bg-secondary cursor-pointer"
                         onClick={() => {
                           setOpenId(pid);
                           setForm(p);
@@ -882,13 +896,21 @@ const AddProductsPage = () => {
                         Edit
                       </button>
                       <button
-                        className="px-3 py-1 rounded border text-white hover:opacity-90 bg-primary"
+                        className="px-3 py-1 rounded border text-white hover:opacity-90 bg-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                        disabled={deleting[pid]}
                         onClick={() => deleteProduct(pid)}
                       >
-                        Delete
+                        {deleting[pid] ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
+                            Deleting...
+                          </div>
+                        ) : (
+                          "Delete"
+                        )}
                       </button>
                       <button
-                        className="px-3 py-1 rounded border  bg-secondary"
+                        className="px-3 py-1 rounded border bg-secondary cursor-pointer"
                         onClick={() =>
                           updateProductByRow(p as Product, {
                             isActive: !p.isActive,
@@ -909,7 +931,7 @@ const AddProductsPage = () => {
       {totalPages > 1 && (
         <div className="flex items-center gap-2 mt-6">
           <button
-            className="px-3 py-1 rounded border text-black disabled:opacity-50"
+            className="px-3 py-1 rounded border text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
           >
@@ -919,7 +941,7 @@ const AddProductsPage = () => {
             Page {page} of {totalPages}
           </span>
           <button
-            className="px-3 py-1 rounded border text-black disabled:opacity-50"
+            className="px-3 py-1 rounded border text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
           >

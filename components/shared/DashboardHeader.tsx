@@ -9,13 +9,30 @@ const NavLink = ({
   href,
   label,
   onClick,
+  disabled = false,
 }: {
   href: string;
   label: string;
   onClick?: () => void;
+  disabled?: boolean;
 }) => {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
+  
+  if (disabled) {
+    return (
+      <span
+        className={`block px-3 py-2 rounded-lg text-sm font-medium transition opacity-50 cursor-not-allowed ${
+          isActive
+            ? "bg-white/15 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.2)]"
+            : "text-white/85"
+        }`}
+      >
+        {label}
+      </span>
+    );
+  }
+  
   return (
     <Link
       href={href}
@@ -32,7 +49,7 @@ const NavLink = ({
 };
 
 const DashboardHeader = () => {
-  const { user } = useUser();
+  const { user, loading: userLoading, clearUser } = useUser();
   const router = useRouter();
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -40,9 +57,12 @@ const DashboardHeader = () => {
   const onLogout = async () => {
     try {
       await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
+      clearUser(); // Clear user state immediately
       router.replace("/");
     } catch {
-      // no-op
+      // Even if logout fails, clear local state
+      clearUser();
+      router.replace("/");
     }
   };
 
@@ -93,9 +113,9 @@ const DashboardHeader = () => {
         <nav className="hidden sm:flex items-center gap-1.5 sm:gap-2">
           {/* <NavLink href="/" label="Home" /> */}
           <NavLink href="/shop" label="Shop" />
-          <NavLink href="/dashboard" label="Overview" />
-          <NavLink href="/dashboard/orders" label="Orders" />
-          <NavLink href="/dashboard/addProducts" label="Products" />
+          <NavLink href="/dashboard" label="Overview" disabled={userLoading} />
+          <NavLink href="/dashboard/orders" label="Orders" disabled={userLoading} />
+          <NavLink href="/dashboard/addProducts" label="Products" disabled={userLoading} />
         </nav>
 
         {/* Desktop User Actions */}
@@ -141,16 +161,19 @@ const DashboardHeader = () => {
               href="/dashboard"
               label="Overview"
               onClick={handleNavClick}
+              disabled={userLoading}
             />
             <NavLink
               href="/dashboard/orders"
               label="Orders"
               onClick={handleNavClick}
+              disabled={userLoading}
             />
             <NavLink
               href="/dashboard/addProducts"
               label="Products"
               onClick={handleNavClick}
+              disabled={userLoading}
             />
           </nav>
           <div className="flex flex-col gap-2 mt-3">

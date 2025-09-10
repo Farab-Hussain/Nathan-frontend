@@ -7,6 +7,7 @@ import CustomButton from "@/components/custom/CustomButton";
 import { ShoppingCart, Menu, X, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
+import { useCartStore } from "@/store/cartStore";
 import axios from "axios";
 
 // Define types for navLinks and subLinks
@@ -23,10 +24,12 @@ type NavLink = {
 
 const Header = () => {
   const API_URL = process.env.NEXT_PUBLIC_API_URL ;
-  const { user, loading } = useUser();
+  const { user, loading, clearUser } = useUser();
+  const { getItemCount } = useCartStore();
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const dropdownRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const router = useRouter();
 
@@ -39,11 +42,18 @@ const Header = () => {
   };
 
   const handleLogout = async () => {
+    setLogoutLoading(true);
     try {
       await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
+      clearUser(); // Clear user state immediately
       window.location.reload();
     } catch (err) {
       console.error("Logout failed:", err);
+      // Even if logout fails, clear local state
+      clearUser();
+      window.location.reload();
+    } finally {
+      setLogoutLoading(false);
     }
   };
 
@@ -116,7 +126,7 @@ const Header = () => {
                   >
                     <button
                       type="button"
-                      className="text-base xl:text-lg font-poppins flex items-center gap-1 px-2 py-1 rounded transition"
+                      className="text-base xl:text-lg font-poppins flex items-center gap-1 px-2 py-1 rounded transition cursor-pointer"
                       onClick={() =>
                         setOpenDropdown(
                           openDropdown === link.label ? null : link.label
@@ -181,10 +191,15 @@ const Header = () => {
           </nav>
           {/* Actions - right */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            <Link href={"/cart"} className="p-2 rounded  transition">
+            <Link href={"/cart"} className="relative p-2 rounded transition cursor-pointer">
               <ShoppingCart className="w-6 h-6" />
+              {getItemCount() > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#FF5D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                  {getItemCount() > 99 ? '99+' : getItemCount()}
+                </span>
+              )}
             </Link>
-            <Link href="/wishlist" className="p-2 rounded transition">
+            <Link href="/wishlist" className="p-2 rounded transition cursor-pointer">
               <Heart className="w-6 h-6" />
             </Link>
             {user && (
@@ -196,6 +211,8 @@ const Header = () => {
               <CustomButton
                 title={user ? "Logout" : "Login"}
                 onClick={handleClick}
+                loading={logoutLoading}
+                loadingText={user ? "Logging out..." : "Loading..."}
               />
             </div>
             {/* Mobile Nav Toggle */}
@@ -330,8 +347,13 @@ const Header = () => {
             )}
           </nav>
           <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100">
-            <Link href={"/cart"} onClick={() => setMobileNavOpen(false)}>
+            <Link href={"/cart"} onClick={() => setMobileNavOpen(false)} className="relative cursor-pointer">
               <ShoppingCart className="w-6 h-6" />
+              {getItemCount() > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#FF5D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                  {getItemCount() > 99 ? '99+' : getItemCount()}
+                </span>
+              )}
             </Link>
             <CustomButton
               title={user ? "Logout" : "Login"}
@@ -340,6 +362,8 @@ const Header = () => {
                 handleClick();
               }}
               className="ml-2"
+              loading={logoutLoading}
+              loadingText={user ? "Logging out..." : "Loading..."}
             />
           </div>
         </div>

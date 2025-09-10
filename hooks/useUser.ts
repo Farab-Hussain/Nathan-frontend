@@ -17,19 +17,32 @@ export function useUser() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchUser = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    Promise.resolve(
-      axios
-        .get<MeResponse>(`${API_URL}/auth/me`, {
-          withCredentials: true,
-        })
-        .then((res) => {
-          setUser(res.data.user);
-        })
-        .catch(() => setUser(null))
-    ).finally(() => setLoading(false));
+    try {
+      const res = await axios.get<MeResponse>(`${API_URL}/auth/me`, {
+        withCredentials: true,
+      });
+      setUser(res.data.user);
+    } catch {
+      setUser(null);
+    }
+  };
+
+  const refreshUser = async () => {
+    setLoading(true);
+    await fetchUser();
+    setLoading(false);
+  };
+
+  const clearUser = () => {
+    setUser(null);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchUser().finally(() => setLoading(false));
   }, []);
 
-  return { user, loading };
+  return { user, loading, refreshUser, clearUser };
 }

@@ -30,12 +30,16 @@ const ProductDetailPage = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const id = typeof params?.id === "string" ? params.id : "";
 
   const normalizeImageSrc = (src?: string | null, updatedAt?: string) => {
     if (!src) return "/assets/images/slider.png";
-    const path = src.startsWith("/uploads") ? src : src.startsWith("uploads") ? `/${src}` : src;
+    const path = src.startsWith("/uploads")
+      ? src
+      : src.startsWith("uploads")
+      ? `/${src}`
+      : src;
     const cacheBuster = updatedAt ? `?t=${new Date(updatedAt).getTime()}` : "";
     return `${path}${cacheBuster}`;
   };
@@ -52,9 +56,9 @@ const ProductDetailPage = () => {
       try {
         setLoading(true);
         const response = await fetch(`/api/products/${id}`, {
-          credentials: "include"
+          credentials: "include",
         });
-        
+
         if (!response.ok) {
           if (response.status === 404) {
             setError("Product not found");
@@ -64,21 +68,21 @@ const ProductDetailPage = () => {
           setLoading(false);
           return;
         }
-        
+
         const data = await response.json();
-        
+
         // Handle different response formats
         if (data && data.id) {
           setProduct(data);
         } else if (data && data.product) {
           setProduct(data.product);
         } else {
-          console.error('Unexpected product API response format:', data);
-          throw new Error('Invalid product API response format');
+          console.error("Unexpected product API response format:", data);
+          throw new Error("Invalid product API response format");
         }
       } catch (err) {
-        console.error('Failed to fetch product:', err);
-        setError('Failed to load product. Please try again later.');
+        console.error("Failed to fetch product:", err);
+        setError("Failed to load product. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -89,11 +93,15 @@ const ProductDetailPage = () => {
 
   const router = useRouter();
   const { addItem } = useCartStore();
-  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlistStore();
-  
+  const {
+    addItem: addToWishlist,
+    removeItem: removeFromWishlist,
+    isInWishlist,
+  } = useWishlistStore();
+
   const handleAddToCart = async () => {
     if (!product) return;
-    
+
     setAddingToCart(true);
     try {
       await addItem({
@@ -102,15 +110,15 @@ const ProductDetailPage = () => {
         quantity,
         price: product.price,
         imageUrl: product.imageUrl || undefined,
-        sku: product.sku
+        sku: product.sku,
       });
-      
-      alert('Product added to cart! Redirecting to cart...');
+
+      alert("Product added to cart! Redirecting to cart...");
       // Redirect to cart page after successful addition
-      router.push('/cart');
+      router.push("/cart");
     } catch (error) {
-      console.error('Failed to add to cart:', error);
-      alert('Failed to add product to cart. Please try again.');
+      console.error("Failed to add to cart:", error);
+      alert("Failed to add product to cart. Please try again.");
     } finally {
       setAddingToCart(false);
     }
@@ -118,10 +126,10 @@ const ProductDetailPage = () => {
 
   const handleWishlistToggle = () => {
     if (!product) return;
-    
+
     if (isInWishlist(product.id)) {
       removeFromWishlist(product.id);
-      alert('Removed from wishlist!');
+      alert("Removed from wishlist!");
     } else {
       addToWishlist({
         productId: product.id,
@@ -129,9 +137,9 @@ const ProductDetailPage = () => {
         price: product.price,
         imageUrl: product.imageUrl || undefined,
         sku: product.sku,
-        category: product.category
+        category: product.category,
       });
-      alert('Added to wishlist!');
+      alert("Added to wishlist!");
     }
   };
 
@@ -158,11 +166,13 @@ const ProductDetailPage = () => {
           </p>
           {!error && (
             <div className="mb-6 p-4 bg-gray-100 rounded-lg text-sm text-left">
-              <div><strong>Requested ID:</strong> {id}</div>
+              <div>
+                <strong>Requested ID:</strong> {id}
+              </div>
             </div>
           )}
-          <Link 
-            href="/shop" 
+          <Link
+            href="/shop"
             className="inline-block bg-primary text-white font-bold px-8 py-3 rounded-lg shadow-lg hover:opacity-90 transition-all"
           >
             Back to Shop
@@ -200,9 +210,14 @@ const ProductDetailPage = () => {
               <span
                 className="absolute top-4 left-4 text-white text-xs px-3 py-1 rounded-full shadow font-semibold"
                 style={{
-                  background: product.category === "Traditional" ? "#8B4513" : 
-                             product.category === "Sour" ? "#FF6B35" : 
-                             product.category === "Sweet" ? "#FF69B4" : ORANGE
+                  background:
+                    product.category === "Traditional"
+                      ? "#8B4513"
+                      : product.category === "Sour"
+                      ? "#FF6B35"
+                      : product.category === "Sweet"
+                      ? "#FF69B4"
+                      : ORANGE,
                 }}
               >
                 {product.category}
@@ -216,29 +231,70 @@ const ProductDetailPage = () => {
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-black mb-3">
                 {product.name}
               </h1>
-              
+
               {/* SKU */}
               <div className="text-xs sm:text-sm text-gray-500 mb-4 font-mono">
                 SKU: {product.sku}
               </div>
 
               {/* Price */}
-              <div className="flex items-center gap-4 mb-6">
-                <span className="text-2xl sm:text-3xl font-bold" style={{ color: ORANGE }}>
-                  ${product.price.toFixed(2)}
-                </span>
-                <span className="text-xs sm:text-sm text-gray-500">per 3-pack</span>
-                {product.stock !== undefined && (
-                  <span className={`text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ${
-                    product.stock > 20
-                      ? "bg-green-100 text-green-700"
-                      : product.stock > 10
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-red-100 text-red-700"
-                  }`}>
-                    {product.stock > 20 ? "In Stock" : product.stock > 10 ? "Low Stock" : "Limited Stock"} ({product.stock})
+              <div className="mb-6">
+                <div className="flex items-center gap-4 mb-2">
+                  <span
+                    className="text-2xl sm:text-3xl font-bold"
+                    style={{ color: ORANGE }}
+                  >
+                    ${product.price.toFixed(2)}
                   </span>
-                )}
+                  <span className="text-xs sm:text-sm text-gray-500">
+                    per 3-pack
+                  </span>
+                  {product.stock !== undefined && (
+                    <span
+                      className={`text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ${
+                        product.stock > 20
+                          ? "bg-green-100 text-green-700"
+                          : product.stock > 10
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {product.stock > 20
+                        ? "In Stock"
+                        : product.stock > 10
+                        ? "Low Stock"
+                        : "Limited Stock"}{" "}
+                      ({product.stock})
+                    </span>
+                  )}
+                </div>
+                {/* Total Price Display */}
+                <div
+                  className={`rounded-lg p-3 border transition-all ${
+                    quantity > 1
+                      ? "bg-orange-50 border-orange-200 shadow-sm"
+                      : "bg-gray-50 border-gray-200"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">
+                      Total for {quantity} pack{quantity > 1 ? "s" : ""}:
+                    </span>
+                    <span
+                      className={`text-xl font-bold transition-all ${
+                        quantity > 1 ? "text-orange-600" : ""
+                      }`}
+                      style={{ color: quantity > 1 ? ORANGE : "#374151" }}
+                    >
+                      ${(product.price * quantity).toFixed(2)}
+                    </span>
+                  </div>
+                  {quantity > 1 && (
+                    <div className="mt-1 text-xs text-orange-600 font-medium">
+                      Great choice! You&lsquo;re getting {quantity} packs.
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Description */}
@@ -248,19 +304,28 @@ const ProductDetailPage = () => {
 
               {/* Flavors */}
               <div className="mb-6">
-                <h3 className="font-semibold text-black mb-3 text-sm sm:text-base">Contains:</h3>
+                <h3 className="font-semibold text-black mb-3 text-sm sm:text-base">
+                  Contains:
+                </h3>
                 <div className="space-y-2">
-                  {Array.isArray(product.flavors) && product.flavors.length > 0 ? (
+                  {Array.isArray(product.flavors) &&
+                  product.flavors.length > 0 ? (
                     product.flavors.map((flavor, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm">
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 text-sm"
+                      >
                         <span className="w-2 h-2 rounded-full bg-primary"></span>
                         <span className="text-gray-700">
-                          {flavor.name} {flavor.quantity > 1 && `×${flavor.quantity}`}
+                          {flavor.name}{" "}
+                          {flavor.quantity > 1 && `×${flavor.quantity}`}
                         </span>
                       </div>
                     ))
                   ) : (
-                    <span className="text-gray-500 text-sm">No flavors listed.</span>
+                    <span className="text-gray-500 text-sm">
+                      No flavors listed.
+                    </span>
                   )}
                 </div>
               </div>
@@ -269,11 +334,13 @@ const ProductDetailPage = () => {
             {/* Add to Cart Section */}
             <div>
               <div className="flex items-center gap-3 sm:gap-4 mb-6">
-                <span className="text-black font-medium text-sm sm:text-base">Quantity</span>
+                <span className="text-black font-medium text-sm sm:text-base">
+                  Quantity
+                </span>
                 <div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
                   <button
                     type="button"
-                    className="px-3 sm:px-4 py-2 text-lg sm:text-xl hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                    className="px-3 sm:px-4 py-2 text-lg sm:text-xl hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-[#FF5D39] cursor-pointer"
                     style={{ color: ORANGE }}
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   >
@@ -284,14 +351,26 @@ const ProductDetailPage = () => {
                     min={1}
                     max={product.stock || 99}
                     value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, Math.min(product.stock || 99, Number(e.target.value) || 1)))}
+                    onChange={(e) =>
+                      setQuantity(
+                        Math.max(
+                          1,
+                          Math.min(
+                            product.stock || 99,
+                            Number(e.target.value) || 1
+                          )
+                        )
+                      )
+                    }
                     className="w-14 sm:w-16 text-center text-black bg-white focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-base sm:text-lg font-semibold"
                   />
                   <button
                     type="button"
-                    className="px-3 sm:px-4 py-2 text-lg sm:text-xl hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                    className="px-3 sm:px-4 py-2 text-lg sm:text-xl hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-[#FF5D39] cursor-pointer"
                     style={{ color: ORANGE }}
-                    onClick={() => setQuantity((q) => Math.min(product.stock || 99, q + 1))}
+                    onClick={() =>
+                      setQuantity((q) => Math.min(product.stock || 99, q + 1))
+                    }
                   >
                     +
                   </button>
@@ -306,31 +385,41 @@ const ProductDetailPage = () => {
               <div className="flex gap-3 mb-4">
                 <button
                   type="button"
-                  disabled={addingToCart || (product.stock !== undefined && product.stock <= 0)}
+                  disabled={
+                    addingToCart ||
+                    (product.stock !== undefined && product.stock <= 0)
+                  }
                   onClick={handleAddToCart}
                   className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-white font-bold text-base sm:text-lg shadow-lg hover:opacity-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
                   style={{ background: ORANGE }}
                 >
-                  {addingToCart ? "Adding..." : 
-                   product.stock !== undefined && product.stock <= 0 ? "Out of Stock" : 
-                   "Add to Cart"}
+                  {addingToCart
+                    ? "Adding..."
+                    : product.stock !== undefined && product.stock <= 0
+                    ? "Out of Stock"
+                    : `Add to Cart - $${(product.price * quantity).toFixed(2)}`}
                 </button>
                 <button
                   type="button"
                   onClick={handleWishlistToggle}
-                  className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#FF5D39] ${
-                    isInWishlist(product.id) 
-                      ? 'border-red-500 text-red-500 hover:bg-red-50' 
-                      : 'border-gray-300 text-gray-600 hover:border-[#FF5D39] hover:text-[#FF5D39]'
+                  className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#FF5D39] cursor-pointer ${
+                    isInWishlist(product.id)
+                      ? "border-red-500 text-red-500 hover:bg-red-50"
+                      : "border-gray-300 text-gray-600 hover:border-[#FF5D39] hover:text-[#FF5D39]"
                   }`}
                 >
-                  <svg 
-                    className="w-5 h-5 sm:w-6 sm:h-6" 
-                    fill={isInWishlist(product.id) ? "currentColor" : "none"} 
-                    stroke="currentColor" 
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6"
+                    fill={isInWishlist(product.id) ? "currentColor" : "none"}
+                    stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
                   </svg>
                 </button>
               </div>

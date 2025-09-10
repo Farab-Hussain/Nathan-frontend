@@ -16,6 +16,7 @@ const ProfilePage = () => {
     email: '',
     phone: '',
   });
+  const [updatingProfile, setUpdatingProfile] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -149,7 +150,7 @@ const ProfilePage = () => {
               <h2 className="text-2xl font-bold text-black">Profile Information</h2>
               <button
                 onClick={() => setEditMode(!editMode)}
-                className="px-4 py-2 rounded-lg border border-[#FF5D39] text-[#FF5D39] hover:bg-[#FF5D39] hover:text-white transition-colors"
+                className="px-4 py-2 rounded-lg border border-[#FF5D39] text-[#FF5D39] hover:bg-[#FF5D39] hover:text-white transition-colors cursor-pointer"
               >
                 {editMode ? 'Cancel' : 'Edit Profile'}
               </button>
@@ -199,13 +200,21 @@ const ProfilePage = () => {
               <div className="mt-6 flex gap-3">
                 <button
                   onClick={handleProfileUpdate}
-                  className="px-6 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity"
+                  disabled={updatingProfile}
+                  className="px-6 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Save Changes
+                  {updatingProfile ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </div>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </button>
                 <button
                   onClick={() => setEditMode(false)}
-                  className="px-6 py-2 border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-6 py-2 border border-gray-300 text-black rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

@@ -30,7 +30,7 @@ const AdminOrdersPage = () => {
   const [debouncedPaymentStatus, setDebouncedPaymentStatus] = useState("");
 
   useEffect(() => {
-    if (!userLoading && user?.role !== "admin") {
+    if (!userLoading && (!user || user.role !== "admin")) {
       if (typeof window !== "undefined") window.location.href = "/";
     }
   }, [user, userLoading]);
@@ -106,6 +106,18 @@ const AdminOrdersPage = () => {
     () => adminPagination?.pages ?? 1,
     [adminPagination]
   );
+
+  // Show loading while checking authentication
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
+          <p className="text-black text-lg">Loading orders...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -257,7 +269,7 @@ const AdminOrdersPage = () => {
       {totalPages > 1 && (
         <div className="flex items-center gap-2 mt-6">
           <button
-            className="px-3 py-1 rounded border border-gray-300 text-black disabled:opacity-50"
+            className="px-3 py-1 rounded border border-gray-300 text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
           >
@@ -267,7 +279,7 @@ const AdminOrdersPage = () => {
             Page {page} of {totalPages}
           </span>
           <button
-            className="px-3 py-1 rounded border border-gray-300 text-black disabled:opacity-50"
+            className="px-3 py-1 rounded border border-gray-300 text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
           >
