@@ -1,5 +1,6 @@
 import React from "react";
 import DashboardHeader from "@/components/shared/DashboardHeader";
+import AuthDebugger from "@/components/debug/AuthDebugger";
 
 export default function DashboardLayout({
   children,
@@ -10,6 +11,7 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-white">
       <DashboardHeader />
       <main className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">{children}</main>
+      <AuthDebugger />
     </div>
   );
 }

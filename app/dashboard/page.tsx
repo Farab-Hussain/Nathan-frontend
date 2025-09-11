@@ -1,8 +1,10 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useUser } from "@/hooks/useUser";
+import SafeLink from "@/components/custom/SafeLink";
 
 type Order = {
   id: string;
@@ -27,16 +29,19 @@ const Bar = ({ value, label }: { value: number; label: string }) => {
 
 const DashboardPage = () => {
   const { user, loading: userLoading } = useUser();
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('Dashboard: Auth check - userLoading:', userLoading, 'user:', user);
     // Only redirect if user is loaded and either no user or not an admin
     if (!userLoading && (!user || user.role !== "admin")) {
-      if (typeof window !== "undefined") window.location.href = "/";
+      console.log('Dashboard: Redirecting to home - user not admin');
+      router.replace("/");
     }
-  }, [user, userLoading]);
+  }, [user, userLoading, router]);
 
   useEffect(() => {
     if (user?.role !== "admin") return;
@@ -172,32 +177,46 @@ const DashboardPage = () => {
     );
   }
 
+  // Show loading state while auth is being checked
+  if (userLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
+            <p className="text-black opacity-70">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
       <h1 className="text-2xl sm:text-3xl font-extrabold text-black mb-4 sm:mb-6">Dashboard</h1>
 
       {/* Quick navigation */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <a
+        <SafeLink
           href="/dashboard/orders"
-          className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF2EE] to-white p-4 sm:p-5 hover:shadow-md transition"
+          className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF2EE] to-white p-4 sm:p-5 hover:shadow-md transition cursor-pointer"
         >
           <div className="text-black/70 text-xs sm:text-sm">Manage</div>
           <div className="text-lg sm:text-xl font-bold text-black">Orders</div>
           <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-black/60">
             View and update order statuses
           </div>
-        </a>
-        <a
+        </SafeLink>
+        <SafeLink
           href="/dashboard/addProducts"
-          className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF8E5] to-white p-4 sm:p-5 hover:shadow-md transition"
+          className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF8E5] to-white p-4 sm:p-5 hover:shadow-md transition cursor-pointer"
         >
           <div className="text-black/70 text-xs sm:text-sm">Manage</div>
           <div className="text-lg sm:text-xl font-bold text-black">Products</div>
           <div className="mt-1 sm:mt-2 text-xs sm:text-sm text-black/60">
             Add, edit, and delete products
           </div>
-        </a>
+        </SafeLink>
       </div>
 
       {error && (

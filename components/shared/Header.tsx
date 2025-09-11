@@ -24,7 +24,7 @@ type NavLink = {
 
 const Header = () => {
   const API_URL = process.env.NEXT_PUBLIC_API_URL ;
-  const { user, loading, clearUser } = useUser();
+  const { user, loading, error, clearUser } = useUser();
   const { getItemCount } = useCartStore();
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -191,6 +191,11 @@ const Header = () => {
           </nav>
           {/* Actions - right */}
           <div className="flex items-center gap-3 flex-shrink-0">
+            {error && (
+              <div className="text-xs text-orange-500 bg-orange-50 px-2 py-1 rounded" title={error}>
+                ⚠️ Rate limited
+              </div>
+            )}
             <Link href={"/cart"} className="relative p-2 rounded transition cursor-pointer">
               <ShoppingCart className="w-6 h-6" />
               {getItemCount() > 0 && (

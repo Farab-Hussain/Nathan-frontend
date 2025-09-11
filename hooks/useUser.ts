@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 
 export type User = {
@@ -13,36 +13,107 @@ interface MeResponse {
   user: User;
 }
 
+// Cache for user data to reduce API calls
+let userCache: { user: User | null; timestamp: number } | null = null;
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
+
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const lastFetchRef = useRef<number>(0);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async (forceRefresh = false) => {
+    const now = Date.now();
+    
+    // Check cache first (unless force refresh)
+    if (!forceRefresh && userCache && (now - userCache.timestamp) < CACHE_DURATION) {
+      setUser(userCache.user);
+      setLoading(false);
+      return;
+    }
+
+    // Prevent multiple simultaneous requests
+    if (now - lastFetchRef.current < 1000) { // 1 second cooldown
+      return;
+    }
+
+    lastFetchRef.current = now;
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    
     try {
       const res = await axios.get<MeResponse>(`${API_URL}/auth/me`, {
         withCredentials: true,
       });
-      setUser(res.data.user);
-    } catch {
-      setUser(null);
+      
+      const userData = res.data.user;
+      setUser(userData);
+      setError(null);
+      
+      // Update cache
+      userCache = { user: userData, timestamp: now };
+    } catch (err: unknown) {
+      console.error('Failed to fetch user:', err);
+      
+      if (err && typeof err === 'object' && 'response' in err && 
+          err.response && typeof err.response === 'object' && 'status' in err.response &&
+          err.response.status === 429) {
+        // Rate limited - set error and schedule retry
+        setError('Too many requests. Please wait a moment and try again.');
+        
+        // Clear any existing retry timeout
+        if (retryTimeoutRef.current) {
+          clearTimeout(retryTimeoutRef.current);
+        }
+        
+        // Retry after 30 seconds
+        retryTimeoutRef.current = setTimeout(() => {
+          setError(null);
+          fetchUser(true);
+        }, 30000);
+      } else {
+        setUser(null);
+        setError(null);
+      }
     }
-  };
+  }, []);
 
   const refreshUser = async () => {
     setLoading(true);
-    await fetchUser();
+    setError(null);
+    await fetchUser(true);
     setLoading(false);
   };
 
   const clearUser = () => {
     setUser(null);
     setLoading(false);
+    setError(null);
+    userCache = null;
+    
+    // Clear retry timeout
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
   };
 
   useEffect(() => {
-    fetchUser().finally(() => setLoading(false));
-  }, []);
+    // Add debugging
+    console.log('useUser: Initializing auth state...');
+    fetchUser().finally(() => {
+      console.log('useUser: Auth state loaded');
+      setLoading(false);
+    });
+    
+    // Cleanup on unmount
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, [fetchUser]);
 
-  return { user, loading, refreshUser, clearUser };
+  return { user, loading, error, refreshUser, clearUser };
 }

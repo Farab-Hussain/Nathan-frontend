@@ -1,6 +1,7 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
 import { useOrdersStore } from "@/store/ordersStore";
 
@@ -8,6 +9,17 @@ const ORANGE = "#FF5D39";
 const YELLOW = "#F1A900";
 const WHITE = "#FFFFFF";
 const BLACK = "#000000";
+
+// Type definitions
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  category?: string;
+  imageUrl?: string;
+  sku?: string;
+  isActive?: boolean;
+}
 
 const CartPage = () => {
   const {
@@ -19,9 +31,11 @@ const CartPage = () => {
     clearCart,
     getTotal,
     loadFromBackend,
+    addItem,
   } = useCartStore();
 
   const { createOrder } = useOrdersStore();
+  const router = useRouter();
   const [orderLoading, setOrderLoading] = useState<boolean>(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [clearCartLoading, setClearCartLoading] = useState<boolean>(false);
@@ -37,10 +51,43 @@ const CartPage = () => {
     postal: "",
     country: "US",
   });
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+  const [recommendedLoading, setRecommendedLoading] = useState<boolean>(false);
+
+  const fetchRecommendedProducts = useCallback(async () => {
+    setRecommendedLoading(true);
+    try {
+      const response = await fetch('/api/products', {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const products = Array.isArray(data) ? data : data.products || [];
+        
+        // Filter out products already in cart
+        const cartProductIds = items.map(item => item.productId);
+        const availableProducts = products.filter((product: Product) => 
+          product.id && !cartProductIds.includes(product.id) && product.isActive !== false
+        );
+        
+        // Randomly select 2 products
+        const shuffled = availableProducts.sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 2);
+        
+        setRecommendedProducts(selected);
+      }
+    } catch (error) {
+      console.error('Failed to fetch recommended products:', error);
+    } finally {
+      setRecommendedLoading(false);
+    }
+  }, [items]);
 
   useEffect(() => {
     loadFromBackend();
-  }, [loadFromBackend]);
+    fetchRecommendedProducts();
+  }, [loadFromBackend, fetchRecommendedProducts]);
 
   const handleQuantity = async (itemId: string, quantity: number) => {
     await updateQuantity(itemId, quantity);
@@ -57,6 +104,27 @@ const CartPage = () => {
     } finally {
       setClearCartLoading(false);
     }
+  };
+
+  const handleAddRecommendedProduct = async (product: Product) => {
+    try {
+      await addItem({
+        productId: product.id,
+        productName: product.name,
+        quantity: 1,
+        price: product.price,
+        imageUrl: product.imageUrl,
+        sku: product.sku,
+      });
+      // Refresh recommended products to show new ones
+      fetchRecommendedProducts();
+    } catch (error) {
+      console.error('Failed to add recommended product:', error);
+    }
+  };
+
+  const handleViewAllProducts = () => {
+    router.push('/shop');
   };
 
   const checkout = async () => {
@@ -413,7 +481,7 @@ const CartPage = () => {
                       </div>
 
                       {/* Quantity Controls and Total - separate rows on mobile */}
-                      <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3 sm:gap-4">
+                      <div className="space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-4">
                         {/* Quantity Controls */}
                         <div
                           className="flex items-center rounded-xl p-1 w-fit"
@@ -650,6 +718,137 @@ const CartPage = () => {
                     >
                       ${getTotal().toFixed(2)}
                     </span>
+                  </div>
+                </div>
+
+                {/* Special Offer Banner */}
+                <div className="mb-4 p-3 rounded-lg text-center" style={{ background: `linear-gradient(135deg, ${ORANGE}15, ${YELLOW}15)` }}>
+                  <div className="flex items-center justify-center mb-1">
+                    <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke={ORANGE}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                    </svg>
+                    <span className="text-sm font-bold" style={{ color: ORANGE }}>Special Offer!</span>
+                  </div>
+                  <p className="text-xs" style={{ color: BLACK, opacity: 0.8 }}>
+                    Add more items to your order and save on shipping
+                  </p>
+                </div>
+
+                {/* Recommended Products Section */}
+                <div className="mb-6 p-4 rounded-xl border-2 border-dashed" style={{ borderColor: `${YELLOW}40`, background: `${YELLOW}05` }}>
+                  <div className="flex items-center mb-4">
+                    <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke={YELLOW}>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <h3 className="text-lg font-bold" style={{ color: BLACK }}>You might also like</h3>
+                    <div className="flex-1 h-px ml-3" style={{ background: `linear-gradient(90deg, ${YELLOW}40, transparent)` }}></div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    {recommendedLoading ? (
+                      // Loading state
+                      <>
+                        <div className="bg-white rounded-lg p-3 shadow-sm border animate-pulse" style={{ borderColor: `${YELLOW}20` }}>
+                          <div className="aspect-square mb-2 rounded-lg bg-gray-200"></div>
+                          <div className="h-4 bg-gray-200 rounded mb-1"></div>
+                          <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                          <div className="flex items-center justify-between">
+                            <div className="h-4 bg-gray-200 rounded w-12"></div>
+                            <div className="h-6 bg-gray-200 rounded-full w-12"></div>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 shadow-sm border animate-pulse" style={{ borderColor: `${YELLOW}20` }}>
+                          <div className="aspect-square mb-2 rounded-lg bg-gray-200"></div>
+                          <div className="h-4 bg-gray-200 rounded mb-1"></div>
+                          <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                          <div className="flex items-center justify-between">
+                            <div className="h-4 bg-gray-200 rounded w-12"></div>
+                            <div className="h-6 bg-gray-200 rounded-full w-12"></div>
+                          </div>
+                        </div>
+                      </>
+                    ) : recommendedProducts.length > 0 ? (
+                      // Real products
+                      recommendedProducts.map((product, index) => (
+                        <div key={product.id} className="bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer border" style={{ borderColor: `${YELLOW}20` }}>
+                          <div className="aspect-square mb-2 rounded-lg overflow-hidden bg-gray-100">
+                            {product.imageUrl ? (
+                              <Image
+                                src={product.imageUrl}
+                                alt={product.name}
+                                width={100}
+                                height={100}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${index % 2 === 0 ? `${ORANGE}20, ${YELLOW}20` : `${YELLOW}20, ${ORANGE}20`})` }}>
+                                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke={index % 2 === 0 ? ORANGE : YELLOW}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <h4 className="text-sm font-semibold mb-1 truncate" style={{ color: BLACK }} title={product.name}>
+                            {product.name}
+                          </h4>
+                          <p className="text-xs mb-2" style={{ color: BLACK, opacity: 0.7 }}>
+                            {product.category || 'Premium candy'}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold" style={{ color: ORANGE }}>
+                              ${product.price?.toFixed(2) || '0.00'}
+                            </span>
+                            <button 
+                              onClick={() => handleAddRecommendedProduct(product)}
+                              className="text-xs px-2 py-1 rounded-full text-white font-medium hover:opacity-90 transition-opacity cursor-pointer" 
+                              style={{ background: ORANGE }}
+                            >
+                              Add
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      // Fallback when no products available
+                      <>
+                        <div className="bg-white rounded-lg p-3 shadow-sm border text-center" style={{ borderColor: `${YELLOW}20` }}>
+                          <div className="aspect-square mb-2 rounded-lg bg-gray-100 flex items-center justify-center">
+                            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                          </div>
+                          <h4 className="text-sm font-semibold mb-1" style={{ color: BLACK }}>No recommendations</h4>
+                          <p className="text-xs mb-2" style={{ color: BLACK, opacity: 0.7 }}>All products in cart</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 shadow-sm border text-center" style={{ borderColor: `${YELLOW}20` }}>
+                          <div className="aspect-square mb-2 rounded-lg bg-gray-100 flex items-center justify-center">
+                            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                            </svg>
+                          </div>
+                          <h4 className="text-sm font-semibold mb-1" style={{ color: BLACK }}>Explore more</h4>
+                          <p className="text-xs mb-2" style={{ color: BLACK, opacity: 0.7 }}>Visit our shop</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="mt-3 flex justify-center gap-2">
+                    <button 
+                      onClick={fetchRecommendedProducts}
+                      disabled={recommendedLoading}
+                      className="text-sm font-medium px-3 py-2 rounded-lg transition-colors hover:opacity-90 cursor-pointer disabled:opacity-50" 
+                      style={{ color: YELLOW, background: `${YELLOW}10` }}
+                    >
+                      {recommendedLoading ? 'Loading...' : '🔄 New suggestions'}
+                    </button>
+                    <button 
+                      onClick={handleViewAllProducts}
+                      className="text-sm font-medium px-3 py-2 rounded-lg transition-colors hover:opacity-90 cursor-pointer" 
+                      style={{ color: ORANGE, background: `${ORANGE}10` }}
+                    >
+                      View all products →
+                    </button>
                   </div>
                 </div>
 

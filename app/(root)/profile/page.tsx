@@ -86,16 +86,14 @@ const ProfilePage = () => {
       if (response.ok) {
         // Update the user data in the store or refetch
         setEditMode(false);
-        alert('Profile updated successfully!');
         // Optionally refresh the page or update local state
         window.location.reload();
       } else {
         const errorData = await response.json();
-        alert(`Error: ${errorData.message || 'Failed to update profile'}`);
+        console.error('Profile update error:', errorData.message || 'Failed to update profile');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile. Please try again.');
     }
   };
 

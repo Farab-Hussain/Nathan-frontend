@@ -113,12 +113,10 @@ const ProductDetailPage = () => {
         sku: product.sku,
       });
 
-      alert("Product added to cart! Redirecting to cart...");
       // Redirect to cart page after successful addition
       router.push("/cart");
     } catch (error) {
       console.error("Failed to add to cart:", error);
-      alert("Failed to add product to cart. Please try again.");
     } finally {
       setAddingToCart(false);
     }
@@ -129,7 +127,6 @@ const ProductDetailPage = () => {
 
     if (isInWishlist(product.id)) {
       removeFromWishlist(product.id);
-      alert("Removed from wishlist!");
     } else {
       addToWishlist({
         productId: product.id,
@@ -139,7 +136,6 @@ const ProductDetailPage = () => {
         sku: product.sku,
         category: product.category,
       });
-      alert("Added to wishlist!");
     }
   };
 

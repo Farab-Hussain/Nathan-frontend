@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useUser } from "@/hooks/useUser";
 import Image from "next/image";
@@ -37,6 +38,7 @@ type FlavorDTO = {
 
 const AddProductsPage = () => {
   const { user, loading: userLoading } = useUser();
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,9 +140,9 @@ const AddProductsPage = () => {
 
   useEffect(() => {
     if (!userLoading && (!user || user.role !== "admin")) {
-      if (typeof window !== "undefined") window.location.href = "/";
+      router.replace("/");
     }
-  }, [user, userLoading]);
+  }, [user, userLoading, router]);
 
 
   const fetchProducts = async () => {

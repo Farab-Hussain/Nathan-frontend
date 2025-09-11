@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useUser } from "@/hooks/useUser";
 
@@ -16,6 +17,7 @@ type Pagination = { pages: number };
 
 const AdminOrdersPage = () => {
   const { user, loading: userLoading } = useUser();
+  const router = useRouter();
   const [adminOrders, setAdminOrders] = useState<Order[]>([]);
   const [adminPagination, setAdminPagination] = useState<Pagination | null>(
     null
@@ -31,9 +33,9 @@ const AdminOrdersPage = () => {
 
   useEffect(() => {
     if (!userLoading && (!user || user.role !== "admin")) {
-      if (typeof window !== "undefined") window.location.href = "/";
+      router.replace("/");
     }
-  }, [user, userLoading]);
+  }, [user, userLoading, router]);
 
   // Debounce status/paymentStatus changes to reduce requests
   useEffect(() => {

@@ -48,7 +48,6 @@ const WishlistPage = () => {
         sku: item.sku
       });
       removeItem(item.productId);
-      alert('Item moved to cart! Redirecting to cart...');
       // Redirect to cart page after successful move
       router.push('/cart');
     } catch {
