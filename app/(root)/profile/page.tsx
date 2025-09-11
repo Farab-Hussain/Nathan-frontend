@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useOrdersStore } from '@/store/ordersStore';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import VerificationGuard from '@/components/auth/VerificationGuard';
 
@@ -9,6 +10,7 @@ const BLACK = '#000000';
 
 const ProfilePage = () => {
   const { user, loading: userLoading } = useUser();
+  const router = useRouter();
   const { orders, loading: ordersLoading, fetchOrders } = useOrdersStore();
   const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
   const [editMode, setEditMode] = useState(false);
@@ -18,6 +20,14 @@ const ProfilePage = () => {
     phone: '',
   });
   const [updatingProfile] = useState(false);
+
+  // Authentication check
+  useEffect(() => {
+    if (!userLoading && !user) {
+      router.push("/auth/login");
+      return;
+    }
+  }, [user, userLoading, router]);
 
   useEffect(() => {
     if (user) {
@@ -42,6 +52,7 @@ const ProfilePage = () => {
     }
   }, [activeTab, user, userLoading, fetchOrders]);
 
+  // Show loading while checking authentication
   if (userLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -53,21 +64,9 @@ const ProfilePage = () => {
     );
   }
 
+  // Redirect if not authenticated
   if (!user) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4 text-black">Please log in</h2>
-          <p className="mb-6 text-black opacity-70">You need to be logged in to view your profile.</p>
-          <Link 
-            href="/auth/login"
-            className="inline-block bg-[#FF5D39] text-white font-bold px-8 py-3 rounded-lg shadow-lg hover:opacity-90 transition-all"
-          >
-            Login
-          </Link>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const handleProfileUpdate = async () => {

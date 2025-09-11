@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useUser } from "@/hooks/useUser";
 
 const ORANGE = "#FF5D39";
 const YELLOW = "#F1A900";
@@ -10,19 +11,47 @@ const BLACK = "#000000";
 function OrderSuccessContent() {
   const search = useSearchParams();
   const router = useRouter();
+  const { user, loading: userLoading } = useUser();
   const [seconds, setSeconds] = useState(5);
 
   const orderId = search.get("order") || "";
   const sessionId = search.get("session_id") || "";
 
+  // Authentication check
   useEffect(() => {
-    const timer = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
-    const redirect = setTimeout(() => router.replace("/profile"), 5000);
-    return () => {
-      clearInterval(timer);
-      clearTimeout(redirect);
-    };
-  }, [router]);
+    if (!userLoading && !user) {
+      router.push("/auth/login");
+      return;
+    }
+  }, [user, userLoading, router]);
+
+  useEffect(() => {
+    if (user) {
+      const timer = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
+      const redirect = setTimeout(() => router.replace("/profile"), 5000);
+      return () => {
+        clearInterval(timer);
+        clearTimeout(redirect);
+      };
+    }
+  }, [router, user]);
+
+  // Show loading while checking authentication
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
+          <p className="text-black text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">

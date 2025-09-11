@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useUser } from '@/hooks/useUser';
 import { useOrdersStore } from '@/store/ordersStore';
 import Image from 'next/image';
 
@@ -69,13 +70,40 @@ const OrderItemCard = ({ item }: { item: DisplayOrderItem }) => (
 
 const OrderDetailPage = () => {
   const params = useParams();
+  const router = useRouter();
+  const { user, loading: userLoading } = useUser();
   const id = typeof params?.id === 'string' ? params.id : Array.isArray(params?.id) ? params?.id[0] : '';
   const { order, loading, error, fetchOrderById, clearOrder } = useOrdersStore();
 
+  // Authentication check
   useEffect(() => {
-    if (id) fetchOrderById(id).catch(() => {});
+    if (!userLoading && !user) {
+      router.push("/auth/login");
+      return;
+    }
+  }, [user, userLoading, router]);
+
+  useEffect(() => {
+    if (id && user) fetchOrderById(id).catch(() => {});
     return () => clearOrder();
-  }, [id, fetchOrderById, clearOrder]);
+  }, [id, fetchOrderById, clearOrder, user]);
+
+  // Show loading while checking authentication
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
+          <p className="text-black text-lg">Loading order...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!user) {
+    return null;
+  }
 
   if (loading)
     return (
