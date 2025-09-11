@@ -62,17 +62,14 @@ const AddProductsPage = () => {
   const [search, setSearch] = useState<string>("");
   const [preview, setPreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [availableFlavors] = useState<Array<{ id: string; name: string }>>([
-    { id: "red_twist", name: "Red Twist" },
-    { id: "blue_raspberry", name: "Blue Raspberry" },
-    { id: "fruit_rainbow", name: "Fruit Rainbow" },
-    { id: "green_apple", name: "Green Apple" },
-    { id: "watermelon", name: "Watermelon" },
-    { id: "cherry", name: "Cherry" },
-    { id: "berry_delight", name: "Berry Delight" },
-    { id: "cotton_candy", name: "Cotton Candy" },
-    { id: "strawberry_banana", name: "Strawberry Banana" },
-  ]);
+  const [availableFlavors, setAvailableFlavors] = useState<Array<{ id: string; name: string }>>([]);
+  const [showNewFlavorForm, setShowNewFlavorForm] = useState<boolean>(false);
+  const [newFlavor, setNewFlavor] = useState({
+    name: "",
+    aliases: "",
+  });
+  const [creatingFlavor, setCreatingFlavor] = useState<boolean>(false);
+  const [deletingFlavor, setDeletingFlavor] = useState<{ [key: string]: boolean }>({});
 
   const getFlavorNameById = (id: string): string => {
     const found = availableFlavors.find((f) => f.id === id);
@@ -184,20 +181,119 @@ const AddProductsPage = () => {
           setError(null);
         } catch (e2) {
           const message =
-            (e2 as { message?: string })?.message || "Failed to load products";
+            (e2 as { message?: string })?.message || "Unable to load products. Please try again.";
           setError(message);
           setProducts([]);
           setPagination(null);
         }
       } else {
         const message =
-          (e as { message?: string })?.message || "Failed to load products";
+          (e as { message?: string })?.message || "Unable to load products. Please try again.";
         setError(message);
         setProducts([]);
         setPagination(null);
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFlavors = async () => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    try {
+      const { data } = await axios.get(
+        `${API_URL}/3pack/admin/flavors`,
+        {
+          withCredentials: true,
+        }
+      );
+      // Filter only active flavors and map to the expected format
+      const activeFlavors = data
+        .filter((flavor: { active: boolean }) => flavor.active)
+        .map((flavor: { id: string; name: string }) => ({
+          id: flavor.id,
+          name: flavor.name,
+        }));
+      setAvailableFlavors(activeFlavors);
+    } catch (e) {
+      console.error("Failed to load flavors:", e);
+      // Fallback to empty array if flavors can't be loaded
+      setAvailableFlavors([]);
+    }
+  };
+
+  const createNewFlavor = async () => {
+    if (!newFlavor.name.trim()) {
+      setError("Flavor name is required");
+      return;
+    }
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    setCreatingFlavor(true);
+    setError(null);
+    try {
+      const aliasesArray = newFlavor.aliases
+        .split(",")
+        .map((alias) => alias.trim())
+        .filter((alias) => alias.length > 0);
+
+      const { data } = await axios.post(
+        `${API_URL}/3pack/admin/flavors`,
+        {
+          name: newFlavor.name.trim(),
+          aliases: aliasesArray,
+          active: true,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      // Add the new flavor to the available flavors list
+      setAvailableFlavors((prev) => [
+        ...prev,
+        { id: data.id, name: data.name },
+      ]);
+
+      // Reset form
+      setNewFlavor({ name: "", aliases: "" });
+      setShowNewFlavorForm(false);
+    } catch (e) {
+      const message =
+        (e as { message?: string })?.message || "Unable to create flavor. Please try again.";
+      setError(message);
+    } finally {
+      setCreatingFlavor(false);
+    }
+  };
+
+  const deleteFlavor = async (flavorId: string) => {
+    if (!confirm("Are you sure you want to delete this flavor? This action cannot be undone and will affect any products using this flavor.")) {
+      return;
+    }
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    setDeletingFlavor((prev) => ({ ...prev, [flavorId]: true }));
+    setError(null);
+    try {
+      await axios.delete(`${API_URL}/3pack/admin/flavors/${flavorId}`, {
+        withCredentials: true,
+      });
+
+      // Remove the flavor from the available flavors list
+      setAvailableFlavors((prev) => prev.filter((f) => f.id !== flavorId));
+
+      // Remove the flavor from any products that are using it
+      setForm((prev) => ({
+        ...prev,
+        flavors: prev.flavors?.filter((f) => f.id !== flavorId) || [],
+      }));
+    } catch (e) {
+      const message =
+        (e as { message?: string })?.message || "Unable to delete flavor. Please try again.";
+      setError(message);
+    } finally {
+      setDeletingFlavor((prev) => ({ ...prev, [flavorId]: false }));
     }
   };
 
@@ -238,6 +334,7 @@ const AddProductsPage = () => {
     if (user?.role === "admin") {
       fetchProducts();
       fetchCategories();
+      fetchFlavors();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, page, limit, categoryFilter, search]);
@@ -343,7 +440,7 @@ const AddProductsPage = () => {
       setImageFile(null);
     } catch (e) {
       const message =
-        (e as { message?: string })?.message || "Failed to create product";
+        (e as { message?: string })?.message || "Unable to create product. Please try again.";
       setError(message);
     } finally {
       setSaving(false);
@@ -453,7 +550,7 @@ const AddProductsPage = () => {
       setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (e) {
       const message =
-        (e as { message?: string })?.message || "Failed to delete product";
+        (e as { message?: string })?.message || "Unable to delete product. Please try again.";
       setError(message);
     } finally {
       setDeleting(prev => ({ ...prev, [id]: false }));
@@ -604,7 +701,13 @@ const AddProductsPage = () => {
                       <select
                         className="w-full border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
                         value={flavor.id}
-                        onChange={(e) => updateFlavor(index, "id", e.target.value)}
+                        onChange={(e) => {
+                          if (e.target.value === "add_new") {
+                            setShowNewFlavorForm(true);
+                          } else {
+                            updateFlavor(index, "id", e.target.value);
+                          }
+                        }}
                       >
                         <option value="">Select flavor</option>
                         {availableFlavors.map((f) => (
@@ -612,6 +715,9 @@ const AddProductsPage = () => {
                             {f.name}
                           </option>
                         ))}
+                        <option value="add_new" className="text-[#FF5D39] font-semibold">
+                          + Add New Flavor
+                        </option>
                       </select>
                     </div>
                     <div className="col-span-3 sm:col-span-2">
@@ -645,6 +751,83 @@ const AddProductsPage = () => {
                   </div>
                 )}
               </div>
+              
+              {/* Add New Flavor Form */}
+              {showNewFlavorForm && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h4 className="text-sm font-semibold text-black mb-3">Add New Flavor</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Flavor Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={newFlavor.name}
+                        onChange={(e) => setNewFlavor({ ...newFlavor, name: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm text-black bg-white"
+                        placeholder="e.g., Tropical Punch"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Aliases (comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={newFlavor.aliases}
+                        onChange={(e) => setNewFlavor({ ...newFlavor, aliases: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm text-black bg-white"
+                        placeholder="e.g., tropical, punch, fruit"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={createNewFlavor}
+                      disabled={creatingFlavor || !newFlavor.name.trim()}
+                      className="bg-[#FF5D39] text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
+                    >
+                      {creatingFlavor ? "Creating..." : "Create Flavor"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowNewFlavorForm(false);
+                        setNewFlavor({ name: "", aliases: "" });
+                      }}
+                      className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Manage Existing Flavors */}
+              {availableFlavors.length > 0 && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h4 className="text-sm font-semibold text-black mb-3">Manage Existing Flavors</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {availableFlavors.map((flavor) => (
+                      <div
+                        key={flavor.id}
+                        className="flex items-center justify-between p-2 bg-white rounded border border-gray-200"
+                      >
+                        <span className="text-sm text-black truncate flex-1 mr-2">
+                          {flavor.name}
+                        </span>
+                        <button
+                          onClick={() => deleteFlavor(flavor.id)}
+                          disabled={deletingFlavor[flavor.id]}
+                          className="px-2 py-1 text-xs bg-red-100 text-red-700 hover:bg-red-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          {deletingFlavor[flavor.id] ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="lg:col-span-1">

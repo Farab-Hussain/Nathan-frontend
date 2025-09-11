@@ -60,7 +60,6 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       const queryParams = new URLSearchParams();
-      console.log('Fetching orders from:', `${API_URL}/orders?${queryParams.toString()}`);
       
       if (params.status) queryParams.append('status', params.status);
       if (params.page) queryParams.append('page', params.page.toString());
@@ -77,9 +76,7 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
         loading: false 
       });
       
-      console.log('Orders fetched from backend:', data.orders?.length || 0, 'orders');
     } catch (error) {
-      console.error('Error fetching orders:', error);
       const message = error instanceof Error ? error.message : 'Failed to fetch orders';
       set({ error: message, loading: false, orders: [] });
     }
@@ -106,12 +103,6 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      console.log('=== ORDER CREATION DEBUG ===');
-      console.log('🎯 Creating order with data:', orderData);
-      console.log('📦 Order items details:', orderData.orderItems);
-      console.log('🌐 Sending to:', `${API_URL}/orders`);
-      console.log('📤 Request payload:', JSON.stringify(orderData, null, 2));
-      console.log('🔑 API URL:', API_URL);
       
       const { data } = await axios.post<Order>(
         `${API_URL}/orders`,
@@ -126,14 +117,10 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
         loading: false 
       });
       
-      console.log('Order created and added to local state:', data);
       
       return data;
     } catch (error: unknown) {
-      console.error('Order creation error:', error);
       const axiosError = error as { response?: { data?: { message?: string }; status?: number } };
-      console.error('Error response:', axiosError.response?.data);
-      console.error('Error status:', axiosError.response?.status);
       const message = axiosError.response?.data?.message || (error instanceof Error ? error.message : 'Failed to create order');
       set({ error: message, loading: false });
       return null;

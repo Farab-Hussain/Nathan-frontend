@@ -35,10 +35,8 @@ const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('Dashboard: Auth check - userLoading:', userLoading, 'user:', user);
     // Only redirect if user is loaded and either no user or not an admin
     if (!userLoading && (!user || user.role !== "admin")) {
-      console.log('Dashboard: Redirecting to home - user not admin');
       router.replace("/");
     }
   }, [user, userLoading, router]);

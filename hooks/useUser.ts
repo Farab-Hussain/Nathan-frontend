@@ -60,7 +60,7 @@ export function useUser() {
           err.response && typeof err.response === 'object' && 'status' in err.response &&
           err.response.status === 429) {
         // Rate limited - set error and schedule retry
-        setError('Too many requests. Please wait a moment and try again.');
+        setError('We\'re experiencing high traffic. Please wait a moment and try again.');
         
         // Clear any existing retry timeout
         if (retryTimeoutRef.current) {
@@ -100,10 +100,7 @@ export function useUser() {
   };
 
   useEffect(() => {
-    // Add debugging
-    console.log('useUser: Initializing auth state...');
     fetchUser().finally(() => {
-      console.log('useUser: Auth state loaded');
       setLoading(false);
     });
     

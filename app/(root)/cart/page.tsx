@@ -132,63 +132,37 @@ const CartPage = () => {
     try {
       setOrderLoading(true);
 
-      console.log("=== CHECKOUT DEBUG ===");
-      console.log("Cart items count:", items.length);
-      console.log("Cart items:", items);
-      console.log(
-        "Product IDs in cart:",
-        items.map((item) => item.productId)
-      );
-      console.log("Total:", getTotal());
 
       if (items.length === 0) {
-        throw new Error("Cart is empty");
+        throw new Error("Your cart is empty. Add some products to continue.");
       }
 
       // Enhanced product verification with detailed logging
       try {
         const productIds = items.map((item) => item.productId);
-        console.log("🔍 Verifying products exist in backend:", productIds);
-
         // Check if products exist by fetching them from backend
         const response = await fetch("/api/products", {
           credentials: "include"
         });
-        console.log("📡 API Response status:", response.status);
 
         if (response.ok) {
           const products = await response.json();
-          console.log("📦 Backend products response:", products);
 
           const availableProductIds = Array.isArray(products)
             ? products.map((p: { id: string }) => p.id)
             : products.products?.map((p: { id: string }) => p.id) || [];
 
-          console.log(
-            "✅ Available product IDs in backend:",
-            availableProductIds
-          );
-
           const missingProducts = productIds.filter(
             (id) => !availableProductIds.includes(id)
           );
           if (missingProducts.length > 0) {
-            console.error("❌ Missing products in backend:", missingProducts);
             throw new Error(
-              `Products not found in backend: ${missingProducts.join(", ")}`
+              `Some items in your cart are no longer available. Please refresh your cart to see current availability.`
             );
-          } else {
-            console.log("✅ All products verified in backend");
           }
         } else {
-          console.warn(
-            "⚠️ API response not OK:",
-            response.status,
-            response.statusText
-          );
         }
       } catch (verifyError) {
-        console.warn("⚠️ Could not verify products with backend:", verifyError);
         // Continue anyway - backend will handle validation
       }
 
@@ -217,8 +191,6 @@ const CartPage = () => {
         },
       };
 
-      console.log("Sending order data:", orderData);
-      console.log("Order items structure:", orderData.orderItems);
 
       // Fix: shippingAddress should be a string, not an object
       const orderDataForBackend = {

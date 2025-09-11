@@ -21,9 +21,6 @@ export const SafeLink = ({ href, children, className, onClick }: SafeLinkProps) 
     // Prevent default browser navigation
     e.preventDefault();
     
-    // Log navigation for debugging
-    console.log('SafeLink: Navigating to', href);
-    
     // Call custom onClick if provided
     if (onClick) {
       onClick();
