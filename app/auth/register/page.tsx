@@ -56,11 +56,21 @@ const RegisterPage = () => {
   useEffect(() => {
     if (userLoading) return;
     if (user) {
-      const redirectUrl = process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || "/";
-      if (typeof window !== "undefined") {
-        window.location.href = redirectUrl;
-      } else if (router) {
-        router.replace(redirectUrl);
+      // If user is not verified, redirect to verification page
+      if (!user.isVerified) {
+        if (typeof window !== "undefined") {
+          window.location.href = `/auth/verify-email?email=${encodeURIComponent(user.email)}`;
+        } else if (router) {
+          router.replace(`/auth/verify-email?email=${encodeURIComponent(user.email)}`);
+        }
+      } else {
+        // User is verified, redirect to main site
+        const redirectUrl = process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || "/";
+        if (typeof window !== "undefined") {
+          window.location.href = redirectUrl;
+        } else if (router) {
+          router.replace(redirectUrl);
+        }
       }
     }
   }, [user, userLoading, router]);
@@ -99,26 +109,22 @@ const RegisterPage = () => {
         { name, email, password },
         { withCredentials: true }
       );
-      toast.success("Registration successful!");
-      setSuccess("Registration successful!");
+      toast.success("Registration successful! Please check your email to verify your account.");
+      setSuccess("Registration successful! Please check your email to verify your account.");
       setForm({ name: "", email: "", password: "", confirmPassword: "" });
       setTimeout(() => {
-        const redirectUrl =
-          process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || "/";
+        // Redirect to verification page instead of main site
         if (typeof window !== "undefined") {
-          window.location.href = redirectUrl;
+          window.location.href = `/auth/verify-email?email=${encodeURIComponent(email)}`;
         }
       }, 600);
     } catch (err: unknown) {
-      console.log("Registration error:", err);
       
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
         const responseData = err.response?.data;
         
         // Log the full response for debugging
-        console.log("Backend response data:", responseData);
-        console.log("Status code:", status);
         
         // Handle different types of backend errors
         if (responseData) {

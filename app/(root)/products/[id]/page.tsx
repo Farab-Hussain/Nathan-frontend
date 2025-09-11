@@ -243,7 +243,8 @@ const ProductDetailPage = () => {
                     ${product.price.toFixed(2)}
                   </span>
                   <span className="text-xs sm:text-sm text-gray-500">
-                    per 3-pack
+                    {/* per 3-pack */}
+                    per pack 3 flavors
                   </span>
                   {product.stock !== undefined && (
                     <span

@@ -3,9 +3,12 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 
 export type User = {
+  id: string;
   name: string;
   email: string;
   role: string;
+  isVerified: boolean;
+  requiresVerification?: boolean;
   // add other fields as needed
 };
 
@@ -35,7 +38,7 @@ export function useUser() {
     }
 
     // Prevent multiple simultaneous requests
-    if (now - lastFetchRef.current < 1000) { // 1 second cooldown
+    if (now - lastFetchRef.current < 2000) { // 2 second cooldown
       return;
     }
 
@@ -54,8 +57,6 @@ export function useUser() {
       // Update cache
       userCache = { user: userData, timestamp: now };
     } catch (err: unknown) {
-      console.error('Failed to fetch user:', err);
-      
       if (err && typeof err === 'object' && 'response' in err && 
           err.response && typeof err.response === 'object' && 'status' in err.response &&
           err.response.status === 429) {

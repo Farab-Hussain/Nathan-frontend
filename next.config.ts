@@ -40,6 +40,10 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Production optimizations
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: false,
   // CORS is handled by the backend API, no need for frontend CORS headers
 };
 

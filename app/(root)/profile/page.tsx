@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useOrdersStore } from '@/store/ordersStore';
 import Link from 'next/link';
+import VerificationGuard from '@/components/auth/VerificationGuard';
 
 const BLACK = '#000000';
 
@@ -16,7 +17,7 @@ const ProfilePage = () => {
     email: '',
     phone: '',
   });
-  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [updatingProfile] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -108,7 +109,8 @@ const ProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <VerificationGuard>
+      <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -146,12 +148,12 @@ const ProfilePage = () => {
           <div className="bg-white rounded-2xl shadow-lg border p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-black">Profile Information</h2>
-              <button
+              {/* <button
                 onClick={() => setEditMode(!editMode)}
                 className="px-4 py-2 rounded-lg border border-[#FF5D39] text-[#FF5D39] hover:bg-[#FF5D39] hover:text-white transition-colors cursor-pointer"
               >
                 {editMode ? 'Cancel' : 'Edit Profile'}
-              </button>
+              </button> */}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -162,7 +164,7 @@ const ProfilePage = () => {
                     type="text"
                     value={profileForm.name}
                     onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black"
                   />
                 ) : (
                   <p className="text-black">{user.name || 'Not provided'}</p>
@@ -181,7 +183,7 @@ const ProfilePage = () => {
                     type="tel"
                     value={profileForm.phone}
                     onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black"
                   />
                 ) : (
                   <p className="text-black">{(user as { phone?: string }).phone || 'Not provided'}</p>
@@ -292,6 +294,7 @@ const ProfilePage = () => {
 
       </div>
     </div>
+    </VerificationGuard>
   );
 };
 

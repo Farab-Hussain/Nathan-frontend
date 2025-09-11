@@ -152,6 +152,7 @@ NEXT_PUBLIC_POST_AUTH_REDIRECT_URL=/
 Notes:
 - Use full origin (scheme + host, no trailing slash).
 - In development, this can be `http://localhost:4000`.
+- In production, this should be `https://api.licorice4good.com`.
 
 ---
 
@@ -160,7 +161,7 @@ Notes:
 npm ci
 npm run dev
 ```
-Visit `http://localhost:3000`.
+Visit `http://localhost:3000` (development) or `https://licorice4good.com` (production).
 
 ---
 
@@ -186,7 +187,7 @@ Recommendation:
 
 ## Images, Assets, and Uploads
 - Backend serves images under `/uploads`.
-- Next Image `remotePatterns` is configured dynamically from `NEXT_PUBLIC_API_URL` or defaults to `localhost:4000` in development.
+- Next Image `remotePatterns` is configured dynamically from `NEXT_PUBLIC_API_URL` or defaults to `localhost:4000` in development and `api.licorice4good.com` in production.
 - Place favicon(s) in `public/` and configure `metadata.icons` in `app/layout.tsx`.
 
 ---

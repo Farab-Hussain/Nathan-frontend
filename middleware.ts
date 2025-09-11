@@ -8,6 +8,24 @@ const GUEST_ONLY_PATHS = [
   "/auth/reset-password",
 ];
 
+// Routes that don't require authentication (including verification pages)
+const PUBLIC_PATHS = [
+  "/auth/verify-email",
+  "/auth/verify-success",
+  "/",
+  "/shop",
+  "/products",
+];
+
+// Routes that require email verification
+const VERIFICATION_REQUIRED_PATHS = [
+  "/cart",
+  "/checkout", 
+  "/orders",
+  "/profile",
+  "/dashboard",
+];
+
 // List of routes that require authentication
 const AUTH_REQUIRED_PATHS = [
   "/cart",
@@ -39,19 +57,33 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // 2. Require login for protected pages (basic check)
+  // 2. Allow public paths without authentication
+  if (matchesPath(pathname, PUBLIC_PATHS)) {
+    return NextResponse.next();
+  }
+
+  // 3. Require login for protected pages (basic check)
   if (!hasAuthCookie && matchesPath(pathname, AUTH_REQUIRED_PATHS)) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
   
-  // 3. For admin pages, allow access if user has auth cookie - client will verify role
+  // 4. For verification-required pages, let client-side handle verification check
+  // The VerificationGuard component will handle the actual verification logic
+  if (matchesPath(pathname, VERIFICATION_REQUIRED_PATHS)) {
+    if (!hasAuthCookie) {
+      return NextResponse.redirect(new URL("/auth/login", req.url));
+    }
+    // Let client-side VerificationGuard handle verification status
+  }
+  
+  // 5. For admin pages, allow access if user has auth cookie - client will verify role
   if (matchesPath(pathname, ADMIN_ONLY_PATHS)) {
     if (!hasAuthCookie) {
       return NextResponse.redirect(new URL("/auth/login", req.url));
     }
   }
 
-  // 4. Allow all other requests
+  // 6. Allow all other requests
   return NextResponse.next();
 }
 

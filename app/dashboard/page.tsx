@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useUser } from "@/hooks/useUser";
 import SafeLink from "@/components/custom/SafeLink";
+import VerificationGuard from "@/components/auth/VerificationGuard";
 
 type Order = {
   id: string;
@@ -190,7 +191,8 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+    <VerificationGuard>
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
       <h1 className="text-2xl sm:text-3xl font-extrabold text-black mb-4 sm:mb-6">Dashboard</h1>
 
       {/* Quick navigation */}
@@ -285,6 +287,7 @@ const DashboardPage = () => {
 
       {loading && <div className="mt-4 sm:mt-6 text-sm sm:text-base text-black">Loading analytics...</div>}
     </div>
+    </VerificationGuard>
   );
 };
 
