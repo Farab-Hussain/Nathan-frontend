@@ -38,7 +38,7 @@ export function useUser() {
     }
 
     // Prevent multiple simultaneous requests
-    if (now - lastFetchRef.current < 2000) { // 2 second cooldown
+    if (now - lastFetchRef.current < 5000) { // 5 second cooldown
       return;
     }
 
@@ -83,6 +83,8 @@ export function useUser() {
   const refreshUser = async () => {
     setLoading(true);
     setError(null);
+    // Clear cache to force fresh data
+    userCache = null;
     await fetchUser(true);
     setLoading(false);
   };

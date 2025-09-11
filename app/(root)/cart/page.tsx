@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
 import { useOrdersStore } from "@/store/ordersStore";
+import { useUser } from "@/hooks/useUser";
 import VerificationGuard from "@/components/auth/VerificationGuard";
 
 const ORANGE = "#FF5D39";
@@ -23,6 +24,7 @@ interface Product {
 }
 
 const CartPage = () => {
+  const { user, loading: userLoading } = useUser();
   const {
     items,
     loading,
@@ -96,10 +98,37 @@ const CartPage = () => {
     }
   }, [items]);
 
+  // Authentication check
   useEffect(() => {
-    loadFromBackend();
-    fetchRecommendedProducts();
-  }, [loadFromBackend, fetchRecommendedProducts]);
+    if (!userLoading && !user) {
+      router.push("/auth/login");
+      return;
+    }
+  }, [user, userLoading, router]);
+
+  useEffect(() => {
+    if (user) {
+      loadFromBackend();
+      fetchRecommendedProducts();
+    }
+  }, [loadFromBackend, fetchRecommendedProducts, user]);
+
+  // Show loading while checking authentication
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
+          <p className="text-black text-lg">Loading cart...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!user) {
+    return null;
+  }
 
   const handleQuantity = async (itemId: string, quantity: number) => {
     await updateQuantity(itemId, quantity);

@@ -37,6 +37,10 @@ function VerifySuccessContent() {
         setVerificationStatus('success');
         // Refresh user data to get updated verification status
         await refreshUser();
+        // Force a small delay to ensure user data is updated
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
       } else if (verifiedParam === "false") {
         setVerificationStatus('error');
       } else {

@@ -56,7 +56,9 @@ function VerifyEmailContent() {
       const responseData = await response.json();
 
       if (response.ok) {
-        // Verification successful, redirect immediately
+        // Verification successful, refresh user data first
+        await refreshUser();
+        // Then redirect to success page
         router.push("/auth/verify-success?verified=true");
       } else {
         // Check if the error is due to token already being used
@@ -78,7 +80,7 @@ function VerifyEmailContent() {
     } finally {
       setVerifying(false);
     }
-  }, [router, verifying, verificationAttempted]);
+  }, [router, verifying, verificationAttempted, refreshUser]);
 
   // Handle token verification if token is present
   useEffect(() => {

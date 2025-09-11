@@ -36,21 +36,18 @@ export default function GlobalVerificationCheck() {
 
     // If user is logged in but not verified, redirect to verification page
     if (user && !user.isVerified) {
-      console.log("User is not verified, redirecting to verification page");
       router.replace(`/auth/verify-email?email=${encodeURIComponent(user.email)}`);
       return;
     }
 
     // If user is not logged in but trying to access protected routes, redirect to login
     if (!user && VERIFICATION_REQUIRED_PATHS.some(path => pathname.startsWith(path))) {
-      console.log("User not logged in, redirecting to login");
       router.replace("/auth/login");
       return;
     }
 
     // If user is verified and on login/register pages, redirect to main site
     if (user && user.isVerified && (pathname.startsWith("/auth/login") || pathname.startsWith("/auth/register"))) {
-      console.log("User is verified, redirecting to main site");
       const redirectUrl = process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || "/";
       router.replace(redirectUrl);
       return;

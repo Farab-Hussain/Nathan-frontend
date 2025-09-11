@@ -40,6 +40,29 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Image configuration for external domains
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'licorice4good.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.licorice4good.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
   // Production optimizations
   compress: true,
   poweredByHeader: false,

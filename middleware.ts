@@ -49,7 +49,7 @@ export async function middleware(req: NextRequest) {
     req.cookies.get("jwt")?.value ||
     req.cookies.get("accessToken")?.value;
   
-  // Simply check for presence of auth cookie - let client-side handle role verification
+  // Check for presence of auth cookie - let client-side handle validation
   const hasAuthCookie = !!rawToken;
 
   // 1. Redirect logged-in users away from guest-only pages
@@ -62,13 +62,12 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3. Require login for protected pages (basic check)
+  // 3. Require authentication for protected pages
   if (!hasAuthCookie && matchesPath(pathname, AUTH_REQUIRED_PATHS)) {
     return NextResponse.redirect(new URL("/auth/login", req.url));
   }
   
-  // 4. For verification-required pages, let client-side handle verification check
-  // The VerificationGuard component will handle the actual verification logic
+  // 4. For verification-required pages, require authentication
   if (matchesPath(pathname, VERIFICATION_REQUIRED_PATHS)) {
     if (!hasAuthCookie) {
       return NextResponse.redirect(new URL("/auth/login", req.url));
@@ -76,7 +75,7 @@ export async function middleware(req: NextRequest) {
     // Let client-side VerificationGuard handle verification status
   }
   
-  // 5. For admin pages, allow access if user has auth cookie - client will verify role
+  // 5. For admin pages, require authentication
   if (matchesPath(pathname, ADMIN_ONLY_PATHS)) {
     if (!hasAuthCookie) {
       return NextResponse.redirect(new URL("/auth/login", req.url));

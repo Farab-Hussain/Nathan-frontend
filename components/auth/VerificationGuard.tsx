@@ -14,15 +14,25 @@ interface VerificationGuardProps {
 }
 
 export default function VerificationGuard({ children, fallback }: VerificationGuardProps) {
-  const { user, loading } = useUser();
+  const { user, loading, refreshUser } = useUser();
   const router = useRouter();
   const [showFallback, setShowFallback] = useState(false);
 
   useEffect(() => {
     if (!loading && user && !user.isVerified) {
       setShowFallback(true);
+    } else if (user && user.isVerified) {
+      setShowFallback(false);
     }
   }, [user, loading]);
+
+  // Add a refresh mechanism when component mounts
+  useEffect(() => {
+    if (user && !user.isVerified) {
+      // Try to refresh user data to check if verification status has changed
+      refreshUser();
+    }
+  }, [user, refreshUser]);
 
   if (loading) {
     return (
@@ -79,6 +89,26 @@ export default function VerificationGuard({ children, fallback }: VerificationGu
               style={{ background: `linear-gradient(90deg, ${ORANGE}, ${YELLOW})` }}
             >
               Go to Verification Page
+            </button>
+
+            <button
+              onClick={async () => {
+                await refreshUser();
+                // Force a small delay to ensure user data is updated
+                setTimeout(() => {
+                  if (user?.isVerified) {
+                    setShowFallback(false);
+                  }
+                }, 1000);
+              }}
+              className="w-full font-semibold py-3 rounded-xl transition-all duration-200"
+              style={{
+                border: `2px solid ${YELLOW}`,
+                color: YELLOW,
+                background: WHITE,
+              }}
+            >
+              Refresh Status
             </button>
 
             <button
