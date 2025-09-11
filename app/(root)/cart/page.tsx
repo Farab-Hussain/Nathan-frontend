@@ -71,8 +71,19 @@ const CartPage = () => {
           product.id && !cartProductIds.includes(product.id) && product.isActive !== false
         );
         
+        // Always show recommendations - if we have available products, show them
+        // If no available products, show all products (user can still browse)
+        let productsToShow = availableProducts;
+        
+        // If no products available (all in cart), show all products for browsing
+        if (availableProducts.length === 0 && products.length > 0) {
+          productsToShow = products.filter((product: Product) => 
+            product.id && product.isActive !== false
+          );
+        }
+        
         // Randomly select 2 products
-        const shuffled = availableProducts.sort(() => 0.5 - Math.random());
+        const shuffled = productsToShow.sort(() => 0.5 - Math.random());
         const selected = shuffled.slice(0, 2);
         
         setRecommendedProducts(selected);
@@ -162,7 +173,7 @@ const CartPage = () => {
           }
         } else {
         }
-      } catch (verifyError) {
+      } catch {
         // Continue anyway - backend will handle validation
       }
 
@@ -781,25 +792,33 @@ const CartPage = () => {
                         </div>
                       ))
                     ) : (
-                      // Fallback when no products available
+                      // Fallback when no products available - show explore options
                       <>
-                        <div className="bg-white rounded-lg p-3 shadow-sm border text-center" style={{ borderColor: `${YELLOW}20` }}>
-                          <div className="aspect-square mb-2 rounded-lg bg-gray-100 flex items-center justify-center">
-                            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        <div 
+                          className="bg-white rounded-lg p-3 shadow-sm border text-center cursor-pointer hover:shadow-md transition-shadow" 
+                          style={{ borderColor: `${YELLOW}20` }}
+                          onClick={handleViewAllProducts}
+                        >
+                          <div className="aspect-square mb-2 rounded-lg bg-gray-100 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${ORANGE}20, ${YELLOW}20)` }}>
+                            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke={ORANGE}>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                             </svg>
                           </div>
-                          <h4 className="text-sm font-semibold mb-1" style={{ color: BLACK }}>No recommendations</h4>
-                          <p className="text-xs mb-2" style={{ color: BLACK, opacity: 0.7 }}>All products in cart</p>
+                          <h4 className="text-sm font-semibold mb-1" style={{ color: BLACK }}>Browse Products</h4>
+                          <p className="text-xs mb-2" style={{ color: BLACK, opacity: 0.7 }}>Discover more items</p>
                         </div>
-                        <div className="bg-white rounded-lg p-3 shadow-sm border text-center" style={{ borderColor: `${YELLOW}20` }}>
-                          <div className="aspect-square mb-2 rounded-lg bg-gray-100 flex items-center justify-center">
-                            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                        <div 
+                          className="bg-white rounded-lg p-3 shadow-sm border text-center cursor-pointer hover:shadow-md transition-shadow" 
+                          style={{ borderColor: `${YELLOW}20` }}
+                          onClick={fetchRecommendedProducts}
+                        >
+                          <div className="aspect-square mb-2 rounded-lg bg-gray-100 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${YELLOW}20, ${ORANGE}20)` }}>
+                            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke={YELLOW}>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
                           </div>
-                          <h4 className="text-sm font-semibold mb-1" style={{ color: BLACK }}>Explore more</h4>
-                          <p className="text-xs mb-2" style={{ color: BLACK, opacity: 0.7 }}>Visit our shop</p>
+                          <h4 className="text-sm font-semibold mb-1" style={{ color: BLACK }}>Refresh</h4>
+                          <p className="text-xs mb-2" style={{ color: BLACK, opacity: 0.7 }}>Get new suggestions</p>
                         </div>
                       </>
                     )}
