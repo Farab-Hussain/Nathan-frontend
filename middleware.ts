@@ -43,6 +43,8 @@ function matchesPath(path: string, patterns: string[]) {
 // JWT verification is handled by the backend API
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  
+  // Get authentication token from cookies
   const rawToken =
     req.cookies.get("token")?.value ||
     req.cookies.get("auth_token")?.value ||

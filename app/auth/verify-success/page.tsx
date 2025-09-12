@@ -35,8 +35,12 @@ function VerifySuccessContent() {
       
       if (verifiedParam === "true") {
         setVerificationStatus('success');
-        // Refresh user data to get updated verification status
-        await refreshUser();
+        // Try to refresh user data if logged in, but don't fail if not
+        try {
+          await refreshUser();
+        } catch {
+          // User might not be logged in on this device, that's okay
+        }
         // Force a small delay to ensure user data is updated
         setTimeout(() => {
           window.location.href = '/';
@@ -102,8 +106,11 @@ function VerifySuccessContent() {
                 </svg>
               </div>
               <h1 className="text-3xl font-bold mb-2" style={{ color: BLACK }}>Email Verified!</h1>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-4">
                 Your email has been successfully verified. You can now access all features.
+              </p>
+              <p className="text-sm text-gray-500">
+                Redirecting to home page in {countdown} seconds...
               </p>
             </>
           )}

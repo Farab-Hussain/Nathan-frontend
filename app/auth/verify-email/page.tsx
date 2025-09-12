@@ -56,10 +56,20 @@ function VerifyEmailContent() {
       const responseData = await response.json();
 
       if (response.ok) {
-        // Verification successful, refresh user data first
-        await refreshUser();
-        // Then redirect to success page
-        router.push("/auth/verify-success?verified=true");
+        // Verification successful
+        setVerificationMessage("Email verified successfully!");
+        
+        // Try to refresh user data if logged in, but don't fail if not
+        try {
+          await refreshUser();
+        } catch {
+          // User might not be logged in on this device, that's okay
+        }
+        
+        // Redirect to success page
+        setTimeout(() => {
+          router.push("/auth/verify-success?verified=true");
+        }, 1500);
       } else {
         // Check if the error is due to token already being used
         if (responseData.message && responseData.message.includes("already verified")) {
@@ -185,10 +195,17 @@ function VerifyEmailContent() {
           <h1 className="text-3xl font-bold mb-2" style={{ color: BLACK }}>
             {verifying ? "Verifying..." : "Check Your Email"}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-4">
             {verifying ? "Please wait while we verify your email..." : `We've sent a verification link to`}
           </p>
-          <p className="font-semibold" style={{ color: ORANGE }}>{email}</p>
+          <p className="font-semibold mb-4" style={{ color: ORANGE }}>{email}</p>
+          {!verifying && !user && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-blue-800">
+                <strong>💡 Cross-Device Verification:</strong> You can verify your email from any device! If you&apos;re logged in on another device, the verification will work there too.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Instructions */}
@@ -279,12 +296,30 @@ function VerifyEmailContent() {
 
         {/* Back to Login */}
         <div className="mt-6 text-center">
-          <button
-            onClick={() => router.push("/auth/login")}
-            className="text-sm text-gray-500 hover:text-gray-700 underline"
-          >
-            Back to Login
-          </button>
+          {!user ? (
+            <div className="space-y-3">
+              <button
+                onClick={() => router.push("/auth/login")}
+                className="w-full font-semibold py-3 rounded-xl transition-all duration-200"
+                style={{
+                  background: ORANGE,
+                  color: WHITE,
+                }}
+              >
+                Log In (Optional)
+              </button>
+              <p className="text-xs text-gray-500">
+                You can verify your email without logging in, or log in to access your account
+              </p>
+            </div>
+          ) : (
+            <button
+              onClick={() => router.push("/auth/login")}
+              className="text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              Back to Login
+            </button>
+          )}
         </div>
       </div>
     </div>
