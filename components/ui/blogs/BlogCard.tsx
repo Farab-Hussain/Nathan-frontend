@@ -12,13 +12,108 @@ interface BlogCardProps {
   date: string;
   author: string;
   wrapper?: boolean;
+  content?: {
+    sections?: Array<{
+      title: string;
+      content: string;
+      image?: string;
+    }>;
+    table?: {
+      title: string;
+      headers: string[];
+      rows: string[][];
+    };
+    list?: Array<{
+      title: string;
+      content: string;
+    }>;
+  };
 }
 
-const BlogCard = ({ id, title, description, image, date, author, wrapper }: BlogCardProps) => {
+const BlogCard = ({ id, title, description, image, date, author, wrapper, content }: BlogCardProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const toggleReadMore = () => {
     setIsOpen(!isOpen);
   };
+
+  const renderContent = () => {
+    if (!content) return null;
+
+    return (
+      <div className="space-y-6">
+        {/* Render Sections */}
+        {content.sections && content.sections.map((section, index) => (
+          <div key={index} className="space-y-4">
+            <h3 className="text-xl md:text-2xl font-semibold text-black">
+              {section.title}
+            </h3>
+            {section.image && (
+              <Image
+                src={section.image}
+                alt={section.title}
+                width={1000}
+                height={1000}
+                className="rounded-lg w-full h-auto"
+              />
+            )}
+            <p className="text-sm text-[#555555] font-light leading-6">
+              {section.content}
+            </p>
+          </div>
+        ))}
+
+        {/* Render Table */}
+        {content.table && (
+          <div className="space-y-4">
+            <h3 className="text-xl md:text-2xl font-semibold text-black">
+              {content.table.title}
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-50">
+                    {content.table.headers.map((header, index) => (
+                      <th key={index} className="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {content.table.rows.map((row, rowIndex) => (
+                    <tr key={rowIndex} className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                      {row.map((cell, cellIndex) => (
+                        <td key={cellIndex} className="border border-gray-300 px-4 py-2 text-sm text-gray-600">
+                          {cell}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Render List */}
+        {content.list && (
+          <div className="space-y-4">
+            {content.list.map((item, index) => (
+              <div key={index} className="space-y-2">
+                <h4 className="text-lg md:text-xl font-semibold text-black">
+                  {index + 1}. {item.title}
+                </h4>
+                <p className="text-sm text-[#555555] font-light leading-6">
+                  {item.content}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-4 rounded-lg ">
       <Link href={`/blogs/${id}`} className="cursor-pointer">
@@ -36,8 +131,8 @@ const BlogCard = ({ id, title, description, image, date, author, wrapper }: Blog
             text={date}
             className="text-sm text-black font-regular"
             splitBy="character"
-            duration={0.3}
-            stagger={0.02}
+            duration={0.1}
+            stagger={0.01}
             triggerStart="top 90%"
           />
           <hr className="w-2 h-1 bg-black" />
@@ -64,11 +159,10 @@ const BlogCard = ({ id, title, description, image, date, author, wrapper }: Blog
       <p className="text-sm text-[#555555] font-light leading-6">
         {description}
       </p>
-      {isOpen && (
-        <p className="text-sm text-[#555555] font-light leading-6">
-          {description}
-        </p>
-      )}
+      
+      {/* Render rich content when expanded */}
+      {isOpen && renderContent()}
+      
       <button onClick={toggleReadMore} className="text-sm text-black font-light leading-6 self-start">
         {isOpen ? "Read Less" : "Read More"}
       </button>

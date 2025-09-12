@@ -6,6 +6,22 @@ export interface BlogItem {
   date: string;
   author: string;
   wrapper?: boolean;
+  content?: {
+    sections?: Array<{
+      title: string;
+      content: string;
+      image?: string;
+    }>;
+    table?: {
+      title: string;
+      headers: string[];
+      rows: string[][];
+    };
+    list?: Array<{
+      title: string;
+      content: string;
+    }>;
+  };
 }
 
 export interface SideBarItem {
@@ -21,33 +37,174 @@ export const blogPageData = {
   blogData: [
     {
       id: "1",
-      title: "4 Top Fundraising Challenges for Youth Activities",
+      title: "4 Top Fundraising Challenges For Youth Activities",
       description:
         "School fundraising is an important aspect of raising money for a variety of activities, events, and programs. That being said, organizing the classic car wash or bake sale fundraiser can be more trouble than it's worth. Parents are too busy managing family obligations, social commitments, and working on their career goals. Children are often booked solid with school work, sports practice, and extracurricular activities. Gone are the days of organizing walk-a-thons, silent auctions, and raffles. In today's busy world, nobody has time to coordinate groups of people, secure a location, gather supplies, and pray for good weather. For all that effort, the return is quite meager. While these are all good ideas, they come with their own set of challenges. And so this demands a new approach to youth activities fundraising. Before we delve into what makes school fundraisers successful, let's review the top fundraising challenges for youth activities.",
       image: "/assets/images/blog1.png",
       date: "Jul 06, 2021",
       author: "Marie Caphlish",
       wrapper: true,
+      content: {
+        sections: [
+          {
+            title: "Poor Planning",
+            content:
+              "No matter how small, every fundraiser requires some planning. Poor planning is one of the main reasons why many fundraisers fail. Each event requires a detailed roadmap with clear goals, budgets, timelines, volunteer roles, and promotion tactics. Without a strategic annual plan, youth events and activities quickly become disorganized. Unfortunately, it's quite common to set unrealistic goals and weak incentives. Poor planning also means poor communication. Tasks overlap, deadlines get missed, enthusiasm wanes, and you end up with a complete disaster. Solution: Our candy will make your fundraiser a smashing success. There's no need for meticulous order tracking and long inventory spreadsheets. You get one shipment, set your own prices, and sell a product everyone knows (and loves!). There is no long approval process or confusing logistics to handle. Plus, it's highly flexible. Kids and volunteers can sell on the go and start raising money to support youth activities and events. We're here to simplify fundraising for you with a tried-and-true favorite that always delivers.",
+            image: "/assets/images/blog1.png",
+          },
+          {
+            title: "Poor Products",
+            content:
+              "This might be one of the most difficult challenges for children, parents, coaches, and community members alike. Trying to garner enthusiasm for a poor product is an insurmountable obstacle. Quality can make or break your fundraising efforts. So when a donor contributes, they expect to receive a product that aligns with the value they're offering. Low-quality merchandise means low sales, leftover inventory, and a damaged reputation. Not only do buyers feel misled, but they're also less likely to participate in future fundraisers. This is why it's so important to invest in quality goods. A low-cost product that is highly desirable can make all the difference. Solution: Let's face it. No one really wants to buy overpriced wrapping paper or stale cookie dough. Much less buying a novelty item that is poorly made and that they will never use. Candy is an easy \"yes.\" It moves fast, so you're not stuck with leftover inventory. You have high profit margins, so teams and club members get to keep more of the money raised. Plus, it's a tested product, which means no surprises and no complaints. Best of all, children, parents, and volunteers feel more confident selling something they actually believe in. Offering people a treat they're happy to pay for takes away the pressure that comes with traditional fundraising. All in all, it's a winning combination. Ready to raise more, with less stress? Reach out today and find out how easy it is to get started!",
+          },
+        ],
+      },
     },
     {
       id: "2",
-      title: "Poor Planning",
+      title: "Candy Fundraising Solutions To Pay For Your Kids' Activities",
       description:
-        "No matter how small, every fundraiser requires some planning. Poor planning is one of the main reasons why many fundraisers fail. Each event requires a detailed roadmap with clear goals, budgets, timelines, volunteer roles, and promotion tactics. Without a strategic annual plan, youth events and activities quickly become disorganized. Unfortunately, it's quite common to set unrealistic goals and weak incentives. Poor planning also means poor communication. Tasks overlap, deadlines get missed, enthusiasm wanes, and you end up with a complete disaster. Solution: Our candy will make your fundraiser a smashing success. There's no need for meticulous order tracking and long inventory spreadsheets. You get one shipment, set your own prices, and sell a product everyone knows (and loves!). There is no long approval process or confusing logistics to handle. Plus, it's highly flexible. Kids and volunteers can sell on the go and start raising money to support youth activities and events. We're here to simplify fundraising for you with a tired-and-true favorite that always delivers.",
+        "Candy fundraising has emerged as one of the most effective and enjoyable ways to raise money for youth activities. Unlike traditional fundraising methods that require extensive planning, volunteer coordination, and often yield disappointing results, candy fundraising offers a simple, profitable, and engaging solution that both kids and parents can get excited about. With high profit margins, easy logistics, and universal appeal, candy fundraising transforms the often stressful task of raising money into a fun and rewarding experience for everyone involved.",
       image: "/assets/images/blog1.png",
       date: "Jul 06, 2021",
       author: "Marie Caphlish",
-      wrapper: false,
+      wrapper: true,
+      content: {
+        sections: [
+          {
+            title: "The Real Price Of Enrichment",
+            content:
+              "Youth activities and sports programs provide invaluable benefits to children, from physical health and teamwork skills to academic success and community building. However, these programs come with significant costs that many families struggle to afford. The financial burden of youth activities can be substantial, including equipment, uniforms, coaching fees, travel expenses, and facility costs. Understanding these costs is crucial for communities to appreciate the value of fundraising efforts and the importance of making these activities accessible to all children, regardless of their family's financial situation.",
+          },
+        ],
+        table: {
+          title: "Average Annual Cost",
+          headers: ["Sport", "Average Annual Cost", "What's Included"],
+          rows: [
+            [
+              "Ice hockey",
+              "$2,583",
+              "Equipment (skates, sticks, pads, helmets, gloves, jerseys), ice time, coaching, travel, league fees, tournaments, miscellaneous (team apparel, etc).",
+            ],
+            [
+              "Skiing/Snowboarding",
+              "$2,249",
+              "Equipment (skis/snowboards, boots, poles, protective gear), lift tickets, lessons, travel, camps, registration, insurance.",
+            ],
+            [
+              "Field hockey",
+              "$2,125",
+              "Equipment (stick, shin guards, mouthguard, shoes), uniform, coaching, travel, league fees, tournaments, camps.",
+            ],
+            [
+              "Gymnastics",
+              "$1,580",
+              "Tuition, uniform, coaching, competitions, camps, travel, insurance.",
+            ],
+            [
+              "Lacrosse",
+              "$1,289",
+              "Equipment (stick, helmet, pads, gloves, cleats), uniform, league fees, coaching, travel, tournaments, camps.",
+            ],
+            [
+              "Soccer",
+              "$1,188",
+              "Registration, uniform, coaching, travel, tournaments, camps, insurance.",
+            ],
+            [
+              "Tennis",
+              "$1,170",
+              "Tennis	$1,170	Equipment (racquet, strings, grip, shoes), lessons, tournaments, camps, travel, club fees, apparel.",
+            ],
+            [
+              "Bicycling",
+              "$1,012",
+              "Bike, gear (helmet, gloves, shoes, apparel), events, training, travel, insurance, accessories.",
+            ],
+            [
+              "Basketball",
+              "$1,002",
+              "Registration, uniform, coaching, travel, tournaments, camps, insurance.",
+            ],
+            [
+              "Golf",
+              "$925",
+              "Membership, equipment (clubs, balls, tees, bag), lessons, tournaments, carts, travel, apparel.",
+            ],
+            [
+              "Swimming",
+              "$786",
+              "Membership, equipment (swimsuit, goggles, cap, fins), coaching, competitions, travel, camps, insurance.",
+            ],
+            [
+              "Martial arts",
+              "$777",
+              "Tuition, uniform, belt testing, equipment (pads, gloves, weapons), camps, insurance, competitions.",
+            ],
+            [
+              "Baseball/Softball",
+              "$714",
+              "Registration, equipment (bat, glove, helmet, cleats), uniform, coaching, travel, tournaments, camps.",
+            ],
+            [
+              "Tackle Football",
+              "$581",
+              "Equipment (helmet, pads, cleats, gloves), registration, uniform, coaching, travel, tournaments, insurance.",
+            ],
+          ],
+        },
+      },
     },
     {
       id: "3",
-      title: "Poor Products",
+      title: "Why Every Community Should Invest In Youth Sports In America",
       description:
-        "This might be one of the most difficult challenges for children, parents, coaches, and community members alike. Trying to garner enthusiasm for a poor product is an insurmountable obstacle. Quality can make or break your fundraising efforts. So when a donor contributes, they expect to receive a product that aligns with the value they're offering. Low-quality merchandise means low sales, leftover inventory, and a damaged reputation. Not only do buyers feel misled, but they're also less likely to participate in future fundraisers. This is why it's so important to invest in quality goods. A low-cost product that is highly desirable can make all the difference. Solution: Let's face it. No one really wants to buy overpriced wrapping paper or stale cookie dough. Much less buying a novelty item that is poorly made and that they will never use. Candy is an easy \"yes.\" It moves fast, so you're not stuck with leftover inventory. You have high profit margins, so teams and club members get to keep more of the money raised. Plus, it's a tested product, which means no surprises and no complaints. Best of all, children, parents, and volunteers feel more confident selling something they actually believe in. Offering people a treat they're happy to pay for takes away the pressure that comes with traditional fundraising. All in all, it's a winning combination. Ready to raise more, with less stress? Reach out today and find out how easy it is to get started!",
+        "Youth sports in America represent more than just games and competitions—they are fundamental building blocks for healthy communities, strong families, and successful futures. Investing in youth sports programs yields returns that extend far beyond the playing field, creating positive ripple effects throughout society. From improving children's physical and mental health to teaching essential life skills and building stronger communities, youth sports programs are one of the most valuable investments a community can make.",
       image: "/assets/images/blog1.png",
       date: "Jul 06, 2021",
       author: "Marie Caphlish",
-      wrapper: false,
+      wrapper: true,
+      content: {
+        sections: [
+          {
+            title: "Why We Can't Afford To Lose Youth Sports",
+            content:
+              "Youth sports programs are facing unprecedented challenges in today's society. Budget cuts, facility closures, and increasing costs threaten to make these valuable programs inaccessible to many families. However, the consequences of losing youth sports extend far beyond the playing field. Communities that lose their youth sports programs face increased healthcare costs, higher crime rates, decreased academic performance, and weakened social bonds. The investment in youth sports is not just about recreation—it's about building the foundation for a healthier, more connected, and more successful society.",
+          },
+          {
+            title: "Candy Fundraising: Sweet And Profitable",
+            content:
+              "Candy fundraising offers the perfect solution to support youth sports programs while engaging the entire community. With high profit margins, universal appeal, and simple logistics, candy fundraising makes it easy for teams, schools, and organizations to raise the funds they need to keep their programs running. The benefits include: High profit margins that maximize fundraising returns, Easy to sell products that appeal to everyone, Fun and engaging activities that kids love, Flexible and adaptable to any schedule or group size, No complicated logistics or inventory management, Community-wide participation that builds support for youth programs.",
+          },
+        ],
+        list: [
+          {
+            title: "They Improve Children's Physical Health",
+            content:
+              "Regular participation in youth sports helps children develop strong bones, muscles, and cardiovascular systems. It reduces the risk of obesity, diabetes, and other health conditions while promoting healthy habits that last a lifetime. Physical activity through sports also improves coordination, balance, and motor skills, contributing to overall physical development and well-being.",
+          },
+          {
+            title: "They Teach Essential Life Skills",
+            content:
+              "Youth sports teach children invaluable life skills including teamwork, leadership, communication, problem-solving, and time management. These skills translate directly to academic success, career advancement, and personal relationships. Children learn to work with others, handle pressure, set goals, and persevere through challenges—skills that are essential for success in all areas of life.",
+          },
+          {
+            title: "They Support Academic Success",
+            content:
+              "Research consistently shows that children who participate in youth sports perform better academically. Sports participation improves concentration, memory, and cognitive function. It also teaches time management skills as children learn to balance schoolwork with practice and games. The discipline and focus required in sports directly translate to improved classroom performance and higher graduation rates.",
+          },
+          {
+            title: "They Build Stronger Communities",
+            content:
+              "Youth sports bring families, neighbors, and community members together in support of common goals. They create opportunities for social interaction, volunteerism, and community pride. Sports programs often serve as gathering places where relationships are built and community bonds are strengthened, creating a more connected and supportive environment for everyone.",
+          },
+          {
+            title: "They Encourage A Growth Mindset",
+            content:
+              "Youth sports teach children that improvement comes through effort, practice, and perseverance. They learn to embrace challenges, learn from mistakes, and continuously work to improve their skills. This growth mindset extends beyond sports to all areas of life, helping children become resilient, confident, and successful adults who are not afraid to take on new challenges and opportunities.",
+          },
+        ],
+      },
     },
   ],
   sideBarData: [
@@ -58,9 +215,27 @@ export const blogPageData = {
       image: "/assets/images/blog1.png",
     },
     {
-      title: "Fundraiser Fatigue",
+      title: "Lack Of Manpower",
       description:
-        "Fundraiser fatigue is not uncommon amongst families. Everyone's been there: \"another catalog, another theme, another guilt trip…\" How often do you see parents sigh and shake their heads when their kid walks through the door with yet another thing to raise funds for? The financial pressure is immense as more and more parents experience burnout from all these campaigns. This is especially prevalent when there is more than one child's activities to deal with. Ordering, selling, and keeping track of multiple fundraising efforts wears everyone out. It's always a hassle asking the same family members and neighbors over and over again. This is especially true when the products aren't that great, not to say entirely useless. Solution: This is where candy fundraising stands out. There is no clutter involved, no complicated order forms, and definitely no awkward pitches to family and friends. You're offering something everyone already enjoys. Instead of trying to juggle five fundraisers all at once, you can focus on the one that actually works. Candy is easy to carry, and it delivers high profit margins.",
+        "Recruiting and retaining volunteers is one of the biggest challenges facing youth organizations today. Parents are busier than ever, juggling work, family responsibilities, and personal commitments. Finding people willing to dedicate their time and energy to fundraising efforts can be incredibly difficult. Even when volunteers are found, keeping them engaged and motivated throughout the fundraising campaign is another challenge entirely. Solution: Candy fundraising requires minimal volunteer involvement. With simple logistics and high-profit margins, you need fewer people to achieve better results. The product sells itself, reducing the need for extensive volunteer training or complex coordination. This makes it easier to recruit volunteers and keep them engaged throughout the fundraising process.",
+      image: "/assets/images/blog1.png",
+    },
+    {
+      title: "Fundraising That Doesn't Burn You Out",
+      description:
+        "Traditional fundraising methods often require extensive planning, coordination, and volunteer management that can quickly lead to burnout among organizers and participants. The stress of managing complex logistics, tracking orders, and coordinating volunteers can make fundraising feel like a second job. Solution: Candy fundraising eliminates the complexity and stress of traditional fundraising. With simple logistics, high-profit margins, and universal appeal, it's designed to be easy and enjoyable for everyone involved. No complex order forms, no inventory management headaches, and no volunteer coordination nightmares—just simple, profitable fundraising that works.",
+      image: "/assets/images/blog1.png",
+    },
+    {
+      title: "How Candy Fundraising Works",
+      description:
+        "Candy fundraising is designed to be simple, profitable, and enjoyable for everyone involved. Here's how it works: Choose your candy products from our selection of high-quality, popular options. Set your own prices to maximize profit margins. Receive your candy shipment with everything you need to get started. Sell to friends, family, neighbors, and community members. Keep the profits to support your youth activities. It's that simple! No complicated logistics, no inventory management, and no volunteer coordination headaches. Just pure, profitable fundraising that everyone can enjoy.",
+      image: "/assets/images/blog1.png",
+    },
+    {
+      title: "Where Fundraising Comes In",
+      description:
+        "Fundraising plays a crucial role in making youth sports accessible to all children, regardless of their family's financial situation. It helps cover the costs of equipment, facilities, coaching, and other expenses that make these programs possible. Without effective fundraising, many children would be unable to participate in the activities that provide so many benefits to their development and well-being. Candy fundraising offers a simple, profitable solution that makes it easy for organizations to raise the funds they need while engaging the entire community in support of youth programs.",
       image: "/assets/images/blog1.png",
     },
   ],
@@ -68,12 +243,12 @@ export const blogPageData = {
 
 // Function to get blog data by ID
 export const getBlogById = (id: string) => {
-  return blogPageData.blogData.find(blog => blog.id === id);
+  return blogPageData.blogData.find((blog) => blog.id === id);
 };
 
 // Function to get all blog IDs for static generation
 export const getAllBlogIds = () => {
-  return blogPageData.blogData.map(blog => blog.id);
+  return blogPageData.blogData.map((blog) => blog.id);
 };
 
 // Terms and Conditions page data
@@ -131,7 +306,7 @@ export const privacyPageData = {
       id: "1",
       title: "1. Scope of this Policy",
       description:
-        "1.1 This Policy Applies To All Users Of The Website, Including: (a) Registered 501(c)(3) charitable organizations (\"Organizations\") participating in virtual fundraising campaigns; (b) Consumers purchasing Licorice Ropes Candy (\"Products\") through the Website; and (c) Visitors browsing the Website. 1.2 This Policy covers personal information, defined as any information that identifies or can be used to identify an individual, collected through the Website or our services. 1.3 This Policy does not apply to information collected offline or through third-party websites linked from our Website, which may have their own privacy practices.",
+        '1.1 This Policy Applies To All Users Of The Website, Including: (a) Registered 501(c)(3) charitable organizations ("Organizations") participating in virtual fundraising campaigns; (b) Consumers purchasing Licorice Ropes Candy ("Products") through the Website; and (c) Visitors browsing the Website. 1.2 This Policy covers personal information, defined as any information that identifies or can be used to identify an individual, collected through the Website or our services. 1.3 This Policy does not apply to information collected offline or through third-party websites linked from our Website, which may have their own privacy practices.',
       image: "/assets/images/blog1.png",
       date: "Jul 06, 2021",
       author: "Legal Team",
@@ -166,4 +341,4 @@ export const privacyPageData = {
       image: "/assets/images/blog1.png",
     },
   ],
-}; 
+};

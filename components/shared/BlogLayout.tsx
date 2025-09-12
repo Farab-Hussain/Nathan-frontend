@@ -11,6 +11,22 @@ interface BlogItem {
   date: string;
   author: string;
   wrapper?: boolean;
+  content?: {
+    sections?: Array<{
+      title: string;
+      content: string;
+      image?: string;
+    }>;
+    table?: {
+      title: string;
+      headers: string[];
+      rows: string[][];
+    };
+    list?: Array<{
+      title: string;
+      content: string;
+    }>;
+  };
 }
 
 interface SideBarItem {
@@ -46,6 +62,7 @@ const BlogLayout = ({ pageTitle, breadcrumbText, blogData, sideBarData }: BlogLa
                   date={item.date}
                   author={item.author}
                   wrapper={item.wrapper}
+                  content={item.content}
                 />
               );
             })}
