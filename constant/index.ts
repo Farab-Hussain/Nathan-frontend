@@ -13,7 +13,7 @@ export const navLinks = [
   },
   {
     label: "Blog",
-    href: "/blogs",
+    href: "/blog-main",
   },
 ];
 

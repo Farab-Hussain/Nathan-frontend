@@ -4,7 +4,7 @@ import AnimatedText from "@/components/custom/AnimatedText";
 
 interface SideBarProps {
   title: string;
-  description: string;
+  description: string | string[];
   image: string;
 }
 
@@ -26,9 +26,17 @@ const SideBar = ({ title, description, image }: SideBarProps) => {
         stagger={0.08}
         triggerStart="top 85%"
       />
-      <p className="text-sm text-[#555555] leading-6">
-        {description}
-      </p>
+      <div className="text-sm text-[#555555] leading-6">
+        {Array.isArray(description) ? (
+          description.map((paragraph, index) => (
+            <p key={index} className="mb-3 last:mb-0">
+              {paragraph}
+            </p>
+          ))
+        ) : (
+          <p>{description}</p>
+        )}
+      </div>
     </div>
   );
 };

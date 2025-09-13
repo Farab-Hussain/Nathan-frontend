@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import AnimatedText from "@/components/custom/AnimatedText";
@@ -31,10 +31,6 @@ interface BlogCardProps {
 }
 
 const BlogCard = ({ id, title, description, image, date, author, wrapper, content }: BlogCardProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const toggleReadMore = () => {
-    setIsOpen(!isOpen);
-  };
 
   const renderContent = () => {
     if (!content) return null;
@@ -160,12 +156,8 @@ const BlogCard = ({ id, title, description, image, date, author, wrapper, conten
         {description}
       </p>
       
-      {/* Render rich content when expanded */}
-      {isOpen && renderContent()}
-      
-      <button onClick={toggleReadMore} className="text-sm text-black font-light leading-6 self-start">
-        {isOpen ? "Read Less" : "Read More"}
-      </button>
+      {/* Render rich content */}
+      {renderContent()}
     </div>
   );
 };

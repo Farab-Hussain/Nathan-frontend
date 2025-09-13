@@ -31,7 +31,7 @@ interface BlogItem {
 
 interface SideBarItem {
   title: string;
-  description: string;
+  description: string | string[];
   image: string;
 }
 

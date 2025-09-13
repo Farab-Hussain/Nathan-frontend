@@ -26,7 +26,7 @@ export interface BlogItem {
 
 export interface SideBarItem {
   title: string;
-  description: string;
+  description: string | string[];
   image: string;
 }
 
@@ -50,12 +50,13 @@ export const blogPageData = {
             title: "Poor Planning",
             content:
               "No matter how small, every fundraiser requires some planning. Poor planning is one of the main reasons why many fundraisers fail. Each event requires a detailed roadmap with clear goals, budgets, timelines, volunteer roles, and promotion tactics. Without a strategic annual plan, youth events and activities quickly become disorganized. Unfortunately, it's quite common to set unrealistic goals and weak incentives. Poor planning also means poor communication. Tasks overlap, deadlines get missed, enthusiasm wanes, and you end up with a complete disaster. Solution: Our candy will make your fundraiser a smashing success. There's no need for meticulous order tracking and long inventory spreadsheets. You get one shipment, set your own prices, and sell a product everyone knows (and loves!). There is no long approval process or confusing logistics to handle. Plus, it's highly flexible. Kids and volunteers can sell on the go and start raising money to support youth activities and events. We're here to simplify fundraising for you with a tried-and-true favorite that always delivers.",
-            image: "/assets/images/blog1.png",
+            image: "/assets/images/blog2.png",
           },
           {
             title: "Poor Products",
             content:
               "This might be one of the most difficult challenges for children, parents, coaches, and community members alike. Trying to garner enthusiasm for a poor product is an insurmountable obstacle. Quality can make or break your fundraising efforts. So when a donor contributes, they expect to receive a product that aligns with the value they're offering. Low-quality merchandise means low sales, leftover inventory, and a damaged reputation. Not only do buyers feel misled, but they're also less likely to participate in future fundraisers. This is why it's so important to invest in quality goods. A low-cost product that is highly desirable can make all the difference. Solution: Let's face it. No one really wants to buy overpriced wrapping paper or stale cookie dough. Much less buying a novelty item that is poorly made and that they will never use. Candy is an easy \"yes.\" It moves fast, so you're not stuck with leftover inventory. You have high profit margins, so teams and club members get to keep more of the money raised. Plus, it's a tested product, which means no surprises and no complaints. Best of all, children, parents, and volunteers feel more confident selling something they actually believe in. Offering people a treat they're happy to pay for takes away the pressure that comes with traditional fundraising. All in all, it's a winning combination. Ready to raise more, with less stress? Reach out today and find out how easy it is to get started!",
+            image: "/assets/images/blog2.png",
           },
         ],
       },
@@ -211,14 +212,20 @@ export const blogPageData = {
     {
       title: "Fundraiser Fatigue",
       description:
-        "Fundraiser fatigue is not uncommon amongst families. Everyone's been there: \"another catalog, another theme, another guilt trip…\" How often do you see parents sigh and shake their heads when their kid walks through the door with yet another thing to raise funds for? The financial pressure is immense as more and more parents experience burnout from all these campaigns. This is especially prevalent when there is more than one child's activities to deal with. Ordering, selling, and keeping track of multiple fundraising efforts wears everyone out. It's always a hassle asking the same family members and neighbors over and over again. This is especially true when the products aren't that great, not to say entirely useless. Solution: This is where candy fundraising stands out. There is no clutter involved, no complicated order forms, and definitely no awkward pitches to family and friends. You're offering something everyone already enjoys. Instead of trying to juggle five fundraisers all at once, you can focus on the one that actually works. Candy is easy to carry, and it delivers high profit margins.",
-      image: "/assets/images/blog1.png",
+        "Fundraiser fatigue is not uncommon amongst families. Everyone’s been there: “another catalog, another theme, another guilt trip…” How often do you see parents sigh and shake their heads when their kid walks through the door with yet another thing to raise funds for? The financial pressure is immense as more and more parents experience burnout from all these campaigns. This is especially prevalent when there is more than one child’s activities to deal with. Ordering, selling, and keeping track of multiple fundraising efforts wears everyone out. It’s always a hassle asking the same family members and neighbors over and over again. This is especially true when the products aren’t that great, not to say entirely useless.Solution: This is where candy fundraising stands out. There is no clutter involved, no complicated order forms, and definitely no awkward pitches to family and friends. You’re offering something everyone already enjoys. Instead of trying to juggle five fundraisers all at once, you can focus on the one that actually works. Candy is easy to carry, and it delivers high profit margins.",
+      image: "/assets/images/blog3.png",
     },
     {
       title: "Lack Of Manpower",
-      description:
-        "Recruiting and retaining volunteers is one of the biggest challenges facing youth organizations today. Parents are busier than ever, juggling work, family responsibilities, and personal commitments. Finding people willing to dedicate their time and energy to fundraising efforts can be incredibly difficult. Even when volunteers are found, keeping them engaged and motivated throughout the fundraising campaign is another challenge entirely. Solution: Candy fundraising requires minimal volunteer involvement. With simple logistics and high-profit margins, you need fewer people to achieve better results. The product sells itself, reducing the need for extensive volunteer training or complex coordination. This makes it easier to recruit volunteers and keep them engaged throughout the fundraising process.",
-      image: "/assets/images/blog1.png",
+      description: [
+        "There’s only so much time parents, teachers, community members, and children can give. Volunteering can be quite exhausting, and the burnout sets in fast. This leaves only a small group to bear the heavy load. As life gets more complicated, finding the time to support youth programs can be virtually impossible.",
+        "In a 2020 survey, respondents estimated spending between 100 and 500 hours on school fundraising efforts. This means committing 10 hours every week, the equivalent of working a part-time job. What we end up with is a small group of people doing the bulk of the work.",
+        "This, undoubtedly, causes a great deal of stress, not to mention the organizational strain. With no one else to step in, burnout settles, and events lose momentum. After one too many bake sales, sign-ups start to dwindle, and there’s no one left to organize the next event.",
+        "Solution: Product-based fundraisers require fewer volunteers compared to labor-intensive ones like carnivals and raffles. When time and people are in short supply, there is but one fundraiser to consider: candy! Forget about securing permits and booking venues. You don’t even need any special equipment -this means no tables, tickets, or signage. With a few people to manage inventory, distribution, and cash collection, you don’t need any large teams either.",
+        "Candy fundraising works because it’s immediate, simple, and doesn’t require all the logistical planning that kills other fundraisers.” – Independent School Fundraising Blog",
+        "Even better, you can sell anywhere, anytime. No need to rearrange your entire week or worry about long volunteer shifts. Candy is universally loved, and selling it is refreshingly low-lift.",
+      ],
+      image: "/assets/images/blog4.png",
     },
     {
       title: "Fundraising That Doesn't Burn You Out",
