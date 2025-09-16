@@ -8,7 +8,6 @@ const page = () => {
       pageTitle={blogPageData.pageTitle}
       breadcrumbText={blogPageData.breadcrumbText}
       blogData={blogPageData.blogData}
-      sideBarData={blogPageData.sideBarData}
     />
   );
 };

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,7 +15,7 @@ interface BlogCardProps {
   content?: {
     sections?: Array<{
       title: string;
-      content: string;
+      content: string | string[];
       image?: string;
     }>;
     table?: {
@@ -30,33 +30,53 @@ interface BlogCardProps {
   };
 }
 
-const BlogCard = ({ id, title, description, image, date, author, wrapper, content }: BlogCardProps) => {
-
+const BlogCard = ({
+  id,
+  title,
+  description,
+  image,
+  date,
+  author,
+  wrapper,
+  content,
+}: BlogCardProps) => {
   const renderContent = () => {
     if (!content) return null;
 
     return (
       <div className="space-y-6">
         {/* Render Sections */}
-        {content.sections && content.sections.map((section, index) => (
-          <div key={index} className="space-y-4">
-            <h3 className="text-xl md:text-2xl font-semibold text-black">
-              {section.title}
-            </h3>
-            {section.image && (
-              <Image
-                src={section.image}
-                alt={section.title}
-                width={1000}
-                height={1000}
-                className="rounded-lg w-full h-auto"
-              />
-            )}
-            <p className="text-sm text-[#555555] font-light leading-6">
-              {section.content}
-            </p>
-          </div>
-        ))}
+        {content.sections &&
+          content.sections.map((section, index) => (
+            <div key={index} className="space-y-4">
+              <h3 className="text-xl md:text-2xl font-semibold text-black">
+                {section.title}
+              </h3>
+              {section.image && (
+                <Image
+                  src={section.image}
+                  alt={section.title}
+                  width={1000}
+                  height={1000}
+                  className="rounded-lg w-full h-auto"
+                />
+              )}
+              <div className="text-sm text-[#555555] font-light leading-6">
+                {Array.isArray(section.content) ? (
+                  <div className="space-y-2">
+                    {section.content.map((paragraph, pIndex) => (
+                      <p
+                        key={pIndex}
+                        dangerouslySetInnerHTML={{ __html: paragraph }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p dangerouslySetInnerHTML={{ __html: section.content }} />
+                )}
+              </div>
+            </div>
+          ))}
 
         {/* Render Table */}
         {content.table && (
@@ -69,7 +89,10 @@ const BlogCard = ({ id, title, description, image, date, author, wrapper, conten
                 <thead>
                   <tr className="bg-gray-50">
                     {content.table.headers.map((header, index) => (
-                      <th key={index} className="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">
+                      <th
+                        key={index}
+                        className="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700"
+                      >
                         {header}
                       </th>
                     ))}
@@ -77,9 +100,15 @@ const BlogCard = ({ id, title, description, image, date, author, wrapper, conten
                 </thead>
                 <tbody>
                   {content.table.rows.map((row, rowIndex) => (
-                    <tr key={rowIndex} className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                    <tr
+                      key={rowIndex}
+                      className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    >
                       {row.map((cell, cellIndex) => (
-                        <td key={cellIndex} className="border border-gray-300 px-4 py-2 text-sm text-gray-600">
+                        <td
+                          key={cellIndex}
+                          className="border border-gray-300 px-4 py-2 text-sm text-gray-600"
+                        >
                           {cell}
                         </td>
                       ))}
@@ -129,7 +158,7 @@ const BlogCard = ({ id, title, description, image, date, author, wrapper, conten
             splitBy="character"
             duration={0.1}
             stagger={0.01}
-            triggerStart="top 90%"
+            triggerStart="top top"
           />
           <hr className="w-2 h-1 bg-black" />
           <Image
@@ -139,9 +168,7 @@ const BlogCard = ({ id, title, description, image, date, author, wrapper, conten
             height={40}
             className="rounded-lg"
           />
-          <p className="text-sm text-black font-light uppercase">
-            {author}
-          </p>
+          <p className="text-sm text-black font-light uppercase">{author}</p>
         </div>
       )}
       <AnimatedText
@@ -155,7 +182,7 @@ const BlogCard = ({ id, title, description, image, date, author, wrapper, conten
       <p className="text-sm text-[#555555] font-light leading-6">
         {description}
       </p>
-      
+
       {/* Render rich content */}
       {renderContent()}
     </div>

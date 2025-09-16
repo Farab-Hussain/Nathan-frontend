@@ -76,12 +76,8 @@ const LoginPage = () => {
         { withCredentials: true }
       );
 
-      // Check if user needs verification
-      if (
-        response.data?.requiresVerification ||
-        response.data?.user?.requiresVerification ||
-        response.data?.user?.isVerified === false
-      ) {
+      // Check if user needs verification - only redirect if explicitly required
+      if (response.data?.requiresVerification) {
         // Redirect to verification page with email
         router.push(
           `/auth/verify-email?email=${encodeURIComponent(form.email)}`

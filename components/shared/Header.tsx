@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
 import { useCartStore } from "@/store/cartStore";
 import axios from "axios";
+import { useWishlistStore } from "@/store/wishlistStore";
 
 // Define types for navLinks and subLinks
 type SubLink = {
@@ -23,10 +24,13 @@ type NavLink = {
 };
 
 const Header = () => {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL ;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const { user, loading, error, clearUser } = useUser();
   const { getItemCount } = useCartStore();
-  const [mobileDropdownOpen, setMobileDropdownOpen] = useState<string | null>(null);
+  const { getItemCount: getWishlistItemCount } = useWishlistStore();
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState<string | null>(
+    null
+  );
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -120,7 +124,7 @@ const Header = () => {
                   <div
                     key={link.label}
                     className="relative group"
-                    ref={el => {
+                    ref={(el) => {
                       dropdownRefs.current[link.label] = el;
                     }}
                   >
@@ -192,23 +196,40 @@ const Header = () => {
           {/* Actions - right */}
           <div className="flex items-center gap-3 flex-shrink-0">
             {error && (
-              <div className="text-xs text-orange-500 bg-orange-50 px-2 py-1 rounded" title={error}>
+              <div
+                className="text-xs text-orange-500 bg-orange-50 px-2 py-1 rounded"
+                title={error}
+              >
                 ⚠️ Rate limited
               </div>
             )}
-            <Link href={"/cart"} className="relative p-2 rounded transition cursor-pointer">
+            <Link
+              href={"/cart"}
+              className="relative p-2 rounded transition cursor-pointer"
+            >
               <ShoppingCart className="w-6 h-6" />
               {getItemCount() > 0 && (
                 <span className="absolute -top-1 -right-1 bg-[#FF5D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                  {getItemCount() > 99 ? '99+' : getItemCount()}
+                  {getItemCount() > 99 ? "99+" : getItemCount()}
                 </span>
               )}
             </Link>
-            <Link href="/wishlist" className="p-2 rounded transition cursor-pointer">
+            <Link
+              href="/wishlist"
+              className="relative p-2 rounded transition cursor-pointer"
+            >
               <Heart className="w-6 h-6" />
+              {getWishlistItemCount() > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#FF5D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold z-10">
+                  {getWishlistItemCount() > 99 ? "99+" : getWishlistItemCount()}
+                </span>
+              )}
             </Link>
             {user && (
-              <Link href="/profile" className="hidden lg:block text-white hover:opacity-80 transition-opacity">
+              <Link
+                href="/profile"
+                className="hidden lg:block text-white hover:opacity-80 transition-opacity"
+              >
                 Profile
               </Link>
             )}
@@ -226,7 +247,11 @@ const Header = () => {
               aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
               onClick={() => setMobileNavOpen((prev) => !prev)}
             >
-              {mobileNavOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileNavOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </div>
@@ -240,7 +265,9 @@ const Header = () => {
         />
         <div
           className={`fixed top-0 right-0 z-50 h-full w-4/5 max-w-xs bg-primary shadow-lg transform transition-transform duration-300 ease-in-out
-            ${mobileNavOpen ? "translate-x-0" : "translate-x-full"} lg:hidden flex flex-col`}
+            ${
+              mobileNavOpen ? "translate-x-0" : "translate-x-full"
+            } lg:hidden flex flex-col`}
           style={{ minHeight: "100vh" }}
         >
           <div className="flex items-center justify-between w-full px-4 py-4 border-b border-gray-200">
@@ -281,18 +308,14 @@ const Header = () => {
                       className="flex items-center justify-between w-full text-base font-poppins py-2 px-2 border-b border-gray-200"
                       onClick={() =>
                         setMobileDropdownOpen(
-                          mobileDropdownOpen === link.label
-                            ? null
-                            : link.label
+                          mobileDropdownOpen === link.label ? null : link.label
                         )
                       }
                     >
                       {link.label}
                       <svg
                         className={`w-4 h-4 ml-1 transition-transform ${
-                          mobileDropdownOpen === link.label
-                            ? "rotate-180"
-                            : ""
+                          mobileDropdownOpen === link.label ? "rotate-180" : ""
                         }`}
                         fill="none"
                         stroke="currentColor"
@@ -352,11 +375,15 @@ const Header = () => {
             )}
           </nav>
           <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100">
-            <Link href={"/cart"} onClick={() => setMobileNavOpen(false)} className="relative cursor-pointer">
+            <Link
+              href={"/cart"}
+              onClick={() => setMobileNavOpen(false)}
+              className="relative cursor-pointer"
+            >
               <ShoppingCart className="w-6 h-6" />
               {getItemCount() > 0 && (
                 <span className="absolute -top-1 -right-1 bg-[#FF5D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                  {getItemCount() > 99 ? '99+' : getItemCount()}
+                  {getItemCount() > 99 ? "99+" : getItemCount()}
                 </span>
               )}
             </Link>

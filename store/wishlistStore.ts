@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export type WishlistItem = {
   id: string;
@@ -16,12 +16,13 @@ type WishlistState = {
   loading: boolean;
   error: string | null;
   // Actions
-  addItem: (item: Omit<WishlistItem, 'id'>) => void;
+  addItem: (item: Omit<WishlistItem, "id">) => void;
   removeItem: (productId: string) => void;
   clearWishlist: () => void;
   isInWishlist: (productId: string) => boolean;
   // Computed
   getItemCount: () => number;
+  getTotal: () => number;
 };
 
 export const useWishlistStore = create<WishlistState>()(
@@ -33,17 +34,24 @@ export const useWishlistStore = create<WishlistState>()(
 
       addItem: (newItem) => {
         const { items } = get();
-        const existingItem = items.find(item => item.productId === newItem.productId);
-        
+        const existingItem = items.find(
+          (item) => item.productId === newItem.productId
+        );
+
         if (!existingItem) {
-          const itemWithId = { ...newItem, id: `${newItem.productId}-${Date.now()}` };
+          const itemWithId = {
+            ...newItem,
+            id: `${newItem.productId}-${Date.now()}`,
+          };
           set({ items: [...items, itemWithId] });
         }
       },
 
       removeItem: (productId) => {
         const { items } = get();
-        const updatedItems = items.filter(item => item.productId !== productId);
+        const updatedItems = items.filter(
+          (item) => item.productId !== productId
+        );
         set({ items: updatedItems });
       },
 
@@ -53,16 +61,21 @@ export const useWishlistStore = create<WishlistState>()(
 
       isInWishlist: (productId) => {
         const { items } = get();
-        return items.some(item => item.productId === productId);
+        return items.some((item) => item.productId === productId);
       },
 
       getItemCount: () => {
         const { items } = get();
         return items.length;
       },
+
+      getTotal: () => {
+        const { items } = get();
+        return items.reduce((total, item) => total + item.price, 0);
+      },
     }),
     {
-      name: 'wishlist-storage',
+      name: "wishlist-storage",
       partialize: (state) => ({ items: state.items }),
     }
   )

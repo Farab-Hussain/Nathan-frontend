@@ -11,7 +11,7 @@ const Fundraising = () => {
   // Calculate fundraising amount based on participants
   const calculateAmount = (participants: number) => {
     // $100 per seller over 4 days
-    return participants * 100;
+    return participants * 180;
   };
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -19,10 +19,10 @@ const Fundraising = () => {
   };
 
   return (
-    <section className='w-full min-h-full flex flex-col items-center justify-center relative py-8 md:py-20 px-4 md:px-8 bg-white'>
+    <section className="w-full min-h-full flex flex-col items-center justify-center relative py-8 md:py-20 px-4 md:px-8 bg-white">
       <div className="absolute inset-0 w-full h-full z-0 bg-[url('/assets/images/fundbg.png')] bg-cover bg-center bg-no-repeat"></div>
 
-      <AnimatedSection 
+      <AnimatedSection
         animationType="slideUp"
         duration={0.5}
         delay={0.2}

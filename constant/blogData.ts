@@ -9,7 +9,7 @@ export interface BlogItem {
   content?: {
     sections?: Array<{
       title: string;
-      content: string;
+      content: string | string[];
       image?: string;
     }>;
     table?: {
@@ -22,12 +22,6 @@ export interface BlogItem {
       content: string;
     }>;
   };
-}
-
-export interface SideBarItem {
-  title: string;
-  description: string | string[];
-  image: string;
 }
 
 // Blog page data
@@ -48,14 +42,16 @@ export const blogPageData = {
         sections: [
           {
             title: "Poor Planning",
-            content:
+            content: [
               "No matter how small, every fundraiser requires some planning. Poor planning is one of the main reasons why many fundraisers fail. Each event requires a detailed roadmap with clear goals, budgets, timelines, volunteer roles, and promotion tactics. Without a strategic annual plan, youth events and activities quickly become disorganized. Unfortunately, it's quite common to set unrealistic goals and weak incentives. Poor planning also means poor communication. Tasks overlap, deadlines get missed, enthusiasm wanes, and you end up with a complete disaster. Solution: Our candy will make your fundraiser a smashing success. There's no need for meticulous order tracking and long inventory spreadsheets. You get one shipment, set your own prices, and sell a product everyone knows (and loves!). There is no long approval process or confusing logistics to handle. Plus, it's highly flexible. Kids and volunteers can sell on the go and start raising money to support youth activities and events. We're here to simplify fundraising for you with a tried-and-true favorite that always delivers.",
+            ],
             image: "/assets/images/blog2.png",
           },
           {
             title: "Poor Products",
-            content:
+            content: [
               "This might be one of the most difficult challenges for children, parents, coaches, and community members alike. Trying to garner enthusiasm for a poor product is an insurmountable obstacle. Quality can make or break your fundraising efforts. So when a donor contributes, they expect to receive a product that aligns with the value they're offering. Low-quality merchandise means low sales, leftover inventory, and a damaged reputation. Not only do buyers feel misled, but they're also less likely to participate in future fundraisers. This is why it's so important to invest in quality goods. A low-cost product that is highly desirable can make all the difference. Solution: Let's face it. No one really wants to buy overpriced wrapping paper or stale cookie dough. Much less buying a novelty item that is poorly made and that they will never use. Candy is an easy \"yes.\" It moves fast, so you're not stuck with leftover inventory. You have high profit margins, so teams and club members get to keep more of the money raised. Plus, it's a tested product, which means no surprises and no complaints. Best of all, children, parents, and volunteers feel more confident selling something they actually believe in. Offering people a treat they're happy to pay for takes away the pressure that comes with traditional fundraising. All in all, it's a winning combination. Ready to raise more, with less stress? Reach out today and find out how easy it is to get started!",
+            ],
             image: "/assets/images/blog2.png",
           },
         ],
@@ -74,8 +70,10 @@ export const blogPageData = {
         sections: [
           {
             title: "The Real Price Of Enrichment",
-            content:
+            content: [
               "Youth activities and sports programs provide invaluable benefits to children, from physical health and teamwork skills to academic success and community building. However, these programs come with significant costs that many families struggle to afford. The financial burden of youth activities can be substantial, including equipment, uniforms, coaching fees, travel expenses, and facility costs. Understanding these costs is crucial for communities to appreciate the value of fundraising efforts and the importance of making these activities accessible to all children, regardless of their family's financial situation.",
+            ],
+            image: "/assets/images/blog1.png",
           },
         ],
         table: {
@@ -169,13 +167,17 @@ export const blogPageData = {
         sections: [
           {
             title: "Why We Can't Afford To Lose Youth Sports",
-            content:
+            content: [
               "Youth sports programs are facing unprecedented challenges in today's society. Budget cuts, facility closures, and increasing costs threaten to make these valuable programs inaccessible to many families. However, the consequences of losing youth sports extend far beyond the playing field. Communities that lose their youth sports programs face increased healthcare costs, higher crime rates, decreased academic performance, and weakened social bonds. The investment in youth sports is not just about recreation—it's about building the foundation for a healthier, more connected, and more successful society.",
+            ],
+            image: "/assets/images/blog2.png",
           },
           {
             title: "Candy Fundraising: Sweet And Profitable",
-            content:
+            content: [
               "Candy fundraising offers the perfect solution to support youth sports programs while engaging the entire community. With high profit margins, universal appeal, and simple logistics, candy fundraising makes it easy for teams, schools, and organizations to raise the funds they need to keep their programs running. The benefits include: High profit margins that maximize fundraising returns, Easy to sell products that appeal to everyone, Fun and engaging activities that kids love, Flexible and adaptable to any schedule or group size, No complicated logistics or inventory management, Community-wide participation that builds support for youth programs.",
+            ],
+            image: "/assets/images/blog3.png",
           },
         ],
         list: [
@@ -207,45 +209,113 @@ export const blogPageData = {
         ],
       },
     },
-  ],
-  sideBarData: [
     {
-      title: "Fundraiser Fatigue",
+      id: "4",
+      title:
+        "Why People Contribute to Fundraisers: The Heart Behind Every Gift",
       description:
-        "Fundraiser fatigue is not uncommon amongst families. Everyone’s been there: “another catalog, another theme, another guilt trip…” How often do you see parents sigh and shake their heads when their kid walks through the door with yet another thing to raise funds for? The financial pressure is immense as more and more parents experience burnout from all these campaigns. This is especially prevalent when there is more than one child’s activities to deal with. Ordering, selling, and keeping track of multiple fundraising efforts wears everyone out. It’s always a hassle asking the same family members and neighbors over and over again. This is especially true when the products aren’t that great, not to say entirely useless.Solution: This is where candy fundraising stands out. There is no clutter involved, no complicated order forms, and definitely no awkward pitches to family and friends. You’re offering something everyone already enjoys. Instead of trying to juggle five fundraisers all at once, you can focus on the one that actually works. Candy is easy to carry, and it delivers high profit margins.",
+        "Fundraising is more than just asking for money—it's about connecting with people's values, emotions, and aspirations. Whether it's a local charity, a national campaign, or a sweet Southern initiative with a purpose, understanding why people give can transform the way we inspire generosity. Let's explore the top reasons why people contribute to fundraisers—and how fundraisers can tap into these motivations to build lasting support.",
       image: "/assets/images/blog3.png",
+      date: "Dec 15, 2024",
+      author: "Marie Caphlish",
+      wrapper: true,
+      content: {
+        sections: [
+          {
+            title: "1. Altruism: Giving for the Greater Good",
+            content: [
+              "At the core of many donations lies a simple yet powerful force: altruism. People give because they care. They want to help others, support causes that matter, and make the world a little better than they found it.",
+              "This instinct is often shaped by personal values, upbringing, or cultural and religious beliefs. When fundraisers speak to this sense of shared humanity, they unlock a deep well of generosity.",
+              "This instinct is often shaped by personal values, upbringing, or cultural and religious beliefs. When fundraisers speak to this sense of shared humanity, they unlock a deep well of generosity.",
+              "<strong>Tip for fundraisers:</strong> Use messaging that emphasizes ethical imperatives and collective impact. Phrases like “Your gift can save a life” or “Together, we can make a difference” resonate deeply.",
+            ],
+            image: "/assets/images/blog1.png",
+          },
+          {
+            title: "2. The “Warm-Glow” Effect: Giving Feels Good",
+            content: [
+              "Science backs it up—giving activates the brain’s reward centers, releasing feel-good chemicals like dopamine. This emotional satisfaction, often called the “warm-glow” effect, reinforces the act of giving and makes donors feel proud, joyful, and fulfilled.",
+              "<strong>Tip for fundraisers:</strong> Share stories of impact that evoke positive emotions. Send personalized thank-you notes and updates that remind donors of the good they’ve done.",
+              "<strong>Example:</strong> “Because of your gift, a child received life-saving medical care.",
+            ],
+            image: "/assets/images/blog2.png",
+          },
+          {
+            title: "3. Empathy and Personal Connection",
+            content: [
+              "People are more likely to give when they feel emotionally connected to a cause. This is known as the Identifiable Victim Effect—donors respond more generously to individual stories than to abstract statistics.",
+              "<strong>Tip for fundraisers:</strong> Use storytelling to humanize your mission. Share real names, faces, and first-person narratives that help donors see the people behind the cause.",
+              "<strong>Example:</strong> Example: “Meet Rosa, a single mom who found hope thanks to your support.",
+            ],
+            image: "/assets/images/blog3.png",
+          },
+          {
+            title: "4. Social Influence: Giving Is Contagious",
+            content: [
+              "Giving often spreads through social circles. When people see their friends, family, or coworkers donating, they’re more likely to join in. Social proof—seeing others contribute—can be a powerful motivator.",
+              "<strong>Tip for fundraisers:</strong> Promote peer-to-peer campaigns and encourage sharing. Highlight donor testimonials and community involvement. Use phrases like “Join hundreds of others who’ve already donated.",
+            ],
+            image: "/assets/images/blog4.png",
+          },
+          {
+            title: "5. Recognition and Status",
+            content: [
+              "Some donors are motivated by public recognition or the prestige associated with giving. Whether it’s having their name listed on a donor wall or receiving VIP access to an event, status can play a role in charitable behavior.",
+              "<strong>Tip for fundraisers:</strong> Offer tiered giving levels with perks or acknowledgments. Celebrate donors publicly (with permission) through social media, newsletters, or events.",
+              "<strong>Example:</strong>Thank you to our Gold Circle donors for making this campaign possible.",
+            ],
+            image: "/assets/images/blog1.png",
+          },
+          {
+            title: "6. Reciprocity: Giving Back After Receiving",
+            content: [
+              "People often give because they’ve benefited from a cause or organization themselves. This sense of gratitude fuels a desire to give back and support others in similar situations.",
+              "<strong>Tip for fundraisers:</strong> Share stories of past beneficiaries who became donors. Use messaging like “Pay it forward” or “Give back to the community that helped you.”",
+            ],
+            image: "/assets/images/blog2.png",
+          },
+          {
+            title: "7. A Sense of Duty or Moral Obligation",
+            content: [
+              "Many donors feel a responsibility to help others. This sense of duty may stem from religious beliefs, cultural norms, or personal values. For some, giving is simply the right thing to do.",
+              "<strong>Tip for fundraisers:</strong> Use language that appeals to moral responsibility, such as “It’s our duty to care” or “We’re called to serve.” Highlight shared values and community ethics.",
+            ],
+            image: "/assets/images/blog3.png",
+          },
+          {
+            title: "8. Desire to Make a Difference",
+            content: [
+              "Especially among younger generations, donors want to feel like they’re part of something bigger. They’re driven by a desire to change the world, solve pressing issues, and leave a positive mark.",
+              "<strong>Tip for fundraisers:</strong> Emphasize the broader impact of donations. Use aspirational messaging like “Together, we can end hunger” or “Be part of the solution.”",
+            ],
+            image: "/assets/images/blog4.png",
+          },
+          {
+            title: "9. Legacy and Long-Term Impact",
+            content: [
+              "Some donors are motivated by the idea of leaving a legacy. They want their contributions to have lasting effects—whether through endowments, scholarships, or long-term projects.",
+              "<strong>Tip for fundraisers:</strong> Offer planned giving options and legacy programs. Share stories of donors whose gifts created enduring change.",
+              "<strong>Example:</strong> “Thanks to Mr. Thompson’s legacy gift, students will receive scholarships for generations to come.”",
+            ],
+            image: "/assets/images/blog1.png",
+          },
+          {
+            title: "10. Emotional Triggers: Anger, Hope, and Urgency",
+            content: [
+              "Emotions like anger at injustice or hope for a better future can drive donations. Urgent appeals—especially during crises—often see spikes in giving.",
+              "<strong>Tip for fundraisers:</strong> Use emotionally charged storytelling and visuals. Create time-sensitive campaigns with clear calls to action.",
+              "<strong>Example:</strong>“We need your help now—families are facing eviction this winter.”",
+            ],
+            image: "/assets/images/blog2.png",
+          },
+        ] as Array<{
+          title: string;
+          content: string | string[];
+          image?: string;
+        }>,
+      },
     },
-    {
-      title: "Lack Of Manpower",
-      description: [
-        "There’s only so much time parents, teachers, community members, and children can give. Volunteering can be quite exhausting, and the burnout sets in fast. This leaves only a small group to bear the heavy load. As life gets more complicated, finding the time to support youth programs can be virtually impossible.",
-        "In a 2020 survey, respondents estimated spending between 100 and 500 hours on school fundraising efforts. This means committing 10 hours every week, the equivalent of working a part-time job. What we end up with is a small group of people doing the bulk of the work.",
-        "This, undoubtedly, causes a great deal of stress, not to mention the organizational strain. With no one else to step in, burnout settles, and events lose momentum. After one too many bake sales, sign-ups start to dwindle, and there’s no one left to organize the next event.",
-        "Solution: Product-based fundraisers require fewer volunteers compared to labor-intensive ones like carnivals and raffles. When time and people are in short supply, there is but one fundraiser to consider: candy! Forget about securing permits and booking venues. You don’t even need any special equipment -this means no tables, tickets, or signage. With a few people to manage inventory, distribution, and cash collection, you don’t need any large teams either.",
-        "Candy fundraising works because it’s immediate, simple, and doesn’t require all the logistical planning that kills other fundraisers.” – Independent School Fundraising Blog",
-        "Even better, you can sell anywhere, anytime. No need to rearrange your entire week or worry about long volunteer shifts. Candy is universally loved, and selling it is refreshingly low-lift.",
-      ],
-      image: "/assets/images/blog4.png",
-    },
-    {
-      title: "Fundraising That Doesn't Burn You Out",
-      description:
-        "Traditional fundraising methods often require extensive planning, coordination, and volunteer management that can quickly lead to burnout among organizers and participants. The stress of managing complex logistics, tracking orders, and coordinating volunteers can make fundraising feel like a second job. Solution: Candy fundraising eliminates the complexity and stress of traditional fundraising. With simple logistics, high-profit margins, and universal appeal, it's designed to be easy and enjoyable for everyone involved. No complex order forms, no inventory management headaches, and no volunteer coordination nightmares—just simple, profitable fundraising that works.",
-      image: "/assets/images/blog1.png",
-    },
-    {
-      title: "How Candy Fundraising Works",
-      description:
-        "Candy fundraising is designed to be simple, profitable, and enjoyable for everyone involved. Here's how it works: Choose your candy products from our selection of high-quality, popular options. Set your own prices to maximize profit margins. Receive your candy shipment with everything you need to get started. Sell to friends, family, neighbors, and community members. Keep the profits to support your youth activities. It's that simple! No complicated logistics, no inventory management, and no volunteer coordination headaches. Just pure, profitable fundraising that everyone can enjoy.",
-      image: "/assets/images/blog1.png",
-    },
-    {
-      title: "Where Fundraising Comes In",
-      description:
-        "Fundraising plays a crucial role in making youth sports accessible to all children, regardless of their family's financial situation. It helps cover the costs of equipment, facilities, coaching, and other expenses that make these programs possible. Without effective fundraising, many children would be unable to participate in the activities that provide so many benefits to their development and well-being. Candy fundraising offers a simple, profitable solution that makes it easy for organizations to raise the funds they need while engaging the entire community in support of youth programs.",
-      image: "/assets/images/blog1.png",
-    },
-  ],
+  ] as BlogItem[],
 };
 
 // Function to get blog data by ID
@@ -294,14 +364,6 @@ export const termsPageData = {
       wrapper: false,
     },
   ],
-  sideBarData: [
-    {
-      title: "Contact Information",
-      description:
-        "If You Have Questions, Concerns, Or Requests Related To This Policy, Please Contact: Landmark Foods LLC, 4383 Gadsden Farm Dr, Summerville, SC 29485, Phone: 910-701-9321",
-      image: "/assets/images/blog1.png",
-    },
-  ],
 };
 
 // Privacy Policy page data
@@ -339,13 +401,102 @@ export const privacyPageData = {
       author: "Legal Team",
       wrapper: false,
     },
-  ],
-  sideBarData: [
     {
-      title: "Contact Information",
+      id: "4",
+      title:
+        "Why People Contribute to Fundraisers: The Heart Behind Every Gift",
       description:
-        "If You Have Questions, Concerns, Or Requests Related To This Policy, Please Contact: Landmark Foods LLC, 4383 Gadsden Farm Dr, Summerville, SC 29485, Phone: 910-701-9321",
-      image: "/assets/images/blog1.png",
+        "Fundraising is more than just asking for money—it's about connecting with people's values, emotions, and aspirations. Whether it's a local charity, a national campaign, or a sweet Southern initiative with a purpose, understanding why people give can transform the way we inspire generosity. Let's explore the top reasons why people contribute to fundraisers—and how fundraisers can tap into these motivations to build lasting support.",
+      image: "/assets/images/blog3.png",
+      date: "Dec 15, 2024",
+      author: "Marie Caphlish",
+      wrapper: true,
+      content: {
+        sections: [
+          {
+            title: "Altruism: Giving for the Greater Good",
+            content: [
+              "At the core of many donations lies a simple yet powerful force: altruism. People give because they care. They want to help others, support causes that matter, and make the world a little better than they found it. This instinct is often shaped by personal values, upbringing, or cultural and religious beliefs. When fundraisers speak to this sense of shared humanity, they unlock a deep well of generosity.",
+            ],
+            image: "/assets/images/blog1.png",
+          },
+          {
+            title: "The 'Warm-Glow' Effect: Giving Feels Good",
+            content: [
+              "Science backs it up—giving activates the brain's reward centers, releasing feel-good chemicals like dopamine. This emotional satisfaction, often called the 'warm-glow' effect, reinforces the act of giving and makes donors feel proud, joyful, and fulfilled. Share stories of impact that evoke positive emotions. Send personalized thank-you notes and updates that remind donors of the good they've done.",
+            ],
+            image: "/assets/images/blog2.png",
+          },
+          {
+            title: "Empathy and Personal Connection",
+            content: [
+              "People are more likely to give when they feel emotionally connected to a cause. This is known as the Identifiable Victim Effect—donors respond more generously to individual stories than to abstract statistics. Use storytelling to humanize your mission. Share real names, faces, and first-person narratives that help donors see the people behind the cause.",
+            ],
+            image: "/assets/images/blog3.png",
+          },
+          {
+            title: "Social Influence: Giving Is Contagious",
+            content: [
+              "Giving often spreads through social circles. When people see their friends, family, or coworkers donating, they're more likely to join in. Social proof—seeing others contribute—can be a powerful motivator. Promote peer-to-peer campaigns and encourage sharing. Highlight donor testimonials and community involvement.",
+            ],
+            image: "/assets/images/blog4.png",
+          },
+          {
+            title: "Recognition and Status",
+            content: [
+              "Some donors are motivated by public recognition or the prestige associated with giving. Whether it's having their name listed on a donor wall or receiving VIP access to an event, status can play a role in charitable behavior. Offer tiered giving levels with perks or acknowledgments. Celebrate donors publicly (with permission) through social media, newsletters, or events.",
+            ],
+            image: "/assets/images/blog1.png",
+          },
+          {
+            title: "Reciprocity: Giving Back After Receiving",
+            content: [
+              "People often give because they've benefited from a cause or organization themselves. This sense of gratitude fuels a desire to give back and support others in similar situations. Share stories of past beneficiaries who became donors. Use messaging like 'Pay it forward' or 'Give back to the community that helped you.'",
+            ],
+            image: "/assets/images/blog2.png",
+          },
+          {
+            title: "A Sense of Duty or Moral Obligation",
+            content: [
+              "Many donors feel a responsibility to help others. This sense of duty may stem from religious beliefs, cultural norms, or personal values. For some, giving is simply the right thing to do. Use language that appeals to moral responsibility, such as 'It's our duty to care' or 'We're called to serve.' Highlight shared values and community ethics.",
+            ],
+            image: "/assets/images/blog3.png",
+          },
+          {
+            title: "Desire to Make a Difference",
+            content: [
+              "Especially among younger generations, donors want to feel like they're part of something bigger. They're driven by a desire to change the world, solve pressing issues, and leave a positive mark. Emphasize the broader impact of donations. Use aspirational messaging like 'Together, we can end hunger' or 'Be part of the solution.'",
+            ],
+            image: "/assets/images/blog4.png",
+          },
+          {
+            title: "Legacy and Long-Term Impact",
+            content: [
+              "Some donors are motivated by the idea of leaving a legacy. They want their contributions to have lasting effects—whether through endowments, scholarships, or long-term projects. Offer planned giving options and legacy programs. Share stories of donors whose gifts created enduring change.",
+            ],
+            image: "/assets/images/blog1.png",
+          },
+          {
+            title: "Emotional Triggers: Anger, Hope, and Urgency",
+            content: [
+              "Emotions like anger at injustice or hope for a better future can drive donations. Urgent appeals—especially during crises—often see spikes in giving. Use emotionally charged storytelling and visuals. Create time-sensitive campaigns with clear calls to action.",
+            ],
+            image: "/assets/images/blog2.png",
+          },
+        ],
+        list: [
+          {
+            title: "Key Takeaways for Fundraisers",
+            content:
+              "Understanding donor motivations helps create more effective campaigns. Focus on emotional connections, social proof, and clear impact messaging. Use storytelling to humanize your cause and make giving feel personal and meaningful.",
+          },
+          {
+            title: "Building Lasting Support",
+            content:
+              "The best fundraising strategies combine multiple motivations. Create campaigns that appeal to altruism while offering social recognition and clear impact. Remember that giving is both emotional and rational—appeal to both the heart and the mind.",
+          },
+        ],
+      },
     },
   ],
 };

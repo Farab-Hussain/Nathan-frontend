@@ -1,6 +1,6 @@
-import React from 'react'
-import Link from 'next/link'
-import AnimatedText from '@/components/custom/AnimatedText'
+import React from "react";
+import Link from "next/link";
+import AnimatedText from "@/components/custom/AnimatedText";
 
 interface BlogHeaderProps {
   pageTitle: string;
@@ -21,7 +21,10 @@ const BlogHeader = ({ pageTitle, breadcrumbText }: BlogHeaderProps) => {
             triggerStart="top 90%"
           />
           <nav className="text-sm text-gray-500 font-light">
-            <Link href="/blogs" className="hover:text-black transition-colors">
+            <Link
+              href="/blog-main"
+              className="hover:text-black transition-colors"
+            >
               Home
             </Link>
             <span className="mx-2">-</span>
@@ -30,7 +33,7 @@ const BlogHeader = ({ pageTitle, breadcrumbText }: BlogHeaderProps) => {
         </div>
       </div>
     </header>
-  )
-}
+  );
+};
 
-export default BlogHeader
+export default BlogHeader;
