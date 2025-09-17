@@ -30,6 +30,7 @@ const dedication = () => {
         <CustomButton
           title="Get Started Now"
           className="font-bold text-white w-[260px] md:w-[260px] lg:w-[260px] px-8 py-3 md:py-4"
+          href="/coming-soon"
         />
         <div className="w-full flex justify-center items-center -mt-8 md:-mt-16 lg:-mt-24">
           <Image

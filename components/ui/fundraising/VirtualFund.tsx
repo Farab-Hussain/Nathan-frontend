@@ -19,7 +19,7 @@ const data = [
     },
 ];
 
-const VirtualFund = () => {
+const  VirtualFund = () => {
   return (
     <section className="w-full min-h-ful flex flex-col items-center justify-center bg-white py-8 md:py-12 lg:py-16 px-4 md:px-8">
       <div className="w-full flex flex-col items-center justify-center relative gap-6 md:gap-8 lg:gap-10 layout">

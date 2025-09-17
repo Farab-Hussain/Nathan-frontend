@@ -149,7 +149,7 @@ const DashboardPage = () => {
   // Show loading state while user is being loaded
   if (userLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+      <div className="w-full h-full layout py-10">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
           <p className="text-black text-lg">Loading dashboard...</p>
@@ -161,7 +161,7 @@ const DashboardPage = () => {
   // Show access denied if user is loaded but not admin
   if (!userLoading && user && user.role !== "admin") {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+      <div className="w-full h-full layout py-10">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-black mb-4">Access Denied</h1>
           <p className="text-black opacity-70 mb-6">You need admin privileges to access this page.</p>
@@ -179,7 +179,7 @@ const DashboardPage = () => {
   // Show loading state while auth is being checked
   if (userLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+      <div className="w-full h-full layout py-10">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
@@ -192,7 +192,7 @@ const DashboardPage = () => {
 
   return (
     <VerificationGuard>
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+      <div className="w-full h-full layout py-10">
       <h1 className="text-2xl sm:text-3xl font-extrabold text-black mb-4 sm:mb-6">Dashboard</h1>
 
       {/* Quick navigation */}
@@ -208,7 +208,7 @@ const DashboardPage = () => {
           </div>
         </SafeLink>
         <SafeLink
-          href="/dashboard/addProducts"
+          href="/dashboard/admin"
           className="rounded-2xl border shadow bg-gradient-to-br from-[#FFF8E5] to-white p-4 sm:p-5 hover:shadow-md transition cursor-pointer"
         >
           <div className="text-black/70 text-xs sm:text-sm">Manage</div>

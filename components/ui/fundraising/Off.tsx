@@ -70,6 +70,7 @@ const Off = () => {
           <CustomButton
             title="Get Started Now"
             className="font-bold text-white w-full md:w-auto px-8 py-3 md:py-4 mt-4"
+            href="/coming-soon"
           />
         </AnimatedSection>
         <AnimatedSection 

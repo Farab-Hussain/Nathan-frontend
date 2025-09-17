@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
 import axios from "axios";
+import Image from "next/image";
 
 const NavLink = ({
   href,
@@ -71,15 +72,12 @@ const DashboardHeader = () => {
 
   return (
     <div className="w-full bg-primary sticky top-0 z-30 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between border-b border-white/10">
+      <div className="h-14 sm:h-16 flex items-center justify-between border-b border-white/10 layout">
         {/* Left: Logo/Title */}
         <div className="flex items-center gap-2">
-          <span className="text-lg sm:text-xl font-extrabold text-white drop-shadow">
-            Dashboard
-          </span>
-          <span className="text-[10px] sm:text-xs text-white/80 hidden sm:inline">
-            Admin
-          </span>
+          <Link href="/dashboard/admin" className="text-lg sm:text-xl font-extrabold text-white drop-shadow">
+            <Image src="/assets/svg/logo.svg" alt="logo" width={140} height={48} />
+          </Link>
         </div>
 
         {/* Hamburger for mobile */}
@@ -121,14 +119,14 @@ const DashboardHeader = () => {
             label="Orders"
             disabled={userLoading}
           />
-          <NavLink
-            href="/dashboard/addProducts"
+          {/* <NavLink
+            href="/dashboard/admin"
             label="Products"
             disabled={userLoading}
-          />
+          /> */}
           <NavLink
             href="/dashboard/admin"
-            label="Admin"
+            label="Products"
             disabled={userLoading}
           />
         </nav>
@@ -181,7 +179,7 @@ const DashboardHeader = () => {
               disabled={userLoading}
             />
             <NavLink
-              href="/dashboard/addProducts"
+              href="/dashboard/admin"
               label="Products"
               onClick={handleNavClick}
               disabled={userLoading}

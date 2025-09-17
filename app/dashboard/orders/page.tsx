@@ -122,7 +122,7 @@ const AdminOrdersPage = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="w-full h-full layout">
       <h1 className="text-2xl font-bold text-black mb-6">Admin Orders</h1>
 
       <div className="flex flex-wrap items-center gap-3 mb-6">

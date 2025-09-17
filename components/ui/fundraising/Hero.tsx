@@ -5,6 +5,7 @@ import CustomButton from "@/components/custom/CustomButton";
 import AnimatedText from "@/components/custom/AnimatedText";
 import AnimatedSection from "@/components/custom/AnimatedSection";
 
+
 const Fundraising = () => {
   const [participants, setParticipants] = useState(10);
 
@@ -89,8 +90,11 @@ const Fundraising = () => {
           </h5>
           <CustomButton
             title="Get Started Now"
-            onClick={() => {}}
             className="w-full md:w-1/2 lg:w-1/3 xl:w-1/4 mt-4 md:mt-6 lg:mt-8"
+                // onClick={() => {
+                //   router.push("/coming-soon");
+                // }}
+                href="/coming-soon"
           />
         </div>
       </AnimatedSection>

@@ -186,7 +186,7 @@ const Header = () => {
               )}
             {user?.role === "admin" && (
               <Link
-                href="/dashboard"
+                href="/dashboard/admin"
                 className="text-base xl:text-lg font-poppins px-2 py-1 rounded transition"
               >
                 Dashboard
@@ -366,7 +366,7 @@ const Header = () => {
             )}
             {user?.role === "admin" && (
               <Link
-                href="/dashboard"
+                href="/dashboard/admin"
                 className="text-base font-poppins w-full text-left px-2 py-2 border-b border-gray-200"
                 onClick={() => setMobileNavOpen(false)}
               >
