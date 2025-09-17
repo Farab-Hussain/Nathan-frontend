@@ -44,7 +44,12 @@ const AddProductsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [pagination, setPagination] = useState<{ page: number; limit: number; total: number; pages: number } | null>(null);
+  const [pagination, setPagination] = useState<{
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  } | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Product>>({
     name: "",
@@ -62,14 +67,18 @@ const AddProductsPage = () => {
   const [search, setSearch] = useState<string>("");
   const [preview, setPreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [availableFlavors, setAvailableFlavors] = useState<Array<{ id: string; name: string }>>([]);
+  const [availableFlavors, setAvailableFlavors] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
   const [showNewFlavorForm, setShowNewFlavorForm] = useState<boolean>(false);
   const [newFlavor, setNewFlavor] = useState({
     name: "",
     aliases: "",
   });
   const [creatingFlavor, setCreatingFlavor] = useState<boolean>(false);
-  const [deletingFlavor, setDeletingFlavor] = useState<{ [key: string]: boolean }>({});
+  const [deletingFlavor, setDeletingFlavor] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   const getFlavorNameById = (id: string): string => {
     const found = availableFlavors.find((f) => f.id === id);
@@ -80,33 +89,52 @@ const AddProductsPage = () => {
     if (!Array.isArray(flavors) || flavors.length === 0) return "-";
     return flavors
       .map((f) => {
-        const name = (f.name && String(f.name).trim() !== "")
-          ? String(f.name)
-          : getFlavorNameById(String(f.id));
-        const qtyRaw = typeof f.quantity === "number" ? f.quantity : Number(f.quantity || 1);
-        const quantity = Number.isFinite(qtyRaw) && qtyRaw > 0 ? Number(qtyRaw) : 1;
+        const name =
+          f.name && String(f.name).trim() !== ""
+            ? String(f.name)
+            : getFlavorNameById(String(f.id));
+        const qtyRaw =
+          typeof f.quantity === "number" ? f.quantity : Number(f.quantity || 1);
+        const quantity =
+          Number.isFinite(qtyRaw) && qtyRaw > 0 ? Number(qtyRaw) : 1;
         return `${name} (${quantity})`;
       })
       .join(", ");
   };
 
   // Extract/normalize flavors from various backend shapes
-  type UnknownFlavor = { id?: string; name?: string; flavor?: string; quantity?: number; qty?: number };
+  type UnknownFlavor = {
+    id?: string;
+    name?: string;
+    flavor?: string;
+    quantity?: number;
+    qty?: number;
+  };
   const extractFlavors = (raw: unknown): FlavorDTO[] => {
     if (!raw) return [];
     if (Array.isArray(raw)) {
       // Could be string[] or object[]
       if (raw.length === 0) return [];
       if (typeof raw[0] === "string") {
-        return (raw as string[]).map((name, idx) => ({ id: String(idx), name, quantity: 1 }));
+        return (raw as string[]).map((name, idx) => ({
+          id: String(idx),
+          name,
+          quantity: 1,
+        }));
       }
       return (raw as Array<UnknownFlavor>).map((f, idx) => ({
         id: String(f?.id ?? idx),
-        name: (typeof f?.name === 'string' && f.name) ? f.name : (typeof f?.flavor === 'string' ? f.flavor : undefined),
-        quantity: typeof f?.quantity === 'number' ? f.quantity : Number(f?.qty ?? 1),
+        name:
+          typeof f?.name === "string" && f.name
+            ? f.name
+            : typeof f?.flavor === "string"
+            ? f.flavor
+            : undefined,
+        quantity:
+          typeof f?.quantity === "number" ? f.quantity : Number(f?.qty ?? 1),
       }));
     }
-    if (typeof raw === 'string') {
+    if (typeof raw === "string") {
       const str = raw.trim();
       // Try JSON first
       try {
@@ -114,22 +142,32 @@ const AddProductsPage = () => {
         return extractFlavors(parsed);
       } catch {}
       // Fallback: comma-separated names
-      return str.split(',').map((s, idx) => ({ id: String(idx), name: s.trim(), quantity: 1 }));
+      return str
+        .split(",")
+        .map((s, idx) => ({ id: String(idx), name: s.trim(), quantity: 1 }));
     }
     // Unknown shape
     return [];
   };
 
-  const normalizeFlavorsForSave = (flavors?: Array<FlavorDTO | Flavor>): Flavor[] => {
+  const normalizeFlavorsForSave = (
+    flavors?: Array<FlavorDTO | Flavor>
+  ): Flavor[] => {
     if (!Array.isArray(flavors)) return [];
     return flavors.map((f) => {
       const id = String((f as FlavorDTO).id);
-      const name = (f as FlavorDTO).name && String((f as FlavorDTO).name).trim() !== ""
-        ? String((f as FlavorDTO).name)
-        : getFlavorNameById(id);
+      const name =
+        (f as FlavorDTO).name && String((f as FlavorDTO).name).trim() !== ""
+          ? String((f as FlavorDTO).name)
+          : getFlavorNameById(id);
       const qtyRaw = (f as FlavorDTO).quantity;
-      const quantity = typeof qtyRaw === "number" ? qtyRaw : Number(qtyRaw || 1);
-      return { id, name, quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1 };
+      const quantity =
+        typeof qtyRaw === "number" ? qtyRaw : Number(qtyRaw || 1);
+      return {
+        id,
+        name,
+        quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+      };
     });
   };
 
@@ -140,7 +178,6 @@ const AddProductsPage = () => {
       router.replace("/");
     }
   }, [user, userLoading, router]);
-
 
   const fetchProducts = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -155,10 +192,17 @@ const AddProductsPage = () => {
       const cat = String(categoryFilter || "").trim();
       if (cat) params.set("category", cat);
 
-      const { data } = await axios.get<{ products: Product[]; pagination?: { page: number; limit: number; total: number; pages: number } }>(
-        `${API_URL}/products/admin/all?${params.toString()}`,
-        { withCredentials: true }
-      );
+      const { data } = await axios.get<{
+        products: Product[];
+        pagination?: {
+          page: number;
+          limit: number;
+          total: number;
+          pages: number;
+        };
+      }>(`${API_URL}/products/admin/all?${params.toString()}`, {
+        withCredentials: true,
+      });
       setProducts(Array.isArray(data.products) ? data.products : []);
       setPagination(data.pagination || null);
     } catch (e) {
@@ -172,23 +216,32 @@ const AddProductsPage = () => {
           if (q) params.set("search", q);
           const cat = String(categoryFilter || "").trim();
           if (cat) params.set("category", cat);
-          const { data } = await axios.get<{ products: Product[]; pagination?: { page: number; limit: number; total: number; pages: number } }>(
-            `${API_URL}/admin/all?${params.toString()}`,
-            { withCredentials: true }
-          );
+          const { data } = await axios.get<{
+            products: Product[];
+            pagination?: {
+              page: number;
+              limit: number;
+              total: number;
+              pages: number;
+            };
+          }>(`${API_URL}/admin/all?${params.toString()}`, {
+            withCredentials: true,
+          });
           setProducts(Array.isArray(data.products) ? data.products : []);
           setPagination(data.pagination || null);
           setError(null);
         } catch (e2) {
           const message =
-            (e2 as { message?: string })?.message || "Unable to load products. Please try again.";
+            (e2 as { message?: string })?.message ||
+            "Unable to load products. Please try again.";
           setError(message);
           setProducts([]);
           setPagination(null);
         }
       } else {
         const message =
-          (e as { message?: string })?.message || "Unable to load products. Please try again.";
+          (e as { message?: string })?.message ||
+          "Unable to load products. Please try again.";
         setError(message);
         setProducts([]);
         setPagination(null);
@@ -201,12 +254,10 @@ const AddProductsPage = () => {
   const fetchFlavors = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
     try {
-      const { data } = await axios.get(
-        `${API_URL}/3pack/admin/flavors`,
-        {
-          withCredentials: true,
-        }
-      );
+      // Try new admin endpoint first
+      const { data } = await axios.get(`${API_URL}/admin/flavors`, {
+        withCredentials: true,
+      });
       // Filter only active flavors and map to the expected format
       const activeFlavors = data
         .filter((flavor: { active: boolean }) => flavor.active)
@@ -215,10 +266,23 @@ const AddProductsPage = () => {
           name: flavor.name,
         }));
       setAvailableFlavors(activeFlavors);
-    } catch (e) {
-      console.error("Failed to load flavors:", e);
-      // Fallback to empty array if flavors can't be loaded
-      setAvailableFlavors([]);
+    } catch {
+      // Fallback to old endpoint
+      try {
+        const { data } = await axios.get(`${API_URL}/3pack/admin/flavors`, {
+          withCredentials: true,
+        });
+        const activeFlavors = data
+          .filter((flavor: { active: boolean }) => flavor.active)
+          .map((flavor: { id: string; name: string }) => ({
+            id: flavor.id,
+            name: flavor.name,
+          }));
+        setAvailableFlavors(activeFlavors);
+      } catch (e2) {
+        console.error("Failed to load flavors:", e2);
+        setAvailableFlavors([]);
+      }
     }
   };
 
@@ -237,8 +301,9 @@ const AddProductsPage = () => {
         .map((alias) => alias.trim())
         .filter((alias) => alias.length > 0);
 
+      // Try new admin endpoint first
       const { data } = await axios.post(
-        `${API_URL}/3pack/admin/flavors`,
+        `${API_URL}/admin/flavors`,
         {
           name: newFlavor.name.trim(),
           aliases: aliasesArray,
@@ -258,17 +323,50 @@ const AddProductsPage = () => {
       // Reset form
       setNewFlavor({ name: "", aliases: "" });
       setShowNewFlavorForm(false);
-    } catch (e) {
-      const message =
-        (e as { message?: string })?.message || "Unable to create flavor. Please try again.";
-      setError(message);
+    } catch {
+      // Fallback to old endpoint
+      try {
+        const aliasesArray = newFlavor.aliases
+          .split(",")
+          .map((alias) => alias.trim())
+          .filter((alias) => alias.length > 0);
+
+        const { data } = await axios.post(
+          `${API_URL}/3pack/admin/flavors`,
+          {
+            name: newFlavor.name.trim(),
+            aliases: aliasesArray,
+            active: true,
+          },
+          {
+            withCredentials: true,
+          }
+        );
+
+        setAvailableFlavors((prev) => [
+          ...prev,
+          { id: data.id, name: data.name },
+        ]);
+
+        setNewFlavor({ name: "", aliases: "" });
+        setShowNewFlavorForm(false);
+      } catch (e2) {
+        const message =
+          (e2 as { message?: string })?.message ||
+          "Unable to create flavor. Please try again.";
+        setError(message);
+      }
     } finally {
       setCreatingFlavor(false);
     }
   };
 
   const deleteFlavor = async (flavorId: string) => {
-    if (!confirm("Are you sure you want to delete this flavor? This action cannot be undone and will affect any products using this flavor.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this flavor? This action cannot be undone and will affect any products using this flavor."
+      )
+    ) {
       return;
     }
 
@@ -276,7 +374,8 @@ const AddProductsPage = () => {
     setDeletingFlavor((prev) => ({ ...prev, [flavorId]: true }));
     setError(null);
     try {
-      await axios.delete(`${API_URL}/3pack/admin/flavors/${flavorId}`, {
+      // Try new admin endpoint first
+      await axios.delete(`${API_URL}/admin/flavors/${flavorId}`, {
         withCredentials: true,
       });
 
@@ -288,10 +387,24 @@ const AddProductsPage = () => {
         ...prev,
         flavors: prev.flavors?.filter((f) => f.id !== flavorId) || [],
       }));
-    } catch (e) {
-      const message =
-        (e as { message?: string })?.message || "Unable to delete flavor. Please try again.";
-      setError(message);
+    } catch {
+      // Fallback to old endpoint
+      try {
+        await axios.delete(`${API_URL}/3pack/admin/flavors/${flavorId}`, {
+          withCredentials: true,
+        });
+
+        setAvailableFlavors((prev) => prev.filter((f) => f.id !== flavorId));
+        setForm((prev) => ({
+          ...prev,
+          flavors: prev.flavors?.filter((f) => f.id !== flavorId) || [],
+        }));
+      } catch (e2) {
+        const message =
+          (e2 as { message?: string })?.message ||
+          "Unable to delete flavor. Please try again.";
+        setError(message);
+      }
     } finally {
       setDeletingFlavor((prev) => ({ ...prev, [flavorId]: false }));
     }
@@ -419,7 +532,10 @@ const AddProductsPage = () => {
       fd.append("isActive", String(!!form.isActive));
       if (form.sku) fd.append("sku", form.sku);
       if (Array.isArray(form.flavors)) {
-        fd.append("flavors", JSON.stringify(normalizeFlavorsForSave(form.flavors)));
+        fd.append(
+          "flavors",
+          JSON.stringify(normalizeFlavorsForSave(form.flavors))
+        );
       }
       if (imageFile) fd.append("productImage", imageFile);
       if (!imageFile && form.imageUrl) fd.append("imageUrl", form.imageUrl);
@@ -440,7 +556,8 @@ const AddProductsPage = () => {
       setImageFile(null);
     } catch (e) {
       const message =
-        (e as { message?: string })?.message || "Unable to create product. Please try again.";
+        (e as { message?: string })?.message ||
+        "Unable to create product. Please try again.";
       setError(message);
     } finally {
       setSaving(false);
@@ -529,7 +646,7 @@ const AddProductsPage = () => {
 
   const deleteProduct = async (id: string) => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    setDeleting(prev => ({ ...prev, [id]: true }));
+    setDeleting((prev) => ({ ...prev, [id]: true }));
     setError(null);
     try {
       try {
@@ -550,10 +667,11 @@ const AddProductsPage = () => {
       setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (e) {
       const message =
-        (e as { message?: string })?.message || "Unable to delete product. Please try again.";
+        (e as { message?: string })?.message ||
+        "Unable to delete product. Please try again.";
       setError(message);
     } finally {
-      setDeleting(prev => ({ ...prev, [id]: false }));
+      setDeleting((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -588,7 +706,9 @@ const AddProductsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <div className="text-sm font-semibold text-black/80 mb-2">Product details</div>
+              <div className="text-sm font-semibold text-black/80 mb-2">
+                Product details
+              </div>
               <div className="h-px w-full bg-gray-200 mb-3" />
             </div>
             <div className="flex flex-col gap-1">
@@ -666,7 +786,7 @@ const AddProductsPage = () => {
                 />
               </div>
             </div>
-            
+
             <div className="flex flex-col gap-1 md:col-span-2">
               {/* Image URL input removed as per instructions; already provided elsewhere */}
             </div>
@@ -696,7 +816,10 @@ const AddProductsPage = () => {
               </div>
               <div className="space-y-2">
                 {form.flavors?.map((flavor, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                  <div
+                    key={index}
+                    className="grid grid-cols-12 gap-2 items-center"
+                  >
                     <div className="col-span-8 sm:col-span-9">
                       <select
                         className="w-full border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
@@ -715,7 +838,10 @@ const AddProductsPage = () => {
                             {f.name}
                           </option>
                         ))}
-                        <option value="add_new" className="text-[#FF5D39] font-semibold">
+                        <option
+                          value="add_new"
+                          className="text-[#FF5D39] font-semibold"
+                        >
                           + Add New Flavor
                         </option>
                       </select>
@@ -729,7 +855,11 @@ const AddProductsPage = () => {
                         placeholder="Qty"
                         value={flavor.quantity}
                         onChange={(e) =>
-                          updateFlavor(index, "quantity", parseInt(e.target.value) || 1)
+                          updateFlavor(
+                            index,
+                            "quantity",
+                            parseInt(e.target.value) || 1
+                          )
                         }
                       />
                     </div>
@@ -747,15 +877,18 @@ const AddProductsPage = () => {
                 ))}
                 {(!form.flavors || form.flavors.length === 0) && (
                   <div className="text-sm text-gray-500 italic">
-                    No flavors added. Click &quot;Add Flavor&quot; to add up to 3 flavors.
+                    No flavors added. Click &quot;Add Flavor&quot; to add up to
+                    3 flavors.
                   </div>
                 )}
               </div>
-              
+
               {/* Add New Flavor Form */}
               {showNewFlavorForm && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <h4 className="text-sm font-semibold text-black mb-3">Add New Flavor</h4>
+                  <h4 className="text-sm font-semibold text-black mb-3">
+                    Add New Flavor
+                  </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -764,7 +897,9 @@ const AddProductsPage = () => {
                       <input
                         type="text"
                         value={newFlavor.name}
-                        onChange={(e) => setNewFlavor({ ...newFlavor, name: e.target.value })}
+                        onChange={(e) =>
+                          setNewFlavor({ ...newFlavor, name: e.target.value })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm text-black bg-white"
                         placeholder="e.g., Tropical Punch"
                       />
@@ -776,7 +911,12 @@ const AddProductsPage = () => {
                       <input
                         type="text"
                         value={newFlavor.aliases}
-                        onChange={(e) => setNewFlavor({ ...newFlavor, aliases: e.target.value })}
+                        onChange={(e) =>
+                          setNewFlavor({
+                            ...newFlavor,
+                            aliases: e.target.value,
+                          })
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm text-black bg-white"
                         placeholder="e.g., tropical, punch, fruit"
                       />
@@ -802,11 +942,13 @@ const AddProductsPage = () => {
                   </div>
                 </div>
               )}
-              
+
               {/* Manage Existing Flavors */}
               {availableFlavors.length > 0 && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <h4 className="text-sm font-semibold text-black mb-3">Manage Existing Flavors</h4>
+                  <h4 className="text-sm font-semibold text-black mb-3">
+                    Manage Existing Flavors
+                  </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {availableFlavors.map((flavor) => (
                       <div
@@ -1024,7 +1166,9 @@ const AddProductsPage = () => {
               return (
                 <tr
                   key={pid || idx}
-                  className={idx % 2 === 0 ? "bg-white" : "bg-gray-50 hover:bg-gray-100"}
+                  className={
+                    idx % 2 === 0 ? "bg-white" : "bg-gray-50 hover:bg-gray-100"
+                  }
                 >
                   <td className="px-4 py-2">
                     {p.imageUrl ? (
@@ -1052,9 +1196,9 @@ const AddProductsPage = () => {
                     {formatFlavors(
                       extractFlavors(
                         (p as unknown as { flavors?: unknown }).flavors ??
-                        (p as unknown as { flavours?: unknown }).flavours ??
-                        (p as unknown as { flavor?: unknown }).flavor ??
-                        (p as unknown as { options?: unknown }).options
+                          (p as unknown as { flavours?: unknown }).flavours ??
+                          (p as unknown as { flavor?: unknown }).flavor ??
+                          (p as unknown as { options?: unknown }).options
                       )
                     )}
                   </td>

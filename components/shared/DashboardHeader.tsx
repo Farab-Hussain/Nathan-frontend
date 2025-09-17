@@ -18,7 +18,7 @@ const NavLink = ({
 }) => {
   const pathname = usePathname();
   const isActive = pathname.startsWith(href);
-  
+
   if (disabled) {
     return (
       <span
@@ -32,7 +32,7 @@ const NavLink = ({
       </span>
     );
   }
-  
+
   return (
     <Link
       href={href}
@@ -77,7 +77,9 @@ const DashboardHeader = () => {
           <span className="text-lg sm:text-xl font-extrabold text-white drop-shadow">
             Dashboard
           </span>
-          <span className="text-[10px] sm:text-xs text-white/80 hidden sm:inline">Admin</span>
+          <span className="text-[10px] sm:text-xs text-white/80 hidden sm:inline">
+            Admin
+          </span>
         </div>
 
         {/* Hamburger for mobile */}
@@ -114,8 +116,21 @@ const DashboardHeader = () => {
           {/* <NavLink href="/" label="Home" /> */}
           <NavLink href="/shop" label="Shop" />
           <NavLink href="/dashboard" label="Overview" disabled={userLoading} />
-          <NavLink href="/dashboard/orders" label="Orders" disabled={userLoading} />
-          <NavLink href="/dashboard/addProducts" label="Products" disabled={userLoading} />
+          <NavLink
+            href="/dashboard/orders"
+            label="Orders"
+            disabled={userLoading}
+          />
+          <NavLink
+            href="/dashboard/addProducts"
+            label="Products"
+            disabled={userLoading}
+          />
+          <NavLink
+            href="/dashboard/admin"
+            label="Admin"
+            disabled={userLoading}
+          />
         </nav>
 
         {/* Desktop User Actions */}
@@ -152,11 +167,7 @@ const DashboardHeader = () => {
               label="Home"
               onClick={handleNavClick}
             /> */}
-            <NavLink
-              href="/shop"
-              label="Shop"
-              onClick={handleNavClick}
-            />
+            <NavLink href="/shop" label="Shop" onClick={handleNavClick} />
             <NavLink
               href="/dashboard"
               label="Overview"
@@ -172,6 +183,12 @@ const DashboardHeader = () => {
             <NavLink
               href="/dashboard/addProducts"
               label="Products"
+              onClick={handleNavClick}
+              disabled={userLoading}
+            />
+            <NavLink
+              href="/dashboard/admin"
+              label="Admin"
               onClick={handleNavClick}
               disabled={userLoading}
             />
