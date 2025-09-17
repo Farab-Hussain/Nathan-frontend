@@ -32,6 +32,7 @@ const GrateFull = () => {
           <CustomButton
             title="Get Started Now"
             className="font-bold text-white w-full md:w-auto px-8 py-3 md:py-4 mt-4"
+            href="/coming-soon"
           />
         </AnimatedSection>
         <div className="w-full lg:w-1/2 flex flex-col justify-center items-center gap-6 md:gap-8">
