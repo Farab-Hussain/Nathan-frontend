@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 
 const ComingSoonPage = () => {
   const [timeLeft, setTimeLeft] = useState({
@@ -18,104 +19,154 @@ const ComingSoonPage = () => {
 
       if (difference > 0) {
         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const hours = Math.floor(
+          (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
+        const minutes = Math.floor(
+          (difference % (1000 * 60 * 60)) / (1000 * 60)
+        );
         const seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
         setTimeLeft({ days, hours, minutes, seconds });
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
       }
+      setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
     }, 1000);
 
     return () => clearInterval(timer);
   }, []);
 
+  const Card = ({ value, label }: { value: string; label: string }) => (
+    <div className="bg-[#E0E0E0] rounded-2xl shadow-sm border border-[#00000054] text-black shrink-0 w-[150px] h-[150px] md:w-[180px] md:h-[180px] flex flex-col items-center justify-center text-center">
+      <div className="text-6xl md:text-7xl font-extrabold tracking-tight mb-1">
+        {value}
+      </div>
+      <div className="text-sm md:text-base font-semibold text-gray-600 uppercase tracking-wider">
+        {label}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FF5D39] via-orange-500 to-red-600 flex items-center justify-center p-4">
-      <div className="max-w-4xl mx-auto text-center">
-        {/* Logo/Icon */}
-        <div className="mb-8">
-          <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center shadow-lg">
-            <svg className="w-12 h-12 text-[#FF5D39]" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-          </div>
-        </div>
-
-        {/* Main Heading */}
-        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
-          Website Under Construction
-        </h1>
-
-        {/* Subheading */}
-        <h2 className="text-2xl md:text-3xl text-white/90 mb-8 font-light">
-          Something amazing is coming soon...
-        </h2>
-
-        {/* Countdown Timer */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-white/20">
-          <h3 className="text-xl text-white mb-6 font-semibold">
-            Booking Fundraisers Starting
-          </h3>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="bg-white/20 rounded-xl p-4 border border-white/30">
-              <div className="text-4xl md:text-5xl font-bold text-white mb-2">
-                {timeLeft.days.toString().padStart(2, '0')}
-              </div>
-              <div className="text-white/80 text-sm font-medium">Days</div>
-            </div>
-            
-            <div className="bg-white/20 rounded-xl p-4 border border-white/30">
-              <div className="text-4xl md:text-5xl font-bold text-white mb-2">
-                {timeLeft.hours.toString().padStart(2, '0')}
-              </div>
-              <div className="text-white/80 text-sm font-medium">Hours</div>
-            </div>
-            
-            <div className="bg-white/20 rounded-xl p-4 border border-white/30">
-              <div className="text-4xl md:text-5xl font-bold text-white mb-2">
-                {timeLeft.minutes.toString().padStart(2, '0')}
-              </div>
-              <div className="text-white/80 text-sm font-medium">Minutes</div>
-            </div>
-            
-            <div className="bg-white/20 rounded-xl p-4 border border-white/30">
-              <div className="text-4xl md:text-5xl font-bold text-white mb-2">
-                {timeLeft.seconds.toString().padStart(2, '0')}
-              </div>
-              <div className="text-white/80 text-sm font-medium">Seconds</div>
+    <div className="h-screen w-screen bg-primary overflow-hidden">
+      <div className="h-[calc(100vh-2.5rem)] w-[calc(100vw-2.5rem)] m-5 rounded-[28px] border border-white/30 bg-[#D9D9D9] backdrop-blur-md shadow-xl overflow-hidden relative">
+        {/* Decorative inner glow - top left */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-10 -left-10 w-[55%] h-[55%] rounded-[40px]"
+          style={{
+            background:
+              "radial-gradient(120% 120% at 0% 0%, rgba(255,160,139,0.60) 0%, rgba(255,160,139,0.35) 40%, rgba(255,160,139,0.14) 70%, rgba(255,160,139,0.0) 100%)",
+            filter: "blur(8px)",
+          }}
+        />
+        {/* Decorative inner glow - bottom right */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-10 -right-10 w-[55%] h-[55%] rounded-[40px]"
+          style={{
+            background:
+              "radial-gradient(120% 120% at 100% 100%, rgba(255,160,139,0.60) 0%, rgba(255,160,139,0.35) 40%, rgba(255,160,139,0.14) 70%, rgba(255,160,139,0.0) 100%)",
+            filter: "blur(8px)",
+          }}
+        />
+        <div className="p-6 sm:p-10 md:p-14 lg:p-16 h-full flex flex-col justify-center">
+          {/* Top logos */}
+          <div className="flex items-center justify-center gap-8 md:gap-12 mb-10">
+            {/* Right logo - site logo */}
+            <div className="h-24 w-auto">
+              <Image
+                src="/assets/svg/logo.svg"
+                alt="Licorice4Good"
+                width={420}
+                height={112}
+                className="h-24 w-auto object-contain"
+              />
             </div>
           </div>
-          
-          <div className="text-white/90 text-lg font-medium">
-            November 1, 2025
+
+          {/* Countdown */}
+          <div className="flex flex-wrap md:flex-nowrap items-stretch justify-center gap-5 md:gap-8 lg:gap-10 max-w-5xl mx-auto mb-10">
+            <Card
+              value={timeLeft.days.toString().padStart(2, "0")}
+              label="DAYS"
+            />
+            <span className="self-center text-4xl md:text-5xl font-extrabold text-black/70">
+              :
+            </span>
+            <Card
+              value={timeLeft.hours.toString().padStart(2, "0")}
+              label="HOURS"
+            />
+            <span className="self-center text-4xl md:text-5xl font-extrabold text-black/70">
+              :
+            </span>
+            <Card
+              value={timeLeft.minutes.toString().padStart(2, "0")}
+              label="MINUTES"
+            />
+            <span className="self-center text-4xl md:text-5xl font-extrabold text-black/70">
+              :
+            </span>
+            <Card
+              value={timeLeft.seconds.toString().padStart(2, "0")}
+              label="SECONDS"
+            />
           </div>
-        </div>
 
-        {/* Contact Information */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-          <h3 className="text-xl text-white mb-4 font-semibold">
-            Get in Touch
-          </h3>
-          <p className="text-white/90 text-lg mb-4">
-            Have questions or want to be notified when we launch?
-          </p>
-          <a 
-            href="mailto:info@Licorice4Good.com"
-            className="inline-flex items-center gap-2 bg-white text-[#FF5D39] px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/90 transition-colors shadow-lg"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            info@Licorice4Good.com
-          </a>
-        </div>
+          {/* Launch date */}
+          <div className="text-center text-black font-extrabold tracking-wide mb-6 text-2xl md:text-3xl">
+            NOVEMBER 1, 2025
+          </div>
 
-        {/* Additional Info */}
-        <div className="mt-8 text-white/70 text-sm">
-          <p>Licorice4Good - Making a difference, one fundraiser at a time</p>
+          {/* Headline */}
+          <div className="text-center mb-8">
+            <h1 className="text-[34px] sm:text-[42px] px-3 md:text-[56px] lg:text-[64px] font-extrabold leading-tight">
+              <span
+                className="inline-block px-5 py-4 rounded-full text-[#FF5D39]"
+                style={{
+                  background: "#FFFFFF1A",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.9), inset 0 0 0 2px rgba(255,255,255,0.35), inset 0 -12px 28px rgba(255,255,255,0.25)",
+                  backdropFilter: "blur(2px)",
+                }}
+              >
+                SOMETHING SWEET
+                <span className="text-black">&nbsp;IS COMING...</span>
+              </span>
+            </h1>
+          </div>
+
+          {/* Sub text */}
+          <div className="text-center text-gray-600 mb-10 text-lg md:text-xl">
+            <div>Something Amazing Is Coming Very Soon.</div>
+            <div>Stay Tuned!</div>
+          </div>
+
+          {/* Notify button */}
+          <div className="flex items-center justify-center pb-2">
+            <a
+              href="mailto:info@Licorice4Good.com?subject=Notify%20me%20about%20the%20launch"
+              className="inline-flex items-center gap-3 bg-[#FF5D39] text-white font-bold px-8 py-4 rounded-xl shadow hover:opacity-90 transition-opacity text-lg"
+            >
+              Notify Me
+              <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-white/15">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
+              </span>
+            </a>
+          </div>
         </div>
       </div>
     </div>

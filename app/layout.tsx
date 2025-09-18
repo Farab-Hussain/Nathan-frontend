@@ -3,6 +3,7 @@ import { Archivo, Inter } from "next/font/google";
 import "@/styles/globals.css";
 import { Lenis } from "@/constant/lenis";
 import GlobalVerificationCheck from "@/components/auth/GlobalVerificationCheck";
+import ComingSoonPage from "./coming-soon/page";
 
 const archivo = Archivo({
   variable: "--font-archivo",
@@ -20,17 +21,19 @@ export const metadata: Metadata = {
     "Discover and shop the best selection of candies online at Nathan Candy Shop. Enjoy a delightful e-commerce experience with a wide variety of sweets, treats, and exclusive offers.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout() {
+  //   {
+  //   children,
+  // }: Readonly<{
+  //   children: React.ReactNode;
+  // }>
   return (
     <html lang="en">
       <Lenis root>
         <body className={`${archivo.variable} ${inter.variable} antialiased`}>
           <GlobalVerificationCheck />
-          {children}
+          {/* {children} */}
+          <ComingSoonPage />
         </body>
       </Lenis>
     </html>
