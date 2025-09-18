@@ -21,7 +21,13 @@ export type Order = {
   total: number;
   status?: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   paymentStatus?: 'pending' | 'paid' | 'failed';
-  shippingAddress?: string;
+  shippingAddress?: string | {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
   orderNotes?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -104,10 +110,18 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       
+      // Debug: Log the request data
+      console.log('Creating order with data:', JSON.stringify(orderData, null, 2));
+      
       const { data } = await axios.post<Order>(
         `${API_URL}/orders`,
         orderData,
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       );
       
       // Add the new order to the local state
@@ -120,8 +134,11 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
       
       return data;
     } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: { message?: string }; status?: number } };
-      const message = axiosError.response?.data?.message || (error instanceof Error ? error.message : 'Failed to create order');
+      const axiosError = error as { response?: { data?: { message?: string; error?: string }; status?: number } };
+      console.error('Order creation failed:', axiosError.response?.data);
+      const message = axiosError.response?.data?.message || 
+                     axiosError.response?.data?.error || 
+                     (error instanceof Error ? error.message : 'Failed to create order');
       set({ error: message, loading: false });
       return null;
     }

@@ -2,11 +2,12 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useCartStore } from "@/store/cartStore";
+import { useCartStore, CartItem } from "@/store/cartStore";
 import { useOrdersStore } from "@/store/ordersStore";
 import { useUser } from "@/hooks/useUser";
 import VerificationGuard from "@/components/auth/VerificationGuard";
 import CustomButton from "@/components/custom/CustomButton";
+import axios from "axios";
 
 // Type definitions
 interface Product {
@@ -39,19 +40,9 @@ const CartPage = () => {
   const [orderError, setOrderError] = useState<string | null>(null);
   const [clearCartLoading, setClearCartLoading] = useState<boolean>(false);
   const [notes, setNotes] = useState("");
-  const [shipping] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address1: "",
-    address2: "",
-    city: "",
-    state: "",
-    postal: "",
-    country: "US",
-  });
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [recommendedLoading, setRecommendedLoading] = useState<boolean>(false);
+  const [flavors, setFlavors] = useState<Array<{id: string; name: string}>>([]);
 
   const fetchRecommendedProducts = useCallback(async () => {
     setRecommendedLoading(true);
@@ -105,12 +96,39 @@ const CartPage = () => {
     }
   }, [user, userLoading, router]);
 
+  // Fetch flavors for custom pack display
+  const fetchFlavors = useCallback(async () => {
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      
+      // Try multiple endpoints to find flavors
+      let response;
+      try {
+        response = await axios.get(`${API_URL}/admin/flavors`, { withCredentials: true });
+      } catch  {
+        try {
+          response = await axios.get(`${API_URL}/products/flavors`, { withCredentials: true });
+        } catch  {
+          response = await axios.get(`${API_URL}/3pack/admin/flavors`, { withCredentials: true });
+        }
+      }
+      
+      const flavorsData = Array.isArray(response.data) 
+        ? response.data 
+        : response.data?.flavors || [];
+      setFlavors(flavorsData.map((flavor: { id: string; name: string }) => ({ id: flavor.id, name: flavor.name })));
+    } catch (error) {
+      console.error("Failed to fetch flavors:", error);
+    }
+  }, []);
+
   useEffect(() => {
     if (user) {
       loadFromBackend();
       fetchRecommendedProducts();
+      fetchFlavors();
     }
-  }, [loadFromBackend, fetchRecommendedProducts, user]);
+  }, [user]); // Remove function dependencies to prevent infinite loops
 
   // Show loading while checking authentication
   if (userLoading) {
@@ -158,13 +176,18 @@ const CartPage = () => {
       });
       // Refresh recommended products to show new ones
       fetchRecommendedProducts();
-    } catch (error) {
+    } catch  {
       console.error("Failed to add recommended product:", error);
     }
   };
 
   const handleViewAllProducts = () => {
     router.push("/shop");
+  };
+
+  const getFlavorName = (flavorId: string) => {
+    const flavor = flavors.find(f => f.id === flavorId);
+    return flavor ? flavor.name : flavorId;
   };
 
   const checkout = async () => {
@@ -176,78 +199,47 @@ const CartPage = () => {
         throw new Error("Your cart is empty. Add some products to continue.");
       }
 
-      // Enhanced product verification with detailed logging
+
+      // Enhanced product verification with detailed logging (skip custom packs)
       try {
-        const productIds = items.map((item) => item.productId);
-        // Check if products exist by fetching them from backend
-        const response = await fetch("/api/products", {
-          credentials: "include",
-        });
+        const regularItems = items.filter(item => !item.isCustomPack);
+        
+        if (regularItems.length > 0) {
+          const regularProductIds = regularItems.map((item) => item.productId);
+          
+          // Check if regular products exist by fetching them from backend
+          const response = await fetch("/api/products", {
+            credentials: "include",
+          });
 
-        if (response.ok) {
-          const products = await response.json();
+          if (response.ok) {
+            const products = await response.json();
 
-          const availableProductIds = Array.isArray(products)
-            ? products.map((p: { id: string }) => p.id)
-            : products.products?.map((p: { id: string }) => p.id) || [];
+            const availableProductIds = Array.isArray(products)
+              ? products.map((p: { id: string }) => p.id)
+              : products.products?.map((p: { id: string }) => p.id) || [];
 
-          const missingProducts = productIds.filter(
-            (id) => !availableProductIds.includes(id)
-          );
-          if (missingProducts.length > 0) {
-            throw new Error(
-              `Some items in your cart are no longer available. Please refresh your cart to see current availability.`
+            const missingProducts = regularProductIds.filter(
+              (id) => !availableProductIds.includes(id)
             );
+            if (missingProducts.length > 0) {
+              throw new Error(
+                `Some items in your cart are no longer available. Please refresh your cart to see current availability.`
+              );
+            }
           }
         }
       } catch {
         // Continue anyway - backend will handle validation
       }
 
-      // Try the format that matches the backend database
+      // Try cart-based approach - let backend create order from cart
+      // Stripe will collect shipping address, so we don't need it here
       const orderData = {
-        orderItems: items.map((item) => ({
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        total: getTotal(),
-        // Add any additional fields the backend might expect
-        status: "pending" as const,
-        notes: notes || "",
-        shippingAddress: {
-          name: shipping.name,
-          email: shipping.email,
-          phone: shipping.phone,
-          address1: shipping.address1,
-          address2: shipping.address2,
-          city: shipping.city,
-          state: shipping.state,
-          postal: shipping.postal,
-          country: shipping.country,
-        },
+        orderNotes: notes || "Order from website",
       };
 
-      // Fix: shippingAddress should be a string, not an object
-      const orderDataForBackend = {
-        ...orderData,
-        shippingAddress: [
-          orderData.shippingAddress.name,
-          orderData.shippingAddress.email,
-          orderData.shippingAddress.phone,
-          orderData.shippingAddress.address1,
-          orderData.shippingAddress.address2,
-          orderData.shippingAddress.city,
-          orderData.shippingAddress.state,
-          orderData.shippingAddress.postal,
-          orderData.shippingAddress.country,
-        ]
-          .filter(Boolean)
-          .join(", "),
-      };
-
-      const created = await createOrder(orderDataForBackend);
+      const created = await createOrder(orderData);
       if (!created) throw new Error("Failed to create order");
 
       // Create Stripe Checkout Session
@@ -257,9 +249,19 @@ const CartPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId: created.id,
-          items: orderData.orderItems,
-          customerEmail: shipping.email || undefined,
-          shippingAddress: orderData.shippingAddress,
+          items: items.map((item) => ({
+            productId: item.isCustomPack ? item.id : item.productId,
+            productName: item.productName,
+            quantity: item.quantity,
+            price: item.price,
+            ...(item.isCustomPack && {
+              isCustomPack: true,
+              flavorIds: item.flavorIds,
+              sku: item.sku,
+            }),
+          })),
+          customerEmail: undefined, // Stripe will collect this
+          shippingAddress: undefined, // Stripe will collect this
           successUrl: `${window.location.origin}/profile?order=${created.id}&session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/cart`,
         }),
@@ -414,9 +416,19 @@ const CartPage = () => {
                       <div className="flex-1 min-w-0">
                         {/* Header with title and remove button */}
                         <div className="flex justify-between items-start gap-3 mb-3">
-                          <h3 className="text-lg sm:text-xl font-semibold flex-1 text-black">
-                            {item.productName}
-                          </h3>
+                          <div className="flex-1">
+                            <h3 className="text-lg sm:text-xl font-semibold text-black">
+                              {item.productName}
+                            </h3>
+                            {/* Custom Pack Indicator */}
+                            {item.isCustomPack && (
+                              <div className="mt-1">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#FF5D39] text-white">
+                                  Custom 3-Pack
+                                </span>
+                              </div>
+                            )}
+                          </div>
                           <button
                             onClick={() => handleRemoveItem(item.id)}
                             className="flex-shrink-0 p-2 rounded-full transition-colors duration-200 text-black bg-transparent hover:bg-primary/10 hover:text-primary"
@@ -436,6 +448,32 @@ const CartPage = () => {
                             </svg>
                           </button>
                         </div>
+
+                        {/* Custom Pack Flavors */}
+                        {item.isCustomPack && item.flavorIds && item.flavorIds.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Flavors:</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {item.flavorIds.map((flavorId) => (
+                                <span
+                                  key={flavorId}
+                                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200"
+                                >
+                                  {getFlavorName(flavorId)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* SKU Display */}
+                        {item.sku && (
+                          <div className="mb-2">
+                            <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">
+                              SKU: {item.sku}
+                            </span>
+                          </div>
+                        )}
 
                         {/* Price - separate row on mobile */}
                         <div className="mb-4">
@@ -527,9 +565,9 @@ const CartPage = () => {
           {/* Checkout Section */}
           {items.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-              {/* Order Details */}
-              <div className="lg:col-span-2 space-y-6">
-                <div className="rounded-2xl shadow-lg border border-gray-200 bg-white p-4 sm:p-6">
+                {/* Order Details */}
+                <div className="lg:col-span-2 space-y-6">
+                  <div className="rounded-2xl shadow-lg border border-gray-200 bg-white p-4 sm:p-6">
                   <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center text-black">
                     <svg
                       className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary"

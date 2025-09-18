@@ -10,6 +10,10 @@ export type CartItem = {
   price: number;
   imageUrl?: string;
   sku?: string;
+  // Custom pack fields
+  isCustomPack?: boolean;
+  flavorIds?: string[];
+  customPackName?: string;
 };
 
 type CartState = {
@@ -18,6 +22,7 @@ type CartState = {
   error: string | null;
   // Actions
   addItem: (item: Omit<CartItem, "id">) => Promise<void>;
+  addCustomPack: (flavorIds: string[], quantity?: number) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -36,6 +41,9 @@ export const useCartStore = create<CartState>()(
       error: null,
 
       addItem: async (newItem) => {
+        const { loading } = get();
+        if (loading) return; // Prevent multiple simultaneous requests
+        
         set({ loading: true, error: null });
         try {
           const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -73,7 +81,7 @@ export const useCartStore = create<CartState>()(
               price: newItem.price,
               sku: newItem.sku, // Include SKU for dynamic backend
             };
-            await axios.post(`${API_URL}/cart/add`, cartData, {
+            await axios.post(`${API_URL}/3pack/cart/add`, cartData, {
               withCredentials: true,
             });
           } catch (backendError) {
@@ -93,7 +101,44 @@ export const useCartStore = create<CartState>()(
         }
       },
 
+      addCustomPack: async (flavorIds, quantity = 1) => {
+        const { loading } = get();
+        if (loading) return; // Prevent multiple simultaneous requests
+        
+        set({ loading: true, error: null });
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL;
+          
+          // Add custom pack to backend cart
+          const response = await axios.post(`${API_URL}/3pack/cart/add`, {
+            product_id: "3-pack",
+            flavor_ids: flavorIds,
+            qty: quantity
+          }, {
+            withCredentials: true,
+          });
+
+          console.log("Custom pack added to backend cart:", response.data);
+
+          // Reload cart from backend to get the updated cart with the new custom pack
+          await get().loadFromBackend();
+
+        } catch (error) {
+          console.error("Failed to add custom pack to backend cart:", error);
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to add custom pack to cart";
+          set({ error: message });
+        } finally {
+          set({ loading: false });
+        }
+      },
+
       updateQuantity: async (itemId, quantity) => {
+        const { loading } = get();
+        if (loading) return; // Prevent multiple simultaneous requests
+        
         set({ loading: true, error: null });
         try {
           const { items } = get();
@@ -109,14 +154,14 @@ export const useCartStore = create<CartState>()(
           );
           set({ items: updatedItems });
 
-          // Try to sync with backend using the correct endpoint
+          // Try to sync with backend using the correct endpoint (skip custom packs)
           try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL;
             const item = items.find((item) => item.id === itemId);
-            if (item) {
+            if (item && !item.isCustomPack) {
               await axios.put(
-                `${API_URL}/cart/${itemId}`,
-                { quantity },
+                `${API_URL}/3pack/cart/${itemId}`,
+                { qty: quantity },
                 { withCredentials: true }
               );
             }
@@ -138,18 +183,24 @@ export const useCartStore = create<CartState>()(
       },
 
       removeItem: async (itemId) => {
+        const { loading } = get();
+        if (loading) return; // Prevent multiple simultaneous requests
+        
         set({ loading: true, error: null });
         try {
           const { items } = get();
           const updatedItems = items.filter((item) => item.id !== itemId);
           set({ items: updatedItems });
 
-          // Try to sync with backend using the correct endpoint
+          // Try to sync with backend using the correct endpoint (skip custom packs)
           try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL;
-            await axios.delete(`${API_URL}/cart/${itemId}`, {
-              withCredentials: true,
-            });
+            const item = items.find((item) => item.id === itemId);
+            if (item && !item.isCustomPack) {
+              await axios.delete(`${API_URL}/3pack/cart/${itemId}`, {
+                withCredentials: true,
+              });
+            }
           } catch (backendError) {
             console.warn(
               "Failed to sync with backend, using localStorage only:",
@@ -203,7 +254,7 @@ export const useCartStore = create<CartState>()(
               price: item.price,
               sku: item.sku, // Include SKU for dynamic backend
             };
-            await axios.post(`${API_URL}/cart/add`, cartData, {
+            await axios.post(`${API_URL}/3pack/cart/add`, cartData, {
               withCredentials: true,
             });
           }
@@ -214,36 +265,38 @@ export const useCartStore = create<CartState>()(
       },
 
       loadFromBackend: async () => {
+        const { loading } = get();
+        if (loading) return; // Prevent multiple simultaneous requests
+        
         set({ loading: true, error: null });
         try {
           const API_URL = process.env.NEXT_PUBLIC_API_URL;
-          const { data } = await axios.get(`${API_URL}/cart/cart`, {
+          const { data } = await axios.get(`${API_URL}/3pack/cart`, {
             withCredentials: true,
           });
 
-          if (data && Array.isArray(data.items)) {
-            const backendItems = data.items.map((item: unknown) => {
+          if (data && Array.isArray(data.cart)) {
+            const backendItems = data.cart.map((item: unknown) => {
               const typedItem = item as {
                 id?: string;
-                productId?: string;
-                productName?: string;
-                product?: { name?: string; imageUrl?: string };
+                product_id?: string;
+                recipe_title?: string;
+                recipe_kind?: string;
                 quantity?: number;
-                price?: number;
-                imageUrl?: string;
+                unit_price?: number;
                 sku?: string;
+                items?: Array<{ flavor_id: string; flavor_name: string; quantity: number }>;
               };
               return {
-                id: typedItem.id || `${typedItem.productId}-${Date.now()}`,
-                productId: typedItem.productId || "",
-                productName:
-                  typedItem.productName ||
-                  typedItem.product?.name ||
-                  "Unknown Product",
+                id: typedItem.id || `${typedItem.product_id}-${Date.now()}`,
+                productId: typedItem.product_id || "3-pack",
+                productName: typedItem.recipe_title || "Custom 3-Pack",
                 quantity: typedItem.quantity || 1,
-                price: typedItem.price || 0,
-                imageUrl: typedItem.imageUrl || typedItem.product?.imageUrl,
+                price: typedItem.unit_price || 0,
                 sku: typedItem.sku,
+                isCustomPack: typedItem.recipe_kind === "Custom",
+                flavorIds: typedItem.items?.map(item => item.flavor_id) || [],
+                customPackName: typedItem.recipe_title,
               };
             });
             set({ items: backendItems });

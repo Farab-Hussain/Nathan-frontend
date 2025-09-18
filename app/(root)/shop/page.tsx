@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import CustomButton from "@/components/custom/CustomButton";
 import { useRouter } from "next/navigation";
+import CustomPackBuilder from "@/components/ui/shop/CustomPackBuilder";
 
 const ORANGE = "#FF5D39";
 const YELLOW = "#F1A900";
@@ -30,6 +31,7 @@ const ShopPage = () => {
   const [loading, setLoading] = useState(true);
   const [retryLoading, setRetryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCustomBuilder, setShowCustomBuilder] = useState(false);
   const normalizeImageSrc = (src?: string | null, updatedAt?: string) => {
     if (!src) return "/assets/images/slider.png";
     const path = src.startsWith("/uploads") ? src : src.startsWith("uploads") ? `/${src}` : src;
@@ -163,10 +165,31 @@ const ShopPage = () => {
           Choose from our carefully curated licorice rope packages. Each package
           contains 3 delicious flavors for the perfect tasting experience.
         </p>
+        
+        {/* Custom Pack Builder Toggle */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <CustomButton
+            title={showCustomBuilder ? "Browse Pre-made Packages" : "Build Your Own Custom Pack"}
+            className={`w-full sm:w-auto px-6 py-3 font-bold ${
+              showCustomBuilder 
+                ? "!bg-gray-600 !text-white hover:opacity-90" 
+                : "!bg-[#F1A900] !text-black hover:opacity-90"
+            }`}
+            onClick={() => setShowCustomBuilder(!showCustomBuilder)}
+          />
+        </div>
       </div>
 
+      {/* Custom Pack Builder */}
+      {showCustomBuilder && (
+        <div className="mb-8">
+          <CustomPackBuilder />
+        </div>
+      )}
+
       {/* Package grid: 4 cards per row on large screens, tighter spacing */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
+      {!showCustomBuilder && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
         {Array.isArray(packages) &&
           packages.map((pkg) => (
             <div
@@ -304,7 +327,8 @@ const ShopPage = () => {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      )}
 
       <div className="mt-12 text-center">
         <p className="text-white text-lg mb-6">
