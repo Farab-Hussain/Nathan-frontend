@@ -42,7 +42,9 @@ const CartPage = () => {
   const [notes, setNotes] = useState("");
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
   const [recommendedLoading, setRecommendedLoading] = useState<boolean>(false);
-  const [flavors, setFlavors] = useState<Array<{id: string; name: string}>>([]);
+  const [flavors, setFlavors] = useState<Array<{ id: string; name: string }>>(
+    []
+  );
 
   const fetchRecommendedProducts = useCallback(async () => {
     setRecommendedLoading(true);
@@ -100,23 +102,34 @@ const CartPage = () => {
   const fetchFlavors = useCallback(async () => {
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      
+
       // Try multiple endpoints to find flavors
       let response;
       try {
-        response = await axios.get(`${API_URL}/admin/flavors`, { withCredentials: true });
-      } catch  {
+        response = await axios.get(`${API_URL}/admin/flavors`, {
+          withCredentials: true,
+        });
+      } catch {
         try {
-          response = await axios.get(`${API_URL}/products/flavors`, { withCredentials: true });
-        } catch  {
-          response = await axios.get(`${API_URL}/3pack/admin/flavors`, { withCredentials: true });
+          response = await axios.get(`${API_URL}/products/flavors`, {
+            withCredentials: true,
+          });
+        } catch {
+          response = await axios.get(`${API_URL}/3pack/admin/flavors`, {
+            withCredentials: true,
+          });
         }
       }
-      
-      const flavorsData = Array.isArray(response.data) 
-        ? response.data 
+
+      const flavorsData = Array.isArray(response.data)
+        ? response.data
         : response.data?.flavors || [];
-      setFlavors(flavorsData.map((flavor: { id: string; name: string }) => ({ id: flavor.id, name: flavor.name })));
+      setFlavors(
+        flavorsData.map((flavor: { id: string; name: string }) => ({
+          id: flavor.id,
+          name: flavor.name,
+        }))
+      );
     } catch (error) {
       console.error("Failed to fetch flavors:", error);
     }
@@ -176,7 +189,7 @@ const CartPage = () => {
       });
       // Refresh recommended products to show new ones
       fetchRecommendedProducts();
-    } catch  {
+    } catch {
       console.error("Failed to add recommended product:", error);
     }
   };
@@ -186,7 +199,7 @@ const CartPage = () => {
   };
 
   const getFlavorName = (flavorId: string) => {
-    const flavor = flavors.find(f => f.id === flavorId);
+    const flavor = flavors.find((f) => f.id === flavorId);
     return flavor ? flavor.name : flavorId;
   };
 
@@ -199,14 +212,13 @@ const CartPage = () => {
         throw new Error("Your cart is empty. Add some products to continue.");
       }
 
-
       // Enhanced product verification with detailed logging (skip custom packs)
       try {
-        const regularItems = items.filter(item => !item.isCustomPack);
-        
+        const regularItems = items.filter((item) => !item.isCustomPack);
+
         if (regularItems.length > 0) {
           const regularProductIds = regularItems.map((item) => item.productId);
-          
+
           // Check if regular products exist by fetching them from backend
           const response = await fetch("/api/products", {
             credentials: "include",
@@ -233,10 +245,24 @@ const CartPage = () => {
         // Continue anyway - backend will handle validation
       }
 
-      // Try cart-based approach - let backend create order from cart
-      // Stripe will collect shipping address, so we don't need it here
+      // Convert cart items to order items format expected by backend
+      const orderItems = items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        total: item.price * item.quantity,
+        // Include custom pack data if applicable
+        ...(item.isCustomPack && {
+          isCustomPack: true,
+          flavorIds: item.flavorIds,
+          customPackName: item.customPackName,
+        }),
+      }));
+
       const orderData = {
+        orderItems,
         orderNotes: notes || "Order from website",
+        total: getTotal(),
       };
 
       const created = await createOrder(orderData);
@@ -450,21 +476,25 @@ const CartPage = () => {
                         </div>
 
                         {/* Custom Pack Flavors */}
-                        {item.isCustomPack && item.flavorIds && item.flavorIds.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Flavors:</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {item.flavorIds.map((flavorId) => (
-                                <span
-                                  key={flavorId}
-                                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200"
-                                >
-                                  {getFlavorName(flavorId)}
-                                </span>
-                              ))}
+                        {item.isCustomPack &&
+                          item.flavorIds &&
+                          item.flavorIds.length > 0 && (
+                            <div className="mb-4">
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                Selected Flavors:
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {item.flavorIds.map((flavorId) => (
+                                  <span
+                                    key={flavorId}
+                                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200"
+                                  >
+                                    {getFlavorName(flavorId)}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
 
                         {/* SKU Display */}
                         {item.sku && (
@@ -565,9 +595,9 @@ const CartPage = () => {
           {/* Checkout Section */}
           {items.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-                {/* Order Details */}
-                <div className="lg:col-span-2 space-y-6">
-                  <div className="rounded-2xl shadow-lg border border-gray-200 bg-white p-4 sm:p-6">
+              {/* Order Details */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="rounded-2xl shadow-lg border border-gray-200 bg-white p-4 sm:p-6">
                   <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center text-black">
                     <svg
                       className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-primary"

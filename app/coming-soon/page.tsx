@@ -147,9 +147,9 @@ const ComingSoonPage = () => {
           <div className="flex items-center justify-center pb-2">
             <a
               href="mailto:info@Licorice4Good.com?subject=Notify%20me%20about%20fundraising"
-              className="inline-flex items-center gap-3 bg-[#FF5D39] text-white font-bold p-8 py-4 rounded-xl shadow hover:opacity-90 transition-opacity text-lg"
+              className="inline-flex items-center gap-3 bg-[#FF5D39] text-white font-bold px-8 py-4 rounded-xl shadow hover:opacity-90 transition-opacity text-lg"
             >
-              Notify Me 
+              Notify Me
               <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-black">
                 <svg
                   className="w-6 h-6"

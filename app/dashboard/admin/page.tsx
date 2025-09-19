@@ -1,5 +1,11 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useState, Suspense } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  Suspense,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { useUser } from "@/hooks/useUser";
@@ -283,6 +289,24 @@ const AdminPageContent = () => {
       }
     } catch (err) {
       console.error("Failed to fetch flavors:", err);
+
+      // Check if it's an authentication error
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        const errorData = err.response.data;
+        if (errorData?.code === "NO_TOKEN") {
+          // Show the authentication error message to user
+          setError(
+            errorData.message ||
+              "Authentication required. Please log in to access this resource."
+          );
+          // Redirect to login page after a short delay to show the message
+          setTimeout(() => {
+            window.location.href = "/auth/login";
+          }, 2000);
+          return;
+        }
+      }
+
       // If the new admin endpoint doesn't exist yet, try the old one
       try {
         const { data } = await axios.get(
@@ -301,6 +325,15 @@ const AdminPageContent = () => {
       } catch (fallbackErr) {
         console.error("Fallback flavors fetch also failed:", fallbackErr);
         setFlavors([]);
+        // Show user-friendly error message
+        if (
+          axios.isAxiosError(fallbackErr) &&
+          fallbackErr.response?.data?.message
+        ) {
+          setError(fallbackErr.response.data.message);
+        } else {
+          setError("Failed to load flavors. Please try again.");
+        }
       }
     }
   };
@@ -340,6 +373,24 @@ const AdminPageContent = () => {
       }
     } catch (err) {
       console.error("Failed to fetch categories:", err);
+
+      // Check if it's an authentication error
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        const errorData = err.response.data;
+        if (errorData?.code === "NO_TOKEN") {
+          // Show the authentication error message to user
+          setError(
+            errorData.message ||
+              "Authentication required. Please log in to access this resource."
+          );
+          // Redirect to login page after a short delay to show the message
+          setTimeout(() => {
+            window.location.href = "/auth/login";
+          }, 2000);
+          return;
+        }
+      }
+
       setCategories([]);
     }
   };
@@ -367,6 +418,24 @@ const AdminPageContent = () => {
       }
     } catch (err) {
       console.error("Failed to fetch inventory alerts:", err);
+
+      // Check if it's an authentication error
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        const errorData = err.response.data;
+        if (errorData?.code === "NO_TOKEN") {
+          // Show the authentication error message to user
+          setError(
+            errorData.message ||
+              "Authentication required. Please log in to access this resource."
+          );
+          // Redirect to login page after a short delay to show the message
+          setTimeout(() => {
+            window.location.href = "/auth/login";
+          }, 2000);
+          return;
+        }
+      }
+
       setInventoryAlerts([]);
     }
   };
@@ -385,6 +454,24 @@ const AdminPageContent = () => {
       setSystemConfig(configData);
     } catch (err) {
       console.error("Failed to fetch system config:", err);
+
+      // Check if it's an authentication error
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        const errorData = err.response.data;
+        if (errorData?.code === "NO_TOKEN") {
+          // Show the authentication error message to user
+          setError(
+            errorData.message ||
+              "Authentication required. Please log in to access this resource."
+          );
+          // Redirect to login page after a short delay to show the message
+          setTimeout(() => {
+            window.location.href = "/auth/login";
+          }, 2000);
+          return;
+        }
+      }
+
       setSystemConfig(null);
     }
   };
@@ -1897,13 +1984,27 @@ const AdminPageContent = () => {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  <svg
+                    className="w-6 h-6 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    />
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Inventory Management</h2>
-                  <p className="text-gray-600">Monitor and manage stock levels</p>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Inventory Management
+                  </h2>
+                  <p className="text-gray-600">
+                    Monitor and manage stock levels
+                  </p>
                 </div>
               </div>
               <div className="text-right">
@@ -1919,8 +2020,18 @@ const AdminPageContent = () => {
           <div className="bg-white rounded-xl border shadow-sm">
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                <svg
+                  className="w-5 h-5 text-red-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
                 </svg>
                 Low Stock Alerts
               </h3>
@@ -1938,51 +2049,105 @@ const AdminPageContent = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-3">
                             <div className="p-2 bg-red-100 rounded-lg">
-                              <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              <svg
+                                className="w-5 h-5 text-red-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
                               </svg>
                             </div>
                             <div>
                               <h4 className="text-lg font-semibold text-gray-900">
                                 {alert.flavor?.name || "Unknown Flavor"}
                               </h4>
-                              {alert.flavor?.aliases && alert.flavor.aliases.length > 0 && (
-                                <p className="text-sm text-gray-500">
-                                  Also known as: {alert.flavor.aliases.join(", ")}
-                                </p>
-                              )}
+                              {alert.flavor?.aliases &&
+                                alert.flavor.aliases.length > 0 && (
+                                  <p className="text-sm text-gray-500">
+                                    Also known as:{" "}
+                                    {alert.flavor.aliases.join(", ")}
+                                  </p>
+                                )}
                             </div>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div className="bg-white rounded-lg p-3 border border-gray-200">
                               <div className="flex items-center gap-2 mb-1">
-                                <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                <svg
+                                  className="w-4 h-4 text-green-600"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                                  />
                                 </svg>
-                                <span className="text-sm font-medium text-gray-600">On Hand</span>
+                                <span className="text-sm font-medium text-gray-600">
+                                  On Hand
+                                </span>
                               </div>
-                              <div className="text-xl font-bold text-gray-900">{alert.onHand || 0}</div>
+                              <div className="text-xl font-bold text-gray-900">
+                                {alert.onHand || 0}
+                              </div>
                             </div>
 
                             <div className="bg-white rounded-lg p-3 border border-gray-200">
                               <div className="flex items-center gap-2 mb-1">
-                                <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <svg
+                                  className="w-4 h-4 text-yellow-600"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
                                 </svg>
-                                <span className="text-sm font-medium text-gray-600">Reserved</span>
+                                <span className="text-sm font-medium text-gray-600">
+                                  Reserved
+                                </span>
                               </div>
-                              <div className="text-xl font-bold text-gray-900">{alert.reserved || 0}</div>
+                              <div className="text-xl font-bold text-gray-900">
+                                {alert.reserved || 0}
+                              </div>
                             </div>
 
                             <div className="bg-white rounded-lg p-3 border border-gray-200">
                               <div className="flex items-center gap-2 mb-1">
-                                <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                <svg
+                                  className="w-4 h-4 text-red-600"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                                  />
                                 </svg>
-                                <span className="text-sm font-medium text-gray-600">Safety Stock</span>
+                                <span className="text-sm font-medium text-gray-600">
+                                  Safety Stock
+                                </span>
                               </div>
-                              <div className="text-xl font-bold text-red-600">{alert.safetyStock || 0}</div>
+                              <div className="text-xl font-bold text-red-600">
+                                {alert.safetyStock || 0}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2022,16 +2187,41 @@ const AdminPageContent = () => {
                           >
                             {updatingInventory[alert.flavorId] ? (
                               <>
-                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                <svg
+                                  className="w-4 h-4 animate-spin"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  ></circle>
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  ></path>
                                 </svg>
                                 Updating...
                               </>
                             ) : (
                               <>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                                  />
                                 </svg>
                                 Update Stock
                               </>
@@ -2046,12 +2236,27 @@ const AdminPageContent = () => {
             ) : (
               <div className="p-12 text-center">
                 <div className="mx-auto w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="w-12 h-12 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">All Good!</h3>
-                <p className="text-gray-600">No inventory alerts at this time. All stock levels are within safe limits.</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  All Good!
+                </h3>
+                <p className="text-gray-600">
+                  No inventory alerts at this time. All stock levels are within
+                  safe limits.
+                </p>
               </div>
             )}
           </div>
@@ -2172,14 +2377,16 @@ const AdminPageContent = () => {
 
 const AdminPage = () => {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
-          <p className="text-black text-lg">Loading admin panel...</p>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
+            <p className="text-black text-lg">Loading admin panel...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <AdminPageContent />
     </Suspense>
   );

@@ -5,6 +5,8 @@ import Image from "next/image";
 import CustomButton from "@/components/custom/CustomButton";
 import { useRouter } from "next/navigation";
 import CustomPackBuilder from "@/components/ui/shop/CustomPackBuilder";
+import { useUser } from "@/hooks/useUser";
+import { useCartStore } from "@/store/cartStore";
 
 const ORANGE = "#FF5D39";
 const YELLOW = "#F1A900";
@@ -27,27 +29,55 @@ type Product = {
 
 const ShopPage = () => {
   const router = useRouter();
+  const { user, loading: userLoading } = useUser();
+  const { addPreDefinedPack } = useCartStore();
   const [packages, setPackages] = useState<Product[]>([]);
+  const [threePackVariants, setThreePackVariants] = useState<
+    Array<{
+      id: string;
+      title: string;
+      kind: string;
+      items: Array<{
+        flavor_id: string;
+        flavor_name: string;
+        qty: number;
+      }>;
+      active: boolean;
+      sku: string;
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [retryLoading, setRetryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCustomBuilder, setShowCustomBuilder] = useState(false);
   const normalizeImageSrc = (src?: string | null, updatedAt?: string) => {
     if (!src) return "/assets/images/slider.png";
-    const path = src.startsWith("/uploads") ? src : src.startsWith("uploads") ? `/${src}` : src;
+    const path = src.startsWith("/uploads")
+      ? src
+      : src.startsWith("uploads")
+      ? `/${src}`
+      : src;
     const cacheBuster = updatedAt ? `?t=${new Date(updatedAt).getTime()}` : "";
     return `${path}${cacheBuster}`;
   };
 
-  // Fetch products from backend API
+  // No authentication check - shop page is accessible to everyone
+  // Authentication will be required only for adding items to cart
+
+  // Fetch products from backend API (accessible to everyone)
   useEffect(() => {
+    // Fetch products regardless of authentication status
+
     const fetchProducts = async () => {
       try {
         setLoading(true);
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-        const response = await fetch("/api/products", {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL;
+        console.log("Fetching products from:", `${API_URL}/products`);
+
+        const response = await fetch(`${API_URL}/products`, {
           method: "GET",
           credentials: "include",
           headers: {
@@ -76,6 +106,34 @@ const ShopPage = () => {
           // Use fallback data instead of throwing error
           throw new Error("Invalid API response format");
         }
+
+        // Also fetch 3-pack variants
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL;
+          console.log(
+            "Fetching 3-pack variants from:",
+            `${API_URL}/3pack/product`
+          );
+
+          const threePackResponse = await fetch(`${API_URL}/3pack/product`, {
+            method: "GET",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (threePackResponse.ok) {
+            const threePackData = await threePackResponse.json();
+            console.log("3-pack variants data:", threePackData);
+            if (threePackData && threePackData.variants) {
+              setThreePackVariants(threePackData.variants);
+              console.log("Set 3-pack variants:", threePackData.variants);
+            }
+          }
+        } catch (threePackErr) {
+          console.warn("Failed to fetch 3-pack variants:", threePackErr);
+        }
       } catch (err) {
         console.error("Failed to fetch products:", err);
         if (err instanceof Error) {
@@ -95,20 +153,36 @@ const ShopPage = () => {
     };
 
     fetchProducts();
-  }, []);
+  }, []); // No dependencies - fetch once on component mount
 
   const viewPackage = (id: string) => router.push(`/products/${id}`);
 
+  const addPreDefinedPackToCart = async (recipeId: string) => {
+    try {
+      console.log("Adding pre-defined pack with recipeId:", recipeId);
+      await addPreDefinedPack(recipeId, 1);
+      // Optionally redirect to cart or show success message
+      router.push("/cart");
+    } catch (error) {
+      console.error("Failed to add pre-defined pack to cart:", error);
+    }
+  };
+
+  // Show loading while fetching products
   if (loading) {
     return (
       <div className="w-full min-h-screen layout py-10 bg-shop-bg flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading products...</p>
+          <p className="text-white text-lg">
+            {userLoading ? "Checking authentication..." : "Loading products..."}
+          </p>
         </div>
       </div>
     );
   }
+
+  // Shop page is accessible to everyone - no authentication required for browsing
 
   if (error && packages.length === 0) {
     return (
@@ -165,18 +239,81 @@ const ShopPage = () => {
           Choose from our carefully curated licorice rope packages. Each package
           contains 3 delicious flavors for the perfect tasting experience.
         </p>
-        
-        {/* Custom Pack Builder Toggle */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <CustomButton
-            title={showCustomBuilder ? "Browse Pre-made Packages" : "Build Your Own Custom Pack"}
-            className={`w-full sm:w-auto px-6 py-3 font-bold ${
-              showCustomBuilder 
-                ? "!bg-gray-600 !text-white hover:opacity-90" 
-                : "!bg-[#F1A900] !text-black hover:opacity-90"
+
+        {/* Custom Pack Builder Card */}
+        <div className="mb-8">
+          <div
+            className={`group rounded-2xl overflow-hidden border-2 transition-all duration-300 transform-gpu hover:-translate-y-1 cursor-pointer ${
+              showCustomBuilder
+                ? "border-[#F1A900] bg-gradient-to-br from-[#F1A900]/10 to-[#FF6B35]/10 shadow-lg"
+                : "border-[#F1A900] bg-gradient-to-br from-white to-[#F1A900]/5 shadow-md hover:shadow-2xl hover:border-[#FF6B35]"
             }`}
             onClick={() => setShowCustomBuilder(!showCustomBuilder)}
-          />
+          >
+            <div className="p-6 sm:p-8 text-center">
+              {/* Icon */}
+              <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-gradient-to-br from-[#F1A900] to-[#FF6B35] flex items-center justify-center shadow-lg">
+                <svg
+                  className="w-8 h-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+              </div>
+
+              {/* Title */}
+              <h3 className="text-xl sm:text-2xl font-extrabold mb-2 text-gray-800">
+                {showCustomBuilder
+                  ? "Custom Pack Builder"
+                  : "Build Your Own Custom Pack"}
+              </h3>
+
+              {/* Description */}
+              <p className="text-gray-600 mb-4 leading-relaxed">
+                {showCustomBuilder
+                  ? "Create your perfect combination by selecting any 3 flavors you love"
+                  : "Choose exactly 3 flavors from our collection to create your unique custom pack"}
+              </p>
+
+              {/* Features */}
+              {!showCustomBuilder && (
+                <div className="space-y-2 mb-6">
+                  <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
+                    <span className="w-2 h-2 rounded-full bg-[#F1A900]"></span>
+                    <span>Choose any 3 flavors</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
+                    <span className="w-2 h-2 rounded-full bg-[#FF6B35]"></span>
+                    <span>Same great price: $27.00</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
+                    <span className="w-2 h-2 rounded-full bg-[#F1A900]"></span>
+                    <span>Perfect for sharing or personal enjoyment</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Button */}
+              <div className="flex justify-center">
+                <div
+                  className={`px-6 py-3 rounded-lg font-bold transition-all duration-300 ${
+                    showCustomBuilder
+                      ? "bg-gray-600 text-white hover:bg-gray-700"
+                      : "bg-gradient-to-r from-[#F1A900] to-[#FF6B35] text-white hover:shadow-lg hover:scale-105"
+                  }`}
+                >
+                  {showCustomBuilder ? "Back to Packages" : "Start Building"}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -190,143 +327,242 @@ const ShopPage = () => {
       {/* Package grid: 4 cards per row on large screens, tighter spacing */}
       {!showCustomBuilder && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
-        {Array.isArray(packages) &&
-          packages.map((pkg) => (
-            <div
-              key={pkg.id}
-              className="group rounded-2xl overflow-hidden bg-white border border-[#FF5D39]/20 hover:border-[#FF5D39] shadow-md hover:shadow-2xl transition-all duration-300 transform-gpu hover:-translate-y-1 h-full flex flex-col"
-            >
-              <div className="relative">
-                <Link href={`/products/${pkg.id}`} className="block">
-                  {(
+          {/* Display 3-pack variants first */}
+          {Array.isArray(threePackVariants) &&
+            threePackVariants.map((variant) => (
+              <div
+                key={variant.id}
+                className="group rounded-2xl overflow-hidden bg-white border border-[#FF5D39]/20 hover:border-[#FF5D39] shadow-md hover:shadow-2xl transition-all duration-300 transform-gpu hover:-translate-y-1 h-full flex flex-col"
+              >
+                <div className="relative">
+                  <div className="block">
                     <Image
-                      src={normalizeImageSrc(pkg.imageUrl, pkg.updatedAt)}
-                      alt={pkg.name}
+                      src="/assets/images/slider.png"
+                      alt={variant.title}
                       width={640}
                       height={480}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="w-full aspect-[4/3] object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-2xl"
                     />
-                  )}
-                </Link>
-                <span
-                  className="absolute top-3 sm:top-4 left-3 sm:left-4 text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 rounded-full shadow"
-                  style={{
-                    background:
-                      pkg.category === "Traditional"
-                        ? "#8B4513"
-                        : pkg.category === "Sour"
-                        ? "#FF6B35"
-                        : pkg.category === "Sweet"
-                        ? "#FF69B4"
-                        : YELLOW,
-                    color: "white",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                  }}
-                >
-                  {pkg.category}
-                </span>
-                <span
-                  className="absolute top-3 sm:top-4 right-3 sm:right-4 text-sm sm:text-lg font-bold px-2.5 sm:px-3 py-1 rounded-full shadow"
-                  style={{
-                    background: ORANGE,
-                    color: "white",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                  }}
-                >
-                  ${pkg.price.toFixed(2)}
-                </span>
-              </div>
-              {/* Make the content area grow to push the button to the bottom */}
-              <div className="p-4 sm:p-6 flex flex-col flex-1 gap-3 sm:gap-4">
-                <div>
-                  <h3
-                    className="font-extrabold text-lg sm:text-xl mb-2"
-                    style={{ color: BLACK }}
+                  </div>
+                  <span
+                    className="absolute top-3 sm:top-4 left-3 sm:left-4 text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 rounded-full shadow"
+                    style={{
+                      background:
+                        variant.kind === "Traditional"
+                          ? "#8B4513"
+                          : variant.kind === "Sour"
+                          ? "#FF6B35"
+                          : "#FF69B4",
+                      color: "white",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    }}
                   >
-                    {pkg.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-3">
-                    {pkg.description}
-                  </p>
-
-                  {/* Stock Status */}
-                  {pkg.stock !== undefined && (
-                    <div className="mb-3">
-                      <span
-                        className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                          pkg.stock > 20
-                            ? "bg-green-100 text-green-700"
-                            : pkg.stock > 10
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {pkg.stock > 20
-                          ? "In Stock"
-                          : pkg.stock > 10
-                          ? "Low Stock"
-                          : "Limited Stock"}{" "}
-                        ({pkg.stock})
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Flavors */}
-                  {Array.isArray(pkg.flavors) && pkg.flavors.length > 0 && (
-                    <div className="space-y-1">
-                      <h4 className="font-semibold text-xs text-gray-700">
-                        Contains:
-                      </h4>
-                      <div className="space-y-1">
-                        {pkg.flavors.slice(0, 3).map((flavor, index) => (
-                          <div
-                            key={index}
-                            className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded flex items-center gap-1"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                            {flavor.name}{" "}
-                            {flavor.quantity > 1 && `×${flavor.quantity}`}
-                          </div>
-                        ))}
-                        {pkg.flavors.length > 3 && (
-                          <div className="text-xs text-gray-500 italic">
-                            +{pkg.flavors.length - 3} more flavors
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                    {variant.kind}
+                  </span>
+                  <span
+                    className="absolute top-3 sm:top-4 right-3 sm:right-4 text-sm sm:text-lg font-bold px-2.5 sm:px-3 py-1 rounded-full shadow"
+                    style={{
+                      background: ORANGE,
+                      color: "white",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    }}
+                  >
+                    $27.00
+                  </span>
                 </div>
-                {/* The button is always at the bottom due to flex-1 above */}
-                <div className="pt-2 sm:pt-4 mt-auto">
-                  <CustomButton
-                    title="View Details"
-                    className="w-full !bg-shop-gradient !text-white font-bold py-2.5 sm:py-3 rounded-lg shadow-lg transition-all hover:opacity-90"
-                    onClick={() => viewPackage(pkg.id)}
-                  />
+                <div className="p-4 sm:p-6 flex flex-col flex-1 gap-3 sm:gap-4">
+                  <div>
+                    <h3
+                      className="font-extrabold text-lg sm:text-xl mb-2"
+                      style={{ color: BLACK }}
+                    >
+                      {variant.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-3">
+                      Pre-made 3-pack with {variant.kind.toLowerCase()} flavors
+                    </p>
+
+                    {/* Flavors */}
+                    {Array.isArray(variant.items) &&
+                      variant.items.length > 0 && (
+                        <div className="space-y-1">
+                          <h4 className="font-semibold text-xs text-gray-700">
+                            Contains:
+                          </h4>
+                          <div className="space-y-1">
+                            {variant.items.slice(0, 3).map(
+                              (
+                                item: {
+                                  flavor_id: string;
+                                  flavor_name: string;
+                                  qty: number;
+                                },
+                                index: number
+                              ) => (
+                                <div
+                                  key={index}
+                                  className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded flex items-center gap-1"
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                  {item.flavor_name}{" "}
+                                  {item.qty > 1 && `×${item.qty}`}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                  <div className="pt-2 sm:pt-4 mt-auto">
+                    <CustomButton
+                      title="Add to Cart"
+                      className="w-full !bg-shop-gradient !text-white font-bold py-2.5 sm:py-3 rounded-lg shadow-lg transition-all hover:opacity-90"
+                      onClick={() => addPreDefinedPackToCart(variant.id)}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        {!Array.isArray(packages) && (
-          <div className="col-span-full text-center py-12">
-            <div className="bg-white rounded-lg p-8 shadow-lg">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">
-                No Products Available
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Unable to load products at this time.
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="bg-primary text-white font-bold px-6 py-2 rounded-lg hover:opacity-90 transition-all"
+            ))}
+
+          {/* Display regular packages */}
+          {Array.isArray(packages) &&
+            packages.map((pkg) => (
+              <div
+                key={pkg.id}
+                className="group rounded-2xl overflow-hidden bg-white border border-[#FF5D39]/20 hover:border-[#FF5D39] shadow-md hover:shadow-2xl transition-all duration-300 transform-gpu hover:-translate-y-1 h-full flex flex-col"
               >
-                Refresh Page
-              </button>
+                <div className="relative">
+                  <Link href={`/products/${pkg.id}`} className="block">
+                    {
+                      <Image
+                        src={normalizeImageSrc(pkg.imageUrl, pkg.updatedAt)}
+                        alt={pkg.name}
+                        width={640}
+                        height={480}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="w-full aspect-[4/3] object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-2xl"
+                      />
+                    }
+                  </Link>
+                  <span
+                    className="absolute top-3 sm:top-4 left-3 sm:left-4 text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 rounded-full shadow"
+                    style={{
+                      background:
+                        pkg.category === "Traditional"
+                          ? "#8B4513"
+                          : pkg.category === "Sour"
+                          ? "#FF6B35"
+                          : pkg.category === "Sweet"
+                          ? "#FF69B4"
+                          : YELLOW,
+                      color: "white",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    }}
+                  >
+                    {pkg.category}
+                  </span>
+                  <span
+                    className="absolute top-3 sm:top-4 right-3 sm:right-4 text-sm sm:text-lg font-bold px-2.5 sm:px-3 py-1 rounded-full shadow"
+                    style={{
+                      background: ORANGE,
+                      color: "white",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    }}
+                  >
+                    ${pkg.price.toFixed(2)}
+                  </span>
+                </div>
+                {/* Make the content area grow to push the button to the bottom */}
+                <div className="p-4 sm:p-6 flex flex-col flex-1 gap-3 sm:gap-4">
+                  <div>
+                    <h3
+                      className="font-extrabold text-lg sm:text-xl mb-2"
+                      style={{ color: BLACK }}
+                    >
+                      {pkg.name}
+                    </h3>
+                    <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-3">
+                      {pkg.description}
+                    </p>
+
+                    {/* Stock Status */}
+                    {pkg.stock !== undefined && (
+                      <div className="mb-3">
+                        <span
+                          className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                            pkg.stock > 20
+                              ? "bg-green-100 text-green-700"
+                              : pkg.stock > 10
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {pkg.stock > 20
+                            ? "In Stock"
+                            : pkg.stock > 10
+                            ? "Low Stock"
+                            : "Limited Stock"}{" "}
+                          ({pkg.stock})
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Flavors */}
+                    {Array.isArray(pkg.flavors) && pkg.flavors.length > 0 && (
+                      <div className="space-y-1">
+                        <h4 className="font-semibold text-xs text-gray-700">
+                          Contains:
+                        </h4>
+                        <div className="space-y-1">
+                          {pkg.flavors.slice(0, 3).map((flavor, index) => (
+                            <div
+                              key={index}
+                              className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded flex items-center gap-1"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                              {flavor.name}{" "}
+                              {flavor.quantity > 1 && `×${flavor.quantity}`}
+                            </div>
+                          ))}
+                          {pkg.flavors.length > 3 && (
+                            <div className="text-xs text-gray-500 italic">
+                              +{pkg.flavors.length - 3} more flavors
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {/* The button is always at the bottom due to flex-1 above */}
+                  <div className="pt-2 sm:pt-4 mt-auto">
+                    <CustomButton
+                      title="View Details"
+                      className="w-full !bg-shop-gradient !text-white font-bold py-2.5 sm:py-3 rounded-lg shadow-lg transition-all hover:opacity-90"
+                      onClick={() => viewPackage(pkg.id)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          {!Array.isArray(packages) && (
+            <div className="col-span-full text-center py-12">
+              <div className="bg-white rounded-lg p-8 shadow-lg">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">
+                  No Products Available
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Unable to load products at this time.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="bg-primary text-white font-bold px-6 py-2 rounded-lg hover:opacity-90 transition-all"
+                >
+                  Refresh Page
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
         </div>
       )}
 

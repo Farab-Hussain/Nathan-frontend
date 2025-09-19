@@ -18,7 +18,7 @@ const getFallbackMessage = (status: number | undefined): string => {
     case 400:
       return "Invalid request. Please check your input.";
     case 401:
-      return "Unauthorized. Please check your credentials.";
+      return "Authentication required. Please log in to access this feature.";
     case 403:
       return "Access denied. You don't have permission to perform this action.";
     case 404:
@@ -59,13 +59,18 @@ const RegisterPage = () => {
       // If user is not verified, redirect to verification page
       if (!user.isVerified) {
         if (typeof window !== "undefined") {
-          window.location.href = `/auth/verify-email?email=${encodeURIComponent(user.email)}`;
+          window.location.href = `/auth/verify-email?email=${encodeURIComponent(
+            user.email
+          )}`;
         } else if (router) {
-          router.replace(`/auth/verify-email?email=${encodeURIComponent(user.email)}`);
+          router.replace(
+            `/auth/verify-email?email=${encodeURIComponent(user.email)}`
+          );
         }
       } else {
         // User is verified, redirect to main site
-        const redirectUrl = process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || "/";
+        const redirectUrl =
+          process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || "/";
         if (typeof window !== "undefined") {
           window.location.href = redirectUrl;
         } else if (router) {
@@ -109,36 +114,43 @@ const RegisterPage = () => {
         { name, email, password },
         { withCredentials: true }
       );
-      toast.success("Registration successful! Please check your email to verify your account.");
-      setSuccess("Registration successful! Please check your email to verify your account.");
+      toast.success(
+        "Registration successful! Please check your email to verify your account."
+      );
+      setSuccess(
+        "Registration successful! Please check your email to verify your account."
+      );
       setForm({ name: "", email: "", password: "", confirmPassword: "" });
       setTimeout(() => {
         // Redirect to verification page instead of main site
         if (typeof window !== "undefined") {
-          window.location.href = `/auth/verify-email?email=${encodeURIComponent(email)}`;
+          window.location.href = `/auth/verify-email?email=${encodeURIComponent(
+            email
+          )}`;
         }
       }, 600);
     } catch (err: unknown) {
-      
       if (axios.isAxiosError(err)) {
         const status = err.response?.status;
         const responseData = err.response?.data;
-        
+
         // Log the full response for debugging
-        
+
         // Handle different types of backend errors
         if (responseData) {
           let errorMessage = "";
-          
+
           // Check for details array (your specific backend format)
           if (responseData.details && Array.isArray(responseData.details)) {
             // Extract messages from details array
-            const messages = responseData.details.map((detail: { msg: string; path: string }) => {
-              if (detail.msg) {
-                return detail.msg;
+            const messages = responseData.details.map(
+              (detail: { msg: string; path: string }) => {
+                if (detail.msg) {
+                  return detail.msg;
+                }
+                return `${detail.path}: ${detail.msg || "Invalid value"}`;
               }
-              return `${detail.path}: ${detail.msg || 'Invalid value'}`;
-            });
+            );
             errorMessage = messages.join("; ");
           }
           // Check for other error formats
@@ -150,15 +162,17 @@ const RegisterPage = () => {
             // Handle validation errors array or object
             if (Array.isArray(responseData.errors)) {
               errorMessage = responseData.errors.join(", ");
-            } else if (typeof responseData.errors === 'object') {
+            } else if (typeof responseData.errors === "object") {
               // Handle object with field-specific errors
-              const errorMessages = Object.entries(responseData.errors).map(([field, messages]) => {
-                if (Array.isArray(messages)) {
-                  return `${field}: ${messages.join(", ")}`;
-                } else {
-                  return `${field}: ${messages}`;
+              const errorMessages = Object.entries(responseData.errors).map(
+                ([field, messages]) => {
+                  if (Array.isArray(messages)) {
+                    return `${field}: ${messages.join(", ")}`;
+                  } else {
+                    return `${field}: ${messages}`;
+                  }
                 }
-              });
+              );
               errorMessage = errorMessages.join("; ");
             } else {
               errorMessage = String(responseData.errors);
@@ -167,12 +181,12 @@ const RegisterPage = () => {
             errorMessage = responseData.msg;
           } else if (responseData.description) {
             errorMessage = responseData.description;
-          } else if (typeof responseData === 'string') {
+          } else if (typeof responseData === "string") {
             errorMessage = responseData;
           } else if (responseData.data && responseData.data.message) {
             errorMessage = responseData.data.message;
           }
-          
+
           // Show the exact backend error in toast
           if (errorMessage) {
             toast.error(errorMessage);
@@ -185,13 +199,17 @@ const RegisterPage = () => {
           }
         } else {
           // No response data
-          const fallbackMsg = "Network error. Please check your connection and try again.";
+          const fallbackMsg =
+            "Network error. Please check your connection and try again.";
           toast.error(fallbackMsg);
           setError(fallbackMsg);
         }
       } else {
         // Non-axios error
-        const message = err instanceof Error ? err.message : "Registration failed. Please try again.";
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Registration failed. Please try again.";
         toast.error(message);
         setError(message);
       }
