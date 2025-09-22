@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useCartStore, CartItem } from "@/store/cartStore";
+import { useCartStore } from "@/store/cartStore";
 import { useOrdersStore } from "@/store/ordersStore";
 import { useUser } from "@/hooks/useUser";
 import VerificationGuard from "@/components/auth/VerificationGuard";
@@ -141,7 +141,7 @@ const CartPage = () => {
       fetchRecommendedProducts();
       fetchFlavors();
     }
-  }, [user]); // Remove function dependencies to prevent infinite loops
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Show loading while checking authentication
   if (userLoading) {
@@ -248,6 +248,7 @@ const CartPage = () => {
       // Convert cart items to order items format expected by backend
       const orderItems = items.map((item) => ({
         productId: item.productId,
+        productName: item.productName,
         quantity: item.quantity,
         price: item.price,
         total: item.price * item.quantity,
@@ -721,195 +722,192 @@ const CartPage = () => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
-                      {recommendedLoading ? (
-                        // Loading state
-                        <>
-                          <div
-                            className="bg-white rounded-lg p-3 shadow-sm border animate-pulse"
-                            style={{ borderColor: `${"var(--primary)"}20` }}
-                          >
-                            <div className="aspect-square mb-2 rounded-lg bg-gray-200"></div>
-                            <div className="h-4 bg-gray-200 rounded mb-1"></div>
-                            <div className="h-3 bg-gray-200 rounded mb-2"></div>
-                            <div className="flex items-center justify-between">
-                              <div className="h-4 bg-gray-200 rounded w-12"></div>
-                              <div className="h-6 bg-gray-200 rounded-full w-12"></div>
-                            </div>
-                          </div>
-                          <div
-                            className="bg-white rounded-lg p-3 shadow-sm border animate-pulse"
-                            style={{ borderColor: `${"var(--primary)"}20` }}
-                          >
-                            <div className="aspect-square mb-2 rounded-lg bg-gray-200"></div>
-                            <div className="h-4 bg-gray-200 rounded mb-1"></div>
-                            <div className="h-3 bg-gray-200 rounded mb-2"></div>
-                            <div className="flex items-center justify-between">
-                              <div className="h-4 bg-gray-200 rounded w-12"></div>
-                              <div className="h-6 bg-gray-200 rounded-full w-12"></div>
-                            </div>
-                          </div>
-                        </>
-                      ) : recommendedProducts.length > 0 ? (
-                        // Real products
-                        recommendedProducts.map((product, index) => (
-                          <div
-                            key={product.id}
-                            className="bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer border"
-                            style={{ borderColor: `${"var(--primary)"}20` }}
-                          >
-                            <div className="aspect-square mb-2 rounded-lg overflow-hidden bg-gray-100">
-                              {product.imageUrl ? (
-                                <Image
-                                  src={product.imageUrl}
-                                  alt={product.name}
-                                  width={100}
-                                  height={100}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div
-                                  className="w-full h-full flex items-center justify-center"
-                                  style={{
-                                    background: `linear-gradient(135deg, ${
-                                      index % 2 === 0
-                                        ? `${"var(--primary)"}20, ${"var(--primary)"}20`
-                                        : `${"var(--primary)"}20, ${"var(--primary)"}20`
-                                    })`,
-                                  }}
-                                >
-                                  <svg
-                                    className="w-8 h-8"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke={
-                                      index % 2 === 0
-                                        ? "var(--primary)"
-                                        : "var(--primary)"
-                                    }
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                                    />
-                                  </svg>
+                      {(() => {
+                        if (recommendedLoading) {
+                          return (
+                            <>
+                              <div
+                                className="bg-white rounded-lg p-3 shadow-sm border animate-pulse"
+                                style={{ borderColor: `${"var(--primary)"}20` }}
+                              >
+                                <div className="aspect-square mb-2 rounded-lg bg-gray-200"></div>
+                                <div className="h-4 bg-gray-200 rounded mb-1"></div>
+                                <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                                <div className="flex items-center justify-between">
+                                  <div className="h-4 bg-gray-200 rounded w-12"></div>
+                                  <div className="h-6 bg-gray-200 rounded-full w-12"></div>
                                 </div>
-                              )}
-                            </div>
-                            <h4
-                              className="text-sm font-semibold mb-1 truncate"
-                              style={{ color: "var(--black)" }}
-                              title={product.name}
-                            >
-                              {product.name}
-                            </h4>
-                            <p
-                              className="text-xs mb-2"
-                              style={{ color: "var(--black)", opacity: 0.7 }}
-                            >
-                              {product.category || "Premium candy"}
-                            </p>
-                            <div className="flex items-center justify-between">
-                              <span
-                                className="text-sm font-bold"
-                                style={{ color: "var(--primary)" }}
+                              </div>
+                              <div
+                                className="bg-white rounded-lg p-3 shadow-sm border animate-pulse"
+                                style={{ borderColor: `${"var(--primary)"}20` }}
                               >
-                                ${product.price?.toFixed(2) || "0.00"}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  handleAddRecommendedProduct(product)
-                                }
-                                className="text-xs px-2 py-1 rounded-full text-white font-medium hover:opacity-90 transition-opacity cursor-pointer"
-                                style={{ background: "var(--primary)" }}
-                              >
-                                Add
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        // Fallback when no products available - show explore options
-                        <>
-                          <div
-                            className="bg-white rounded-lg p-3 shadow-sm border text-center cursor-pointer hover:shadow-md transition-shadow"
-                            style={{ borderColor: `${"var(--primary)"}20` }}
-                            onClick={handleViewAllProducts}
-                          >
+                                <div className="aspect-square mb-2 rounded-lg bg-gray-200"></div>
+                                <div className="h-4 bg-gray-200 rounded mb-1"></div>
+                                <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                                <div className="flex items-center justify-between">
+                                  <div className="h-4 bg-gray-200 rounded w-12"></div>
+                                  <div className="h-6 bg-gray-200 rounded-full w-12"></div>
+                                </div>
+                              </div>
+                            </>
+                          );
+                        }
+
+                        if (recommendedProducts.length > 0) {
+                          return recommendedProducts.map((product) => (
                             <div
-                              className="aspect-square mb-2 rounded-lg bg-gray-100 flex items-center justify-center"
-                              style={{
-                                background: `linear-gradient(135deg, ${"var(--primary)"}20, ${"var(--primary)"}20)`,
-                              }}
+                              key={product.id}
+                              className="bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer border"
+                              style={{ borderColor: `${"var(--primary)"}20` }}
                             >
-                              <svg
-                                className="w-8 h-8"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke={"var(--primary)"}
+                              <div className="aspect-square mb-2 rounded-lg overflow-hidden bg-gray-100">
+                                {product.imageUrl ? (
+                                  <Image
+                                    src={product.imageUrl}
+                                    alt={product.name}
+                                    width={100}
+                                    height={100}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div
+                                    className="w-full h-full flex items-center justify-center"
+                                    style={{
+                                      background: `linear-gradient(135deg, ${"var(--primary)"}20, ${"var(--primary)"}20)`,
+                                    }}
+                                  >
+                                    <svg
+                                      className="w-8 h-8"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="var(--primary)"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                                      />
+                                    </svg>
+                                  </div>
+                                )}
+                              </div>
+                              <h4
+                                className="text-sm font-semibold mb-1 truncate"
+                                style={{ color: "var(--black)" }}
+                                title={product.name}
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                                />
-                              </svg>
-                            </div>
-                            <h4
-                              className="text-sm font-semibold mb-1"
-                              style={{ color: "var(--black)" }}
-                            >
-                              Browse Products
-                            </h4>
-                            <p
-                              className="text-xs mb-2"
-                              style={{ color: "var(--black)", opacity: 0.7 }}
-                            >
-                              Discover more items
-                            </p>
-                          </div>
-                          <div
-                            className="bg-white rounded-lg p-3 shadow-sm border text-center cursor-pointer hover:shadow-md transition-shadow"
-                            style={{ borderColor: `${"var(--primary)"}20` }}
-                            onClick={fetchRecommendedProducts}
-                          >
-                            <div
-                              className="aspect-square mb-2 rounded-lg bg-gray-100 flex items-center justify-center"
-                              style={{
-                                background: `linear-gradient(135deg, ${"var(--primary)"}20, ${"var(--primary)"}20)`,
-                              }}
-                            >
-                              <svg
-                                className="w-8 h-8"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke={"var(--primary)"}
+                                {product.name}
+                              </h4>
+                              <p
+                                className="text-xs mb-2"
+                                style={{ color: "var(--black)", opacity: 0.7 }}
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                />
-                              </svg>
+                                {product.category || "Premium candy"}
+                              </p>
+                              <div className="flex items-center justify-between">
+                                <span
+                                  className="text-sm font-bold"
+                                  style={{ color: "var(--primary)" }}
+                                >
+                                  ${product.price?.toFixed(2) || "0.00"}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    handleAddRecommendedProduct(product)
+                                  }
+                                  className="text-xs px-2 py-1 rounded-full text-white font-medium hover:opacity-90 transition-opacity cursor-pointer"
+                                  style={{ background: "var(--primary)" }}
+                                >
+                                  Add
+                                </button>
+                              </div>
                             </div>
-                            <h4
-                              className="text-sm font-semibold mb-1"
-                              style={{ color: "var(--black)" }}
+                          ));
+                        }
+
+                        return (
+                          <>
+                            <button
+                              className="bg-white rounded-lg p-3 shadow-sm border text-center cursor-pointer hover:shadow-md transition-shadow w-full"
+                              style={{ borderColor: `${"var(--primary)"}20` }}
+                              onClick={handleViewAllProducts}
                             >
-                              Refresh
-                            </h4>
-                            <p
-                              className="text-xs mb-2"
-                              style={{ color: "var(--black)", opacity: 0.7 }}
+                              <div
+                                className="aspect-square mb-2 rounded-lg bg-gray-100 flex items-center justify-center"
+                                style={{
+                                  background: `linear-gradient(135deg, ${"var(--primary)"}20, ${"var(--primary)"}20)`,
+                                }}
+                              >
+                                <svg
+                                  className="w-8 h-8"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke={"var(--primary)"}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                                  />
+                                </svg>
+                              </div>
+                              <h4
+                                className="text-sm font-semibold mb-1"
+                                style={{ color: "var(--black)" }}
+                              >
+                                Browse Products
+                              </h4>
+                              <p
+                                className="text-xs mb-2"
+                                style={{ color: "var(--black)", opacity: 0.7 }}
+                              >
+                                Discover more items
+                              </p>
+                            </button>
+                            <button
+                              className="bg-white rounded-lg p-3 shadow-sm border text-center cursor-pointer hover:shadow-md transition-shadow w-full"
+                              style={{ borderColor: `${"var(--primary)"}20` }}
+                              onClick={fetchRecommendedProducts}
                             >
-                              Get new suggestions
-                            </p>
-                          </div>
-                        </>
-                      )}
+                              <div
+                                className="aspect-square mb-2 rounded-lg bg-gray-100 flex items-center justify-center"
+                                style={{
+                                  background: `linear-gradient(135deg, ${"var(--primary)"}20, ${"var(--primary)"}20)`,
+                                }}
+                              >
+                                <svg
+                                  className="w-8 h-8"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke={"var(--primary)"}
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                  />
+                                </svg>
+                              </div>
+                              <h4
+                                className="text-sm font-semibold mb-1"
+                                style={{ color: "var(--black)" }}
+                              >
+                                Refresh
+                              </h4>
+                              <p
+                                className="text-xs mb-2"
+                                style={{ color: "var(--black)", opacity: 0.7 }}
+                              >
+                                Get new suggestions
+                              </p>
+                            </button>
+                          </>
+                        );
+                      })()}
                     </div>
 
                     <div className="mt-3 flex justify-center gap-2">
@@ -927,6 +925,85 @@ const CartPage = () => {
                         className="text-sm font-medium px-3 py-2 rounded-lg transition-colors hover:opacity-90 text-primary bg-primary  hover:bg-primary/10"
                       />
                     </div>
+                  </div>
+
+                  {/* Custom Pack Builder Section */}
+                  <div className="mb-6 p-4 rounded-xl border-2 border-dashed border-[#F1A900]/40 bg-gradient-to-br from-[#F1A900]/5 to-[#FF6B35]/5">
+                    <div className="flex items-center mb-3">
+                      <svg
+                        className="w-5 h-5 mr-2 text-[#F1A900]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                        />
+                      </svg>
+                      <h3 className="text-lg font-bold text-black">
+                        Create Your Own Pack
+                      </h3>
+                      <div className="flex-1 h-px ml-3 bg-gradient-to-r from-[#F1A900]/40 to-transparent"></div>
+                    </div>
+
+                    <p className="text-sm text-black/70 mb-4">
+                      Don&apos;t see what you want? Build your perfect custom
+                      3-pack by choosing any 3 flavors you love!
+                    </p>
+
+                    <div className="bg-white rounded-lg p-3 border border-[#F1A900]/20 mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#F1A900] to-[#FF6B35] rounded-lg flex items-center justify-center flex-shrink-0">
+                          <svg
+                            className="w-6 h-6 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                            />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-black text-sm">
+                            Custom 3-Pack Builder
+                          </h4>
+                          <p className="text-xs text-black/60">
+                            Choose exactly 3 flavors • Same great price: $27.00
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-bold text-[#FF5D39]">
+                            $27.00
+                          </span>
+                          <span className="text-xs text-green-600 font-medium">
+                            ✓ Same Price
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs text-black/60 mb-4">
+                      <span className="w-2 h-2 rounded-full bg-[#F1A900]"></span>
+                      <span>Pick any 3 flavors from our collection</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-black/60 mb-4">
+                      <span className="w-2 h-2 rounded-full bg-[#FF6B35]"></span>
+                      <span>Perfect for trying new combinations</span>
+                    </div>
+
+                    <CustomButton
+                      title="🎨 Build Custom Pack"
+                      onClick={() => router.push("/shop")}
+                      className="w-full text-sm font-medium py-2.5 rounded-lg transition-all hover:shadow-md bg-gradient-to-r from-[#F1A900] to-[#FF6B35] text-white hover:opacity-90"
+                    />
                   </div>
 
                   {orderError && (

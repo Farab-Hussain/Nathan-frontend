@@ -18,6 +18,20 @@ type Flavor = {
   active: boolean;
   createdAt: string;
   updatedAt: string;
+  imageUrl?: string | null;
+  inventory?: {
+    id: string;
+    flavorId: string;
+    onHand: number;
+    reserved: number;
+    safetyStock: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+  _count?: {
+    productFlavors: number;
+    packRecipeItems: number;
+  };
 };
 
 type Category = {
@@ -96,6 +110,12 @@ const AdminPageContent = () => {
     aliases: "",
     active: true,
   });
+  const [editFlavorImageFile, setEditFlavorImageFile] = useState<File | null>(
+    null
+  );
+  const [editFlavorImagePreview, setEditFlavorImagePreview] = useState<
+    string | null
+  >(null);
 
   // Categories state
   const [categories, setCategories] = useState<Category[]>([]);
@@ -146,6 +166,10 @@ const AdminPageContent = () => {
     name: "",
     aliases: "",
   });
+  const [flavorImageFile, setFlavorImageFile] = useState<File | null>(null);
+  const [flavorImagePreview, setFlavorImagePreview] = useState<string | null>(
+    null
+  );
   const [creatingFlavor, setCreatingFlavor] = useState<boolean>(false);
   const [deletingFlavor, setDeletingFlavor] = useState<{
     [key: string]: boolean;
@@ -635,17 +659,22 @@ const AdminPageContent = () => {
         .map((alias) => alias.trim())
         .filter((alias) => alias.length > 0);
 
-      const { data } = await axios.post(
-        `${API_URL}/admin/flavors`,
-        {
-          name: newFlavor.name.trim(),
-          aliases: aliasesArray,
-          active: true,
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append("name", newFlavor.name.trim());
+      formData.append("aliases", JSON.stringify(aliasesArray));
+      formData.append("active", "true");
+
+      if (flavorImageFile) {
+        formData.append("flavorImage", flavorImageFile);
+      }
+
+      const { data } = await axios.post(`${API_URL}/admin/flavors`, formData, {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "multipart/form-data",
         },
-        {
-          withCredentials: true,
-        }
-      );
+      });
 
       // Handle response format - could be direct object or wrapped in response
       const flavorData = data.flavor || data;
@@ -656,6 +685,8 @@ const AdminPageContent = () => {
         { id: flavorData.id, name: flavorData.name },
       ]);
       setNewFlavor({ name: "", aliases: "" });
+      setFlavorImageFile(null);
+      setFlavorImagePreview(null);
 
       // Refresh the flavors list to ensure consistency
       await fetchFlavors();
@@ -678,20 +709,36 @@ const AdminPageContent = () => {
         .map((alias) => alias.trim())
         .filter((alias) => alias.length > 0);
 
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append("name", editFlavorData.name.trim());
+      formData.append("aliases", JSON.stringify(aliasesArray));
+      formData.append("active", editFlavorData.active.toString());
+
+      if (editFlavorImageFile) {
+        formData.append("flavorImage", editFlavorImageFile);
+      }
+
       const { data } = await axios.put(
         `${API_URL}/admin/flavors/${id}`,
-        {
-          name: editFlavorData.name.trim(),
-          aliases: aliasesArray,
-          active: editFlavorData.active,
-        },
+        formData,
         {
           withCredentials: true,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
 
-      setFlavors((prev) => prev.map((f) => (f.id === id ? data : f)));
+      setFlavors((prev) =>
+        prev.map((f) => (f.id === id ? data.flavor || data : f))
+      );
       setEditingFlavor(null);
+      setEditFlavorImageFile(null);
+      setEditFlavorImagePreview(null);
+
+      // Refresh the flavors list to ensure consistency
+      await fetchFlavors();
     } catch (err: unknown) {
       const errorMessage =
         (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -1015,6 +1062,7 @@ const AdminPageContent = () => {
       );
 
       await fetchInventoryAlerts(); // Refresh alerts
+      await fetchFlavors(); // Refresh flavors with updated inventory data
     } catch {
       setError("Failed to update inventory");
     } finally {
@@ -1781,6 +1829,53 @@ const AdminPageContent = () => {
                   />
                 </div>
               </div>
+
+              {/* Flavor Image Upload */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Flavor Image (Optional)
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setFlavorImageFile(file);
+                          const reader = new FileReader();
+                          reader.onload = (e) => {
+                            setFlavorImagePreview(e.target?.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#FF5D39] file:text-white hover:file:bg-opacity-90"
+                    />
+                  </div>
+                  {flavorImagePreview && (
+                    <div className="flex-shrink-0">
+                      <Image
+                        src={flavorImagePreview}
+                        alt="Flavor preview"
+                        className="w-16 h-16 object-cover rounded-lg border border-gray-300"
+                      />
+                    </div>
+                  )}
+                </div>
+                {flavorImageFile && (
+                  <button
+                    onClick={() => {
+                      setFlavorImageFile(null);
+                      setFlavorImagePreview(null);
+                    }}
+                    className="mt-2 text-sm text-red-600 hover:text-red-800"
+                  >
+                    Remove image
+                  </button>
+                )}
+              </div>
               <button
                 onClick={createFlavor}
                 disabled={creatingFlavor || !newFlavor.name.trim()}
@@ -1799,31 +1894,110 @@ const AdminPageContent = () => {
                     className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg"
                   >
                     {editingFlavor === flavor.id ? (
-                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input
-                          type="text"
-                          value={editFlavorData.name}
-                          onChange={(e) =>
-                            setEditFlavorData({
-                              ...editFlavorData,
-                              name: e.target.value,
-                            })
-                          }
-                          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white"
-                        />
-                        <input
-                          type="text"
-                          value={editFlavorData.aliases}
-                          onChange={(e) =>
-                            setEditFlavorData({
-                              ...editFlavorData,
-                              aliases: e.target.value,
-                            })
-                          }
-                          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white"
-                          placeholder="Aliases (comma-separated)"
-                        />
-                        <div className="flex items-center gap-2">
+                      <div className="flex-1 space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Flavor Name
+                            </label>
+                            <input
+                              type="text"
+                              value={editFlavorData.name}
+                              onChange={(e) =>
+                                setEditFlavorData({
+                                  ...editFlavorData,
+                                  name: e.target.value,
+                                })
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Aliases (comma-separated)
+                            </label>
+                            <input
+                              type="text"
+                              value={editFlavorData.aliases}
+                              onChange={(e) =>
+                                setEditFlavorData({
+                                  ...editFlavorData,
+                                  aliases: e.target.value,
+                                })
+                              }
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white"
+                              placeholder="Aliases (comma-separated)"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Image Upload for Edit */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Update Flavor Image
+                          </label>
+                          <div className="flex items-center gap-4">
+                            <div className="flex-1">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    setEditFlavorImageFile(file);
+                                    const reader = new FileReader();
+                                    reader.onload = (e) => {
+                                      setEditFlavorImagePreview(
+                                        e.target?.result as string
+                                      );
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#FF5D39] file:text-white hover:file:bg-opacity-90"
+                              />
+                            </div>
+                            {/* Current Image */}
+                            {flavor.imageUrl && !editFlavorImagePreview && (
+                              <div className="flex-shrink-0">
+                                <Image
+                                  src={`${process.env.NEXT_PUBLIC_API_URL}${flavor.imageUrl}`}
+                                  alt={flavor.name}
+                                  className="w-16 h-16 object-cover rounded-lg border border-gray-300"
+                                />
+                                <p className="text-xs text-gray-500 mt-1 text-center">
+                                  Current
+                                </p>
+                              </div>
+                            )}
+                            {/* Preview of New Image */}
+                            {editFlavorImagePreview && (
+                              <div className="flex-shrink-0">
+                                <img
+                                  src={editFlavorImagePreview}
+                                  alt="New preview"
+                                  className="w-16 h-16 object-cover rounded-lg border border-gray-300"
+                                />
+                                <p className="text-xs text-green-600 mt-1 text-center">
+                                  New
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          {editFlavorImageFile && (
+                            <button
+                              onClick={() => {
+                                setEditFlavorImageFile(null);
+                                setEditFlavorImagePreview(null);
+                              }}
+                              className="mt-2 text-sm text-red-600 hover:text-red-800"
+                            >
+                              Remove new image
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between">
                           <label className="flex items-center gap-2">
                             <input
                               type="checkbox"
@@ -1834,45 +2008,84 @@ const AdminPageContent = () => {
                                   active: e.target.checked,
                                 })
                               }
+                              className="rounded border-gray-300 text-[#FF5D39] focus:ring-[#FF5D39]"
                             />
-                            Active
+                            <span className="text-sm font-medium text-gray-700">
+                              Active
+                            </span>
                           </label>
-                          <button
-                            onClick={() => updateFlavorAdmin(flavor.id)}
-                            className="bg-green-600 text-white px-3 py-1 rounded text-sm"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditingFlavor(null)}
-                            className="bg-gray-500 text-white px-3 py-1 rounded text-sm"
-                          >
-                            Cancel
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => updateFlavorAdmin(flavor.id)}
+                              className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors"
+                            >
+                              Save Changes
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingFlavor(null);
+                                setEditFlavorImageFile(null);
+                                setEditFlavorImagePreview(null);
+                              }}
+                              className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ) : (
                       <>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3">
-                            <h4 className="font-semibold text-black">
-                              {flavor.name}
-                            </h4>
-                            <span
-                              className={`text-xs px-2 py-1 rounded ${
-                                flavor.active
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-gray-100 text-gray-700"
-                              }`}
-                            >
-                              {flavor.active ? "Active" : "Inactive"}
-                            </span>
+                        <div className="flex items-center gap-4 flex-1">
+                          {/* Flavor Image */}
+                          <div className="flex-shrink-0">
+                            {flavor.imageUrl ? (
+                              <img
+                                src={`${process.env.NEXT_PUBLIC_API_URL}${flavor.imageUrl}`}
+                                alt={flavor.name}
+                                className="w-12 h-12 object-cover rounded-lg border border-gray-300"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center">
+                                <svg
+                                  className="w-6 h-6 text-gray-400"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              </div>
+                            )}
                           </div>
-                          {flavor.aliases && flavor.aliases.length > 0 && (
-                            <p className="text-sm text-gray-600 mt-1">
-                              Aliases: {flavor.aliases.join(", ")}
-                            </p>
-                          )}
+
+                          {/* Flavor Info */}
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <h4 className="font-semibold text-black">
+                                {flavor.name}
+                              </h4>
+                              <span
+                                className={`text-xs px-2 py-1 rounded ${
+                                  flavor.active
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}
+                              >
+                                {flavor.active ? "Active" : "Inactive"}
+                              </span>
+                            </div>
+                            {flavor.aliases && flavor.aliases.length > 0 && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                Aliases: {flavor.aliases.join(", ")}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <div className="flex gap-2">
                           <button
@@ -1883,6 +2096,9 @@ const AdminPageContent = () => {
                                 aliases: flavor.aliases.join(", "),
                                 active: flavor.active,
                               });
+                              // Clear image edit state
+                              setEditFlavorImageFile(null);
+                              setEditFlavorImagePreview(null);
                             }}
                             className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
                           >
@@ -2158,7 +2374,8 @@ const AdminPageContent = () => {
                               type="number"
                               min="0"
                               defaultValue={alert.onHand || 0}
-                              className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              id={`inventory-input-${alert.flavorId}`}
+                              className="w-24 px-3 py-2 border-2 border-gray-400 rounded-lg text-sm font-bold text-gray-900 bg-yellow-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:bg-white transition-colors"
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   const newStock = parseInt(
@@ -2174,8 +2391,8 @@ const AdminPageContent = () => {
                           </div>
                           <button
                             onClick={() => {
-                              const input = document.querySelector(
-                                `input[defaultValue="${alert.onHand || 0}"]`
+                              const input = document.getElementById(
+                                `inventory-input-${alert.flavorId}`
                               ) as HTMLInputElement;
                               const newStock = parseInt(input.value);
                               if (!isNaN(newStock)) {
@@ -2259,6 +2476,243 @@ const AdminPageContent = () => {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* All Flavors Inventory Management */}
+          <div className="bg-white rounded-xl border shadow-sm">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 text-blue-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                  />
+                </svg>
+                All Flavors Inventory
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Manage stock levels for all flavors
+              </p>
+            </div>
+
+            <div className="p-6">
+              <div className="grid gap-4">
+                {flavors.map((flavor) => (
+                  <div
+                    key={flavor.id}
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="text-lg font-semibold text-gray-900">
+                            {flavor.name}
+                          </h4>
+                          {!flavor.active && (
+                            <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                              Inactive
+                            </span>
+                          )}
+                        </div>
+                        {flavor.aliases && flavor.aliases.length > 0 && (
+                          <p className="text-sm text-gray-500 mb-3">
+                            Also known as: {flavor.aliases.join(", ")}
+                          </p>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                          <div className="bg-white rounded-lg p-3 border">
+                            <div className="flex items-center gap-2 mb-1">
+                              <svg
+                                className="w-4 h-4 text-green-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                                />
+                              </svg>
+                              <span className="text-sm font-medium text-gray-600">
+                                On Hand
+                              </span>
+                            </div>
+                            <div className="text-xl font-bold text-gray-900">
+                              {flavor.inventory?.onHand ?? 0}
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-3 border">
+                            <div className="flex items-center gap-2 mb-1">
+                              <svg
+                                className="w-4 h-4 text-yellow-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                              </svg>
+                              <span className="text-sm font-medium text-gray-600">
+                                Reserved
+                              </span>
+                            </div>
+                            <div className="text-xl font-bold text-gray-900">
+                              {flavor.inventory?.reserved ?? 0}
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-3 border">
+                            <div className="flex items-center gap-2 mb-1">
+                              <svg
+                                className="w-4 h-4 text-red-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                                />
+                              </svg>
+                              <span className="text-sm font-medium text-gray-600">
+                                Safety Stock
+                              </span>
+                            </div>
+                            <div className="text-xl font-bold text-gray-900">
+                              {flavor.inventory?.safetyStock ?? 5}
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-lg p-3 border">
+                            <div className="flex items-center gap-2 mb-1">
+                              <svg
+                                className="w-4 h-4 text-blue-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                                />
+                              </svg>
+                              <span className="text-sm font-medium text-gray-600">
+                                Available
+                              </span>
+                            </div>
+                            <div className="text-xl font-bold text-blue-600">
+                              {Math.max(
+                                0,
+                                (flavor.inventory?.onHand ?? 0) -
+                                  (flavor.inventory?.reserved ?? 0) -
+                                  (flavor.inventory?.safetyStock ?? 5)
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 ml-6">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            defaultValue={flavor.inventory?.onHand ?? 0}
+                            id={`inventory-input-all-${flavor.id}`}
+                            className="w-24 px-3 py-2 border-2 border-gray-400 rounded-lg text-sm font-bold text-gray-900 bg-blue-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:bg-white transition-colors"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                const newStock = parseInt(
+                                  (e.target as HTMLInputElement).value
+                                );
+                                if (!isNaN(newStock)) {
+                                  updateInventory(flavor.id, newStock);
+                                }
+                              }
+                            }}
+                          />
+                          <span className="text-sm text-gray-500">units</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const input = document.getElementById(
+                              `inventory-input-all-${flavor.id}`
+                            ) as HTMLInputElement;
+                            const newStock = parseInt(input.value);
+                            if (!isNaN(newStock)) {
+                              updateInventory(flavor.id, newStock);
+                            }
+                          }}
+                          disabled={updatingInventory[flavor.id]}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                        >
+                          {updatingInventory[flavor.id] ? (
+                            <>
+                              <svg
+                                className="w-4 h-4 animate-spin"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Updating...
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                                />
+                              </svg>
+                              Update Stock
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}

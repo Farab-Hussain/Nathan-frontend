@@ -29,7 +29,7 @@ type Product = {
 
 const ShopPage = () => {
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
+  const { user: _user, loading: userLoading } = useUser();
   const { addPreDefinedPack } = useCartStore();
   const [packages, setPackages] = useState<Product[]>([]);
   const [threePackVariants, setThreePackVariants] = useState<
@@ -239,82 +239,6 @@ const ShopPage = () => {
           Choose from our carefully curated licorice rope packages. Each package
           contains 3 delicious flavors for the perfect tasting experience.
         </p>
-
-        {/* Custom Pack Builder Card */}
-        <div className="mb-8">
-          <div
-            className={`group rounded-2xl overflow-hidden border-2 transition-all duration-300 transform-gpu hover:-translate-y-1 cursor-pointer ${
-              showCustomBuilder
-                ? "border-[#F1A900] bg-gradient-to-br from-[#F1A900]/10 to-[#FF6B35]/10 shadow-lg"
-                : "border-[#F1A900] bg-gradient-to-br from-white to-[#F1A900]/5 shadow-md hover:shadow-2xl hover:border-[#FF6B35]"
-            }`}
-            onClick={() => setShowCustomBuilder(!showCustomBuilder)}
-          >
-            <div className="p-6 sm:p-8 text-center">
-              {/* Icon */}
-              <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-gradient-to-br from-[#F1A900] to-[#FF6B35] flex items-center justify-center shadow-lg">
-                <svg
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-              </div>
-
-              {/* Title */}
-              <h3 className="text-xl sm:text-2xl font-extrabold mb-2 text-gray-800">
-                {showCustomBuilder
-                  ? "Custom Pack Builder"
-                  : "Build Your Own Custom Pack"}
-              </h3>
-
-              {/* Description */}
-              <p className="text-gray-600 mb-4 leading-relaxed">
-                {showCustomBuilder
-                  ? "Create your perfect combination by selecting any 3 flavors you love"
-                  : "Choose exactly 3 flavors from our collection to create your unique custom pack"}
-              </p>
-
-              {/* Features */}
-              {!showCustomBuilder && (
-                <div className="space-y-2 mb-6">
-                  <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
-                    <span className="w-2 h-2 rounded-full bg-[#F1A900]"></span>
-                    <span>Choose any 3 flavors</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
-                    <span className="w-2 h-2 rounded-full bg-[#FF6B35]"></span>
-                    <span>Same great price: $27.00</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
-                    <span className="w-2 h-2 rounded-full bg-[#F1A900]"></span>
-                    <span>Perfect for sharing or personal enjoyment</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Button */}
-              <div className="flex justify-center">
-                <div
-                  className={`px-6 py-3 rounded-lg font-bold transition-all duration-300 ${
-                    showCustomBuilder
-                      ? "bg-gray-600 text-white hover:bg-gray-700"
-                      : "bg-gradient-to-r from-[#F1A900] to-[#FF6B35] text-white hover:shadow-lg hover:scale-105"
-                  }`}
-                >
-                  {showCustomBuilder ? "Back to Packages" : "Start Building"}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Custom Pack Builder */}
@@ -545,6 +469,95 @@ const ShopPage = () => {
                 </div>
               </div>
             ))}
+
+          {/* Custom Pack Builder Card - at the end */}
+          <div
+            className="group rounded-2xl overflow-hidden bg-white border border-[#F1A900]/20 hover:border-[#F1A900] shadow-md hover:shadow-2xl transition-all duration-300 transform-gpu hover:-translate-y-1 h-full flex flex-col cursor-pointer"
+            onClick={() => setShowCustomBuilder(!showCustomBuilder)}
+          >
+            <div className="relative">
+              <div className="w-full aspect-[4/3] bg-gradient-to-br from-[#F1A900]/20 to-[#FF6B35]/20 flex items-center justify-center transition-transform duration-300 group-hover:scale-105 rounded-t-2xl">
+                {/* Icon */}
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#F1A900] to-[#FF6B35] flex items-center justify-center shadow-lg">
+                  <svg
+                    className="w-8 h-8 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <span
+                className="absolute top-3 sm:top-4 left-3 sm:left-4 text-xs sm:text-sm font-bold px-2.5 sm:px-3 py-1 rounded-full shadow"
+                style={{
+                  background: "#F1A900",
+                  color: "white",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                }}
+              >
+                Custom
+              </span>
+              <span
+                className="absolute top-3 sm:top-4 right-3 sm:right-4 text-sm sm:text-lg font-bold px-2.5 sm:px-3 py-1 rounded-full shadow"
+                style={{
+                  background: ORANGE,
+                  color: "white",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                }}
+              >
+                $27.00
+              </span>
+            </div>
+            <div className="p-4 sm:p-6 flex flex-col flex-1 gap-3 sm:gap-4">
+              <div>
+                <h3
+                  className="font-extrabold text-lg sm:text-xl mb-2"
+                  style={{ color: BLACK }}
+                >
+                  Build Your Own Pack
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-3">
+                  Choose exactly 3 flavors from our collection to create your
+                  unique custom pack
+                </p>
+
+                {/* Features */}
+                <div className="space-y-1">
+                  <h4 className="font-semibold text-xs text-gray-700">
+                    Features:
+                  </h4>
+                  <div className="space-y-1">
+                    <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#F1A900]"></span>
+                      Choose any 3 flavors
+                    </div>
+                    <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B35]"></span>
+                      Same great price
+                    </div>
+                    <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#F1A900]"></span>
+                      Perfect for you
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2 sm:pt-4 mt-auto">
+                <CustomButton
+                  title="Start Building"
+                  className="w-full !bg-gradient-to-r !from-[#F1A900] !to-[#FF6B35] !text-white font-bold py-2.5 sm:py-3 rounded-lg shadow-lg transition-all hover:opacity-90"
+                  onClick={() => setShowCustomBuilder(!showCustomBuilder)}
+                />
+              </div>
+            </div>
+          </div>
           {!Array.isArray(packages) && (
             <div className="col-span-full text-center py-12">
               <div className="bg-white rounded-lg p-8 shadow-lg">

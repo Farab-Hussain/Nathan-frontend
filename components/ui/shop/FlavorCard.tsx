@@ -28,7 +28,7 @@ interface FlavorCardProps {
 
 const FlavorCard: React.FC<FlavorCardProps> = ({
   flavor,
-  inventory,
+  inventory: _inventory,
   isSelected,
   inStock,
   stockCount,

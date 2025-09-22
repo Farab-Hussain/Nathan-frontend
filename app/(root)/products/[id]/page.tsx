@@ -26,7 +26,7 @@ type Product = {
 
 const ProductDetailPage = () => {
   const params = useParams();
-  const { user } = useUser();
+  const { user: _user } = useUser();
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);

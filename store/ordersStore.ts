@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import axios from 'axios';
+import { create } from "zustand";
+import axios from "axios";
 
 export type OrderItem = {
   id?: string;
@@ -19,15 +19,26 @@ export type Order = {
     quantity: number;
   }>;
   total: number;
-  status?: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus?: 'pending' | 'paid' | 'failed';
-  shippingAddress?: string | {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
+  status?: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+  paymentStatus?:
+    | "pending"
+    | "paid"
+    | "failed"
+    | "completed"
+    | "successful"
+    | "declined"
+    | "error"
+    | "processing"
+    | "refunded";
+  shippingAddress?:
+    | string
+    | {
+        street: string;
+        city: string;
+        state: string;
+        zipCode: string;
+        country: string;
+      };
   orderNotes?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -46,11 +57,15 @@ type OrdersState = {
   pagination: Pagination | null;
   loading: boolean;
   error: string | null;
-  fetchOrders: (params: { status?: string; page?: number; limit?: number }) => Promise<void>;
+  fetchOrders: (params: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) => Promise<void>;
   fetchOrder: (id: string) => Promise<Order | null>;
   fetchOrderById: (id: string) => Promise<void>;
   createOrder: (orderData: Partial<Order>) => Promise<Order | null>;
-  updateOrderStatus: (id: string, status: Order['status']) => Promise<void>;
+  updateOrderStatus: (id: string, status: Order["status"]) => Promise<void>;
   clearOrder: () => void;
 };
 
@@ -66,24 +81,26 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
       const queryParams = new URLSearchParams();
-      
-      if (params.status) queryParams.append('status', params.status);
-      if (params.page) queryParams.append('page', params.page.toString());
-      if (params.limit) queryParams.append('limit', params.limit.toString());
 
-      const { data } = await axios.get<{ orders: Order[]; pagination: Pagination }>(
-        `${API_URL}/orders?${queryParams.toString()}`,
-        { withCredentials: true }
-      );
+      if (params.status) queryParams.append("status", params.status);
+      if (params.page) queryParams.append("page", params.page.toString());
+      if (params.limit) queryParams.append("limit", params.limit.toString());
 
-      set({ 
-        orders: data.orders || [], 
-        pagination: data.pagination || null,
-        loading: false 
+      const { data } = await axios.get<{
+        orders: Order[];
+        pagination: Pagination;
+      }>(`${API_URL}/orders?${queryParams.toString()}`, {
+        withCredentials: true,
       });
-      
+
+      set({
+        orders: data.orders || [],
+        pagination: data.pagination || null,
+        loading: false,
+      });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch orders';
+      const message =
+        error instanceof Error ? error.message : "Failed to fetch orders";
       set({ error: message, loading: false, orders: [] });
     }
   },
@@ -92,14 +109,14 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      const { data } = await axios.get<Order>(
-        `${API_URL}/orders/${id}`,
-        { withCredentials: true }
-      );
+      const { data } = await axios.get<Order>(`${API_URL}/orders/${id}`, {
+        withCredentials: true,
+      });
       set({ loading: false });
       return data;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch order';
+      const message =
+        error instanceof Error ? error.message : "Failed to fetch order";
       set({ error: message, loading: false });
       return null;
     }
@@ -109,42 +126,46 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      
+
       // Debug: Log the request data
-      console.log('Creating order with data:', JSON.stringify(orderData, null, 2));
-      
-      const { data } = await axios.post<Order>(
-        `${API_URL}/orders`,
-        orderData,
-        { 
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+      console.log(
+        "Creating order with data:",
+        JSON.stringify(orderData, null, 2)
       );
-      
+
+      const { data } = await axios.post<Order>(`${API_URL}/orders`, orderData, {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
       // Add the new order to the local state
       const { orders } = get();
-      set({ 
+      set({
         orders: [data, ...orders], // Add new order at the beginning
-        loading: false 
+        loading: false,
       });
-      
-      
+
       return data;
     } catch (error: unknown) {
-      const axiosError = error as { response?: { data?: { message?: string; error?: string }; status?: number } };
-      console.error('Order creation failed:', axiosError.response?.data);
-      const message = axiosError.response?.data?.message || 
-                     axiosError.response?.data?.error || 
-                     (error instanceof Error ? error.message : 'Failed to create order');
+      const axiosError = error as {
+        response?: {
+          data?: { message?: string; error?: string };
+          status?: number;
+        };
+      };
+      console.error("Order creation failed:", axiosError.response?.data);
+      const message =
+        axiosError.response?.data?.message ||
+        axiosError.response?.data?.error ||
+        (error instanceof Error ? error.message : "Failed to create order");
       set({ error: message, loading: false });
       return null;
     }
   },
 
-  updateOrderStatus: async (id: string, status: Order['status']) => {
+  updateOrderStatus: async (id: string, status: Order["status"]) => {
     set({ loading: true, error: null });
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -153,15 +174,18 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
         { status },
         { withCredentials: true }
       );
-      
+
       // Update the order in the local state
       const { orders } = get();
-      const updatedOrders = orders.map(order => 
+      const updatedOrders = orders.map((order) =>
         order.id === id ? { ...order, status } : order
       );
       set({ orders: updatedOrders, loading: false });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update order status';
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to update order status";
       set({ error: message, loading: false });
     }
   },
@@ -170,13 +194,13 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      const { data } = await axios.get<Order>(
-        `${API_URL}/orders/${id}`,
-        { withCredentials: true }
-      );
+      const { data } = await axios.get<Order>(`${API_URL}/orders/${id}`, {
+        withCredentials: true,
+      });
       set({ order: data, loading: false });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch order';
+      const message =
+        error instanceof Error ? error.message : "Failed to fetch order";
       set({ error: message, loading: false, order: null });
     }
   },
