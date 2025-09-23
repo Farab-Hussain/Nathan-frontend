@@ -34,7 +34,7 @@ const CartPage = () => {
     addItem,
   } = useCartStore();
 
-  const { createOrder } = useOrdersStore();
+  const { createOrder, error: orderStoreError } = useOrdersStore();
   const router = useRouter();
   const [orderLoading, setOrderLoading] = useState<boolean>(false);
   const [orderError, setOrderError] = useState<string | null>(null);
@@ -267,7 +267,11 @@ const CartPage = () => {
       };
 
       const created = await createOrder(orderData);
-      if (!created) throw new Error("Failed to create order");
+      if (!created) {
+        // Use the specific error from the orders store if available
+        const specificError = orderStoreError || "Failed to create order";
+        throw new Error(specificError);
+      }
 
       // Create Stripe Checkout Session
       const resp = await fetch("/payments/create-checkout-session", {
@@ -293,13 +297,40 @@ const CartPage = () => {
           cancelUrl: `${window.location.origin}/cart`,
         }),
       });
-      if (!resp.ok) throw new Error("Unable to start checkout");
+
+      if (!resp.ok) {
+        // Try to get the actual error message from the response
+        try {
+          const errorData = await resp.json();
+          throw new Error(errorData.message || "Unable to start checkout");
+        } catch {
+          throw new Error("Unable to start checkout");
+        }
+      }
+
       const data = await resp.json();
       if (!data?.url) throw new Error("Invalid checkout session");
       window.location.href = data.url;
     } catch (e: unknown) {
-      const message =
-        (e as { message?: string })?.message || "Failed to place order";
+      let message = "Failed to place order";
+
+      // Handle different types of errors
+      if (e && typeof e === "object") {
+        if ("message" in e && typeof e.message === "string") {
+          message = e.message;
+        } else if (
+          "response" in e &&
+          e.response &&
+          typeof e.response === "object"
+        ) {
+          // Handle axios-style errors
+          const response = e.response as { data?: { message?: string } };
+          if (response.data?.message) {
+            message = response.data.message;
+          }
+        }
+      }
+
       setOrderError(message);
     } finally {
       setOrderLoading(false);

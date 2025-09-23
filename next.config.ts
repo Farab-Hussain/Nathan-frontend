@@ -44,22 +44,23 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
+        protocol: "http",
+        hostname: "localhost",
+        port: "4000",
+        pathname: "/uploads/**",
+      },
+
+      {
+        protocol: "https",
+        hostname: "licorice4good.com",
+        port: "",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'licorice4good.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.licorice4good.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "api.licorice4good.com",
+        port: "",
+        pathname: "/**",
       },
     ],
   },

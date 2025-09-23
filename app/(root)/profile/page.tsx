@@ -28,6 +28,9 @@ const ProfileContent = () => {
   const [retryingPayment, setRetryingPayment] = useState<{
     [key: string]: boolean;
   }>({});
+  const [checkingPayment, setCheckingPayment] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   // Check for payment success and clear cart
   useEffect(() => {
@@ -41,13 +44,14 @@ const ProfileContent = () => {
       setActiveTab("orders"); // Switch to orders tab to show the new order
 
       // Clear the cart after successful payment
-      clearCart()
-        .then(() => {
-          console.log("Cart cleared after successful payment");
-        })
-        .catch((error) => {
-          console.error("Failed to clear cart after payment:", error);
-        });
+      clearCart().catch((error) => {
+        console.error("Failed to clear cart after payment:", error);
+      });
+
+      // Refresh orders data to get updated payment status (with a small delay to ensure webhook processed)
+      setTimeout(() => {
+        fetchOrders({ page: 1, limit: 50 });
+      }, 1000);
 
       // Clean up URL parameters after handling
       const newUrl = window.location.pathname;
@@ -58,7 +62,7 @@ const ProfileContent = () => {
         setPaymentSuccess(false);
       }, 5000);
     }
-  }, [searchParams, user, clearCart]);
+  }, [searchParams, user, clearCart, fetchOrders]);
 
   // Authentication check
   useEffect(() => {
@@ -212,6 +216,42 @@ const ProfileContent = () => {
     }
   };
 
+  const handleCheckPaymentStatus = async (orderIdToCheck: string) => {
+    setCheckingPayment((prev) => ({ ...prev, [orderIdToCheck]: true }));
+
+    try {
+      const response = await fetch("/payments/verify-payment-status", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: orderIdToCheck,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to check payment status");
+      }
+
+      const data = await response.json();
+
+      if (data.fixed) {
+        alert(`Payment status updated: ${data.message}`);
+        // Refresh orders to show updated status
+        fetchOrders({ page: 1, limit: 50 });
+      } else {
+        alert("Payment status is current. No changes needed.");
+      }
+    } catch (error) {
+      console.error("Payment status check failed:", error);
+      alert(
+        "Unable to check payment status. Please contact support or try again later."
+      );
+    } finally {
+      setCheckingPayment((prev) => ({ ...prev, [orderIdToCheck]: false }));
+    }
+  };
+
   return (
     <VerificationGuard>
       <div className="min-h-screen bg-white">
@@ -305,42 +345,45 @@ const ProfileContent = () => {
           )}
 
           {/* Pending Payments Alert */}
-          {orders.some((order) => order.paymentStatus === "pending") && (
-            <div className="mb-6 p-4 rounded-xl shadow-lg border-2 border-yellow-200 bg-gradient-to-r from-yellow-50 to-amber-50">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="w-6 h-6 text-yellow-600 animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-lg font-bold text-yellow-800">
-                    Payment Processing 🔄
-                  </h3>
-                  <p className="text-sm text-yellow-700">
-                    Some of your payments are still being processed. This may
-                    take a few minutes to complete.
-                  </p>
+          {!paymentSuccess &&
+            orders.some((order) => order.paymentStatus === "pending") && (
+              <div className="mb-6 p-4 rounded-xl shadow-lg border-2 border-yellow-200 bg-gradient-to-r from-yellow-50 to-amber-50">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="w-6 h-6 text-yellow-600 animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-lg font-bold text-yellow-800">
+                      Payment Processing 🔄
+                    </h3>
+                    <p className="text-sm text-yellow-700">
+                      Some of your payments are still being processed. If a
+                      payment has been pending for more than 1 hour, you can
+                      check its status manually using the &quot;Check
+                      Status&quot; button next to the order.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Header */}
           <div className="text-center mb-12">
@@ -613,27 +656,65 @@ const ProfileContent = () => {
                           </div>
                         )}
                         {order.paymentStatus === "pending" && (
-                          <div className="flex items-center text-yellow-600 text-sm">
-                            <svg
-                              className="w-4 h-4 mr-1 animate-spin"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              ></circle>
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                              ></path>
-                            </svg>
-                            Payment processing...
+                          <div className="flex items-center gap-2 text-yellow-600 text-sm">
+                            <div className="flex items-center">
+                              <svg
+                                className="w-4 h-4 mr-1 animate-spin"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Payment processing...
+                            </div>
+                            {order.id && (
+                              <button
+                                onClick={() =>
+                                  handleCheckPaymentStatus(order.id!)
+                                }
+                                disabled={checkingPayment[order.id]}
+                                className="ml-2 px-2 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {checkingPayment[order.id] ? (
+                                  <div className="flex items-center gap-1">
+                                    <svg
+                                      className="w-3 h-3 animate-spin"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                      ></circle>
+                                      <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                      ></path>
+                                    </svg>
+                                    Checking...
+                                  </div>
+                                ) : (
+                                  "Check Status"
+                                )}
+                              </button>
+                            )}
                           </div>
                         )}
                         {(order.paymentStatus === "completed" ||

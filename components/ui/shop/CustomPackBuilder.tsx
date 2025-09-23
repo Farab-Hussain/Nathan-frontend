@@ -290,7 +290,6 @@ const CustomPackBuilder = () => {
               <FlavorCard
                 key={flavor.id}
                 flavor={flavor}
-                inventory={inventory}
                 isSelected={isSelected}
                 inStock={inStock}
                 stockCount={stockCount}
@@ -304,24 +303,29 @@ const CustomPackBuilder = () => {
 
       {/* Add to Cart Button */}
       <div className="text-center">
-        <CustomButton
-          title={
-            success
-              ? "Added to Cart!"
-              : addingToCart
-              ? "Adding to Cart..."
-              : "Add Custom Pack to Cart"
-          }
-          className={`w-full md:w-auto px-8 py-3 font-bold ${
-            success
-              ? "!bg-green-500 !text-white"
-              : selectedFlavors.length === 3
-              ? "!bg-[#FF5D39] !text-white hover:opacity-90"
-              : "!bg-gray-300 !text-gray-500 cursor-not-allowed"
-          }`}
-          onClick={addCustomPackToCart}
-          disabled={selectedFlavors.length !== 3 || addingToCart || success}
-        />
+        {(() => {
+          const getButtonTitle = () => {
+            if (success) return "Added to Cart!";
+            if (addingToCart) return "Adding to Cart...";
+            return "Add Custom Pack to Cart";
+          };
+
+          const getButtonClassName = () => {
+            if (success) return "!bg-green-500 !text-white";
+            if (selectedFlavors.length === 3)
+              return "!bg-[#FF5D39] !text-white hover:opacity-90";
+            return "!bg-gray-300 !text-gray-500 cursor-not-allowed";
+          };
+
+          return (
+            <CustomButton
+              title={getButtonTitle()}
+              className={`w-full md:w-auto px-8 py-3 font-bold ${getButtonClassName()}`}
+              onClick={addCustomPackToCart}
+              disabled={selectedFlavors.length !== 3 || addingToCart || success}
+            />
+          );
+        })()}
 
         {selectedFlavors.length !== 3 && (
           <p className="text-sm text-gray-500 mt-2">

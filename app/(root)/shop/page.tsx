@@ -29,7 +29,7 @@ type Product = {
 
 const ShopPage = () => {
   const router = useRouter();
-  const { user: _user, loading: userLoading } = useUser();
+  const { loading: userLoading } = useUser();
   const { addPreDefinedPack } = useCartStore();
   const [packages, setPackages] = useState<Product[]>([]);
   const [threePackVariants, setThreePackVariants] = useState<
@@ -75,7 +75,6 @@ const ShopPage = () => {
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
         const API_URL = process.env.NEXT_PUBLIC_API_URL;
-        console.log("Fetching products from:", `${API_URL}/products`);
 
         const response = await fetch(`${API_URL}/products`, {
           method: "GET",
@@ -110,10 +109,6 @@ const ShopPage = () => {
         // Also fetch 3-pack variants
         try {
           const API_URL = process.env.NEXT_PUBLIC_API_URL;
-          console.log(
-            "Fetching 3-pack variants from:",
-            `${API_URL}/3pack/product`
-          );
 
           const threePackResponse = await fetch(`${API_URL}/3pack/product`, {
             method: "GET",
@@ -125,10 +120,8 @@ const ShopPage = () => {
 
           if (threePackResponse.ok) {
             const threePackData = await threePackResponse.json();
-            console.log("3-pack variants data:", threePackData);
             if (threePackData && threePackData.variants) {
               setThreePackVariants(threePackData.variants);
-              console.log("Set 3-pack variants:", threePackData.variants);
             }
           }
         } catch (threePackErr) {
@@ -159,7 +152,6 @@ const ShopPage = () => {
 
   const addPreDefinedPackToCart = async (recipeId: string) => {
     try {
-      console.log("Adding pre-defined pack with recipeId:", recipeId);
       await addPreDefinedPack(recipeId, 1);
       // Optionally redirect to cart or show success message
       router.push("/cart");

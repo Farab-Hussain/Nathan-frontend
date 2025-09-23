@@ -101,7 +101,6 @@ export const useCartStore = create<CartState>()(
 
           // Regular products are stored locally only (no backend sync)
           // Only 3-pack products sync with backend via addPreDefinedPack/addCustomPack
-          console.log("Regular product added to local cart:", newItem);
         } catch (error) {
           const message =
             error instanceof Error
@@ -147,10 +146,6 @@ export const useCartStore = create<CartState>()(
             qty: quantity,
           };
 
-          console.log("Adding pre-defined pack with data:", requestData);
-          console.log("API URL:", `${API_URL}/3pack/cart/add`);
-          console.log("recipeId type:", typeof recipeId, "value:", recipeId);
-
           const response = await axios.post(
             `${API_URL}/3pack/cart/add`,
             requestData,
@@ -161,7 +156,6 @@ export const useCartStore = create<CartState>()(
 
           if (response.data && response.data.success) {
             // Success - the backend will handle the cart update
-            console.log("Pre-defined pack added to cart successfully");
 
             // Reload cart from backend to get the updated cart with the new pre-defined pack
             await get().loadFromBackend();
@@ -236,8 +230,6 @@ export const useCartStore = create<CartState>()(
               withCredentials: true,
             }
           );
-
-          console.log("Custom pack added to backend cart:", response.data);
 
           // Reload cart from backend to get the updated cart with the new custom pack
           await get().loadFromBackend();

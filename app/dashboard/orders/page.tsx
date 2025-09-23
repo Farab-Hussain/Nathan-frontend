@@ -320,7 +320,7 @@ const AdminOrdersPage = () => {
         {/* Auto-refresh controls */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-sm text-black">
               <input
                 type="checkbox"
                 checked={autoRefresh}
@@ -333,7 +333,7 @@ const AdminOrdersPage = () => {
               <select
                 value={refreshInterval}
                 onChange={(e) => setRefreshInterval(Number(e.target.value))}
-                className="text-sm border border-gray-300 rounded px-2 py-1"
+                className="text-sm border border-gray-300 rounded px-2 py-1 text-black"
               >
                 <option value={10000}>10s</option>
                 <option value={30000}>30s</option>
@@ -362,10 +362,14 @@ const AdminOrdersPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {/* Search */}
           <div className="xl:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="search-input"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Search
             </label>
             <input
+              id="search-input"
               type="text"
               placeholder="Order ID, user email, or name..."
               value={searchTerm}
@@ -376,10 +380,14 @@ const AdminOrdersPage = () => {
 
           {/* Status Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="status-select"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Status
             </label>
             <select
+              id="status-select"
               value={status}
               onChange={(e) => {
                 setPage(1);
@@ -398,10 +406,14 @@ const AdminOrdersPage = () => {
 
           {/* Payment Status Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="payment-select"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Payment
             </label>
             <select
+              id="payment-select"
               value={paymentStatus}
               onChange={(e) => {
                 setPage(1);
@@ -418,10 +430,14 @@ const AdminOrdersPage = () => {
 
           {/* Date Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="date-select"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Date
             </label>
             <select
+              id="date-select"
               value={dateFilter}
               onChange={(e) => {
                 setPage(1);
@@ -439,10 +455,14 @@ const AdminOrdersPage = () => {
 
           {/* Sort Options */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="sort-select"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Sort by
             </label>
             <select
+              id="sort-select"
               value={`${sortBy}-${sortOrder}`}
               onChange={(e) => {
                 const [field, order] = e.target.value.split("-");
@@ -464,10 +484,14 @@ const AdminOrdersPage = () => {
         {/* Value Range Filter */}
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="min-value-input"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Min Value ($)
             </label>
             <input
+              id="min-value-input"
               type="number"
               placeholder="0.00"
               value={totalValueFilter.min}
@@ -481,10 +505,14 @@ const AdminOrdersPage = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="max-value-input"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Max Value ($)
             </label>
             <input
+              id="max-value-input"
               type="number"
               placeholder="1000.00"
               value={totalValueFilter.max}
@@ -498,10 +526,14 @@ const AdminOrdersPage = () => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="limit-select"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Items per page
             </label>
             <select
+              id="limit-select"
               value={limit}
               onChange={(e) => {
                 setPage(1);
@@ -527,6 +559,7 @@ const AdminOrdersPage = () => {
                 setSortOrder("desc");
                 setPage(1);
               }}
+              id="clear-filters-button"
               className="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
             >
               Clear Filters

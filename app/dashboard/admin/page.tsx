@@ -6,7 +6,7 @@ import React, {
   useState,
   Suspense,
 } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { useUser } from "@/hooks/useUser";
 import Image from "next/image";
@@ -96,6 +96,7 @@ type ProductFlavor = {
 const AdminPageContent = () => {
   const { user, loading: userLoading } = useUser();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     "products" | "flavors" | "categories" | "inventory" | "config"
   >("products");
@@ -116,6 +117,88 @@ const AdminPageContent = () => {
   const [editFlavorImagePreview, setEditFlavorImagePreview] = useState<
     string | null
   >(null);
+
+  const [bulkImageUrl, setBulkImageUrl] = useState("");
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+
+  // Bulk update flavor images
+  const bulkUpdateFlavorImages = async () => {
+    if (!bulkImageUrl.trim()) {
+      setError("Please enter an image URL");
+      return;
+    }
+
+    setBulkUpdating(true);
+    setError(null);
+
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      const flavorIds = flavors.map((flavor) => flavor.id);
+
+      const { data } = await axios.put(
+        `${API_URL}/admin/flavors/bulk-update-images`,
+        {
+          flavorIds: flavorIds,
+          imageUrl: bulkImageUrl.trim(),
+        },
+        {
+          withCredentials: true,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // Refresh flavors to show updated images
+      await fetchFlavors();
+
+      setBulkImageUrl("");
+      setError(null);
+
+      // Show success message
+      alert(
+        `Successfully updated ${data.updatedCount} flavors with the new image!`
+      );
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to update flavor images";
+      setError(errorMessage);
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
+  // Helper function to normalize image src with cache busting
+  const normalizeImageSrc = (src?: string | null, updatedAt?: string) => {
+    if (!src) return "/assets/images/slider.png";
+
+    // Handle static assets (served from frontend)
+    if (src.startsWith("/assets")) {
+      const cacheBuster = updatedAt
+        ? `?t=${new Date(updatedAt).getTime()}`
+        : `?t=${Date.now()}`;
+      return `${src}${cacheBuster}`;
+    }
+
+    // Handle uploaded images (served from backend)
+    if (src.startsWith("/uploads") || src.startsWith("uploads")) {
+      const path = src.startsWith("/uploads") ? src : `/${src}`;
+      const cacheBuster = updatedAt
+        ? `?t=${new Date(updatedAt).getTime()}`
+        : `?t=${Date.now()}`;
+      // Use hardcoded API URL for now to test
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      return `${apiUrl}${path}${cacheBuster}`;
+    }
+
+    // Default case - assume it needs API URL
+    const cacheBuster = updatedAt
+      ? `?t=${new Date(updatedAt).getTime()}`
+      : `?t=${Date.now()}`;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    return `${apiUrl}${src}${cacheBuster}`;
+  };
 
   // Categories state
   const [categories, setCategories] = useState<Category[]>([]);
@@ -175,11 +258,11 @@ const AdminPageContent = () => {
     [key: string]: boolean;
   }>({});
 
-  // useEffect(() => {
-  //   if (!userLoading && (!user || user.role !== "admin")) {
-  //     router.replace("/");
-  //   }
-  // }, [user, userLoading, router]);
+  useEffect(() => {
+    if (!userLoading && (!user || user.role !== "admin")) {
+      router.replace("/");
+    }
+  }, [user, userLoading, router]);
 
   // Handle tab query parameter
   useEffect(() => {
@@ -372,24 +455,11 @@ const AdminPageContent = () => {
           withCredentials: true,
         }
       );
-      console.log("Fetched categories data:", data);
-      console.log("Data type:", typeof data);
-      console.log("Is array:", Array.isArray(data));
-      console.log("Has categories property:", data && data.categories);
-      console.log(
-        "Categories is array:",
-        data && Array.isArray(data.categories)
-      );
 
       // Handle both array format and object with categories property
       if (Array.isArray(data)) {
-        console.log("Setting categories as array:", data);
         setCategories(data);
       } else if (data && Array.isArray(data.categories)) {
-        console.log(
-          "Setting categories from data.categories:",
-          data.categories
-        );
         setCategories(data.categories);
       } else {
         console.warn("Categories API returned unexpected data format:", data);
@@ -730,9 +800,16 @@ const AdminPageContent = () => {
         }
       );
 
+      // Update the flavor in state with fresh data
+      const updatedFlavor = data.flavor || data;
       setFlavors((prev) =>
-        prev.map((f) => (f.id === id ? data.flavor || data : f))
+        prev.map((f) =>
+          f.id === id
+            ? { ...updatedFlavor, updatedAt: new Date().toISOString() }
+            : f
+        )
       );
+
       setEditingFlavor(null);
       setEditFlavorImageFile(null);
       setEditFlavorImagePreview(null);
@@ -1076,6 +1153,10 @@ const AdminPageContent = () => {
   );
 
   const fetchData = useCallback(async () => {
+    if (!user || user.role !== "admin") {
+      return; // Don't fetch data if user is not authenticated as admin
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -1103,18 +1184,27 @@ const AdminPageContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, fetchProducts, fetchProductCategories, fetchAvailableFlavors]);
+  }, [
+    activeTab,
+    fetchProducts,
+    fetchProductCategories,
+    fetchAvailableFlavors,
+    user,
+  ]);
 
   // Main data fetching effect
   useEffect(() => {
-    fetchData();
-    if (activeTab === "products") {
-      fetchProducts();
-      fetchProductCategories();
-      fetchAvailableFlavors();
+    if (!userLoading && user && user.role === "admin") {
+      fetchData();
+      if (activeTab === "products") {
+        fetchProducts();
+        fetchProductCategories();
+        fetchAvailableFlavors();
+      }
     }
   }, [
     user,
+    userLoading,
     activeTab,
     fetchData,
     fetchProducts,
@@ -1128,6 +1218,17 @@ const AdminPageContent = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
           <p className="text-black text-lg">Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if user is not authenticated or not admin
+  if (!userLoading && (!user || user.role !== "admin")) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-lg">Access denied. Redirecting...</p>
         </div>
       </div>
     );
@@ -1475,24 +1576,33 @@ const AdminPageContent = () => {
               <div className="lg:col-span-1">
                 <div className="rounded-xl border bg-white p-3 flex flex-col items-center justify-center">
                   <div className="text-sm text-black/70 mb-2">Preview</div>
-                  {preview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={preview}
-                      alt={form.name || "preview"}
-                      className="w-full max-w-[260px] aspect-[4/3] object-cover rounded"
-                    />
-                  ) : form.imageUrl ? (
-                    <Image
-                      src={form.imageUrl}
-                      alt={form.name || "preview"}
-                      width={240}
-                      height={180}
-                      className="w-full max-w-[260px] aspect-[4/3] object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-full max-w-[260px] aspect-[4/3] bg-gray-100 rounded" />
-                  )}
+                  {(() => {
+                    if (preview) {
+                      return (
+                        <Image
+                          width={240}
+                          height={180}
+                          src={preview}
+                          alt={form.name || "preview"}
+                          className="w-full max-w-[260px] aspect-[4/3] object-cover rounded"
+                        />
+                      );
+                    }
+                    if (form.imageUrl) {
+                      return (
+                        <Image
+                          src={normalizeImageSrc(form.imageUrl)}
+                          alt={form.name || "preview"}
+                          width={240}
+                          height={180}
+                          className="w-full max-w-[260px] aspect-[4/3] object-cover rounded"
+                        />
+                      );
+                    }
+                    return (
+                      <div className="w-full max-w-[260px] aspect-[4/3] bg-gray-100 rounded" />
+                    );
+                  })()}
                 </div>
                 <div className="mt-3">
                   <input
@@ -1676,7 +1786,7 @@ const AdminPageContent = () => {
                       <td className="px-4 py-2">
                         {p.imageUrl ? (
                           <Image
-                            src={p.imageUrl}
+                            src={normalizeImageSrc(p.imageUrl, p.updatedAt)}
                             alt={p.name}
                             width={64}
                             height={48}
@@ -1859,6 +1969,8 @@ const AdminPageContent = () => {
                       <Image
                         src={flavorImagePreview}
                         alt="Flavor preview"
+                        width={64}
+                        height={64}
                         className="w-16 h-16 object-cover rounded-lg border border-gray-300"
                       />
                     </div>
@@ -1883,6 +1995,57 @@ const AdminPageContent = () => {
               >
                 {creatingFlavor ? "Creating..." : "Create Flavor"}
               </button>
+            </div>
+
+            {/* Bulk Image Update Section */}
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Bulk Update Flavor Images
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Image URL for All Flavors
+                  </label>
+                  <input
+                    type="text"
+                    value={bulkImageUrl}
+                    onChange={(e) => setBulkImageUrl(e.target.value)}
+                    placeholder="Enter image URL (e.g., /uploads/flavors/flavorImage-123.png)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white"
+                  />
+                </div>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={bulkUpdateFlavorImages}
+                    disabled={bulkUpdating || !bulkImageUrl.trim()}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {bulkUpdating ? "Updating..." : "Update All Flavors"}
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    This will update all {flavors.length} flavors with the same
+                    image
+                  </span>
+                </div>
+                {bulkImageUrl && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Preview:
+                    </label>
+                    <Image
+                      width={96}
+                      height={96}
+                      src={normalizeImageSrc(bulkImageUrl)}
+                      alt="Bulk image preview"
+                      className="w-24 h-24 object-cover rounded-lg border border-gray-300"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Flavors List */}
@@ -1961,7 +2124,12 @@ const AdminPageContent = () => {
                             {flavor.imageUrl && !editFlavorImagePreview && (
                               <div className="flex-shrink-0">
                                 <Image
-                                  src={`${process.env.NEXT_PUBLIC_API_URL}${flavor.imageUrl}`}
+                                  width={64}
+                                  height={64}
+                                  src={normalizeImageSrc(
+                                    flavor.imageUrl,
+                                    flavor.updatedAt
+                                  )}
                                   alt={flavor.name}
                                   className="w-16 h-16 object-cover rounded-lg border border-gray-300"
                                 />
@@ -1973,7 +2141,9 @@ const AdminPageContent = () => {
                             {/* Preview of New Image */}
                             {editFlavorImagePreview && (
                               <div className="flex-shrink-0">
-                                <img
+                                <Image
+                                  width={48}
+                                  height={48}
                                   src={editFlavorImagePreview}
                                   alt="New preview"
                                   className="w-16 h-16 object-cover rounded-lg border border-gray-300"
@@ -2040,10 +2210,24 @@ const AdminPageContent = () => {
                           {/* Flavor Image */}
                           <div className="flex-shrink-0">
                             {flavor.imageUrl ? (
-                              <img
-                                src={`${process.env.NEXT_PUBLIC_API_URL}${flavor.imageUrl}`}
+                              <Image
+                                width={48}
+                                height={48}
+                                src={normalizeImageSrc(
+                                  flavor.imageUrl,
+                                  flavor.updatedAt
+                                )}
                                 alt={flavor.name}
                                 className="w-12 h-12 object-cover rounded-lg border border-gray-300"
+                                onError={(e) => {
+                                  console.error(
+                                    "Image failed to load for",
+                                    flavor.name,
+                                    "URL:",
+                                    e.currentTarget.src
+                                  );
+                                  e.currentTarget.style.display = "none";
+                                }}
                               />
                             ) : (
                               <div className="w-12 h-12 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center">
@@ -2099,6 +2283,18 @@ const AdminPageContent = () => {
                               // Clear image edit state
                               setEditFlavorImageFile(null);
                               setEditFlavorImagePreview(null);
+
+                              // Force refresh the flavor data to get the latest image
+                              setFlavors((prev) =>
+                                prev.map((f) =>
+                                  f.id === flavor.id
+                                    ? {
+                                        ...f,
+                                        updatedAt: new Date().toISOString(),
+                                      }
+                                    : f
+                                )
+                              );
                             }}
                             className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
                           >

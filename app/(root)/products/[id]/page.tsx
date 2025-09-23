@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
-import { useUser } from "@/hooks/useUser";
 const ORANGE = "#FF5D39";
 const BLACK = "#111111";
 
@@ -26,7 +25,6 @@ type Product = {
 
 const ProductDetailPage = () => {
   const params = useParams();
-  const { user: _user } = useUser();
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);

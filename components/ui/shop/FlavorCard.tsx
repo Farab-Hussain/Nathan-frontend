@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Image from "next/image";
 
 type Flavor = {
   id: string;
@@ -9,16 +10,8 @@ type Flavor = {
   active: boolean;
 };
 
-type FlavorInventory = {
-  flavorId: string;
-  onHand: number;
-  reserved: number;
-  safetyStock: number;
-};
-
 interface FlavorCardProps {
   flavor: Flavor;
-  inventory?: FlavorInventory[];
   isSelected: boolean;
   inStock: boolean;
   stockCount: number;
@@ -28,7 +21,6 @@ interface FlavorCardProps {
 
 const FlavorCard: React.FC<FlavorCardProps> = ({
   flavor,
-  inventory: _inventory,
   isSelected,
   inStock,
   stockCount,
@@ -58,21 +50,26 @@ const FlavorCard: React.FC<FlavorCardProps> = ({
     return colors[Math.abs(hash) % colors.length];
   };
 
+  const getButtonClassName = () => {
+    if (isSelected) return "border-[#FF5D39] bg-[#FF5D39]/5 shadow-md";
+    if (inStock && !disabled)
+      return "border-gray-200 hover:border-[#FF5D39]/50 hover:shadow-sm";
+    return "border-gray-200 opacity-50 cursor-not-allowed";
+  };
+
   return (
-    <div
-      className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-200 ${
-        isSelected
-          ? "border-[#FF5D39] bg-[#FF5D39]/5 shadow-md"
-          : inStock && !disabled
-          ? "border-gray-200 hover:border-[#FF5D39]/50 hover:shadow-sm"
-          : "border-gray-200 opacity-50 cursor-not-allowed"
-      }`}
+    <button
+      type="button"
+      className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-200 w-full text-left ${getButtonClassName()}`}
       onClick={() => !disabled && inStock && onClick()}
+      disabled={disabled || !inStock}
     >
       {/* Flavor Image */}
       <div className="w-full h-16 rounded-lg mb-3 overflow-hidden bg-gray-100 flex items-center justify-center">
         {flavor.imageUrl ? (
-          <img
+          <Image
+            width={64}
+            height={64}
             src={flavor.imageUrl}
             alt={flavor.name}
             className="w-full h-full object-cover"
@@ -114,21 +111,25 @@ const FlavorCard: React.FC<FlavorCardProps> = ({
 
       {/* Stock Status */}
       <div className="flex items-center justify-between">
-        <span
-          className={`text-xs font-medium ${
-            stockCount > 10
-              ? "text-green-600"
-              : stockCount > 0
-              ? "text-yellow-600"
-              : "text-red-600"
-          }`}
-        >
-          {stockCount >= 999
-            ? "In Stock"
-            : stockCount > 0
-            ? `${stockCount} left`
-            : "Out of stock"}
-        </span>
+        {(() => {
+          const getStockColor = () => {
+            if (stockCount > 10) return "text-green-600";
+            if (stockCount > 0) return "text-yellow-600";
+            return "text-red-600";
+          };
+
+          const getStockText = () => {
+            if (stockCount >= 999) return "In Stock";
+            if (stockCount > 0) return `${stockCount} left`;
+            return "Out of stock";
+          };
+
+          return (
+            <span className={`text-xs font-medium ${getStockColor()}`}>
+              {getStockText()}
+            </span>
+          );
+        })()}
 
         {isSelected && (
           <div className="w-5 h-5 bg-[#FF5D39] rounded-full flex items-center justify-center">
@@ -151,7 +152,7 @@ const FlavorCard: React.FC<FlavorCardProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </button>
   );
 };
 

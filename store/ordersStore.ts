@@ -127,12 +127,6 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-      // Debug: Log the request data
-      console.log(
-        "Creating order with data:",
-        JSON.stringify(orderData, null, 2)
-      );
-
       const { data } = await axios.post<Order>(`${API_URL}/orders`, orderData, {
         withCredentials: true,
         headers: {
