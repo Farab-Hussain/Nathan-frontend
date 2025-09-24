@@ -62,6 +62,8 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
+    // Disable image optimization for uploaded images to prevent 400 errors
+    unoptimized: true,
   },
   // Production optimizations
   compress: true,
