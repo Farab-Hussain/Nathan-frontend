@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import Home from "./Home/page";
 import Lenis from "lenis";
 import LoadingScreen from "@/components/custom/LoadingScreen";
+import ComingSoonPage from "../coming-soon/page";
 
 const Page = () => {
   // Check localStorage immediately to avoid showing loading animation
@@ -67,7 +68,8 @@ const Page = () => {
           showHome ? "opacity-100 scale-100" : "opacity-0 scale-95"
         }`}
       >
-        <Home />
+        {/* <Home /> */}
+        <ComingSoonPage />
       </section>
     </>
   );

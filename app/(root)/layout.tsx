@@ -1,12 +1,12 @@
-import Footer from "@/components/shared/Footer";
-import Header from "@/components/shared/Header";
+// import Footer from "@/components/shared/Footer";
+// import Header from "@/components/shared/Header";
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div>
-      <Header />
+      {/* <Header /> */}
       {children}
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };
