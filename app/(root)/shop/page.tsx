@@ -52,13 +52,43 @@ const ShopPage = () => {
   const [showCustomBuilder, setShowCustomBuilder] = useState(false);
   const normalizeImageSrc = (src?: string | null, updatedAt?: string) => {
     if (!src) return "/assets/images/slider.png";
-    const path = src.startsWith("/uploads")
-      ? src
-      : src.startsWith("uploads")
-      ? `/${src}`
-      : src;
-    const cacheBuster = updatedAt ? `?t=${new Date(updatedAt).getTime()}` : "";
-    return `${path}${cacheBuster}`;
+
+    // Handle static assets (served from frontend)
+    if (src.startsWith("/assets")) {
+      const cacheBuster = updatedAt
+        ? `?t=${new Date(updatedAt).getTime()}`
+        : `?t=${Date.now()}`;
+      return `${src}${cacheBuster}`;
+    }
+
+    // Handle uploaded images (served from backend)
+    if (src.startsWith("/uploads") || src.startsWith("uploads")) {
+      const path = src.startsWith("/uploads") ? src : `/${src}`;
+      const cacheBuster = updatedAt
+        ? `?t=${new Date(updatedAt).getTime()}`
+        : `?t=${Date.now()}`;
+
+      // In production, use the proxy route instead of direct API URL
+      if (process.env.NODE_ENV === "production") {
+        return `${path}${cacheBuster}`;
+      } else {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+        return `${apiUrl}${path}${cacheBuster}`;
+      }
+    }
+
+    // Default case - assume it needs API URL
+    const cacheBuster = updatedAt
+      ? `?t=${new Date(updatedAt).getTime()}`
+      : `?t=${Date.now()}`;
+
+    if (process.env.NODE_ENV === "production") {
+      return `${src}${cacheBuster}`;
+    } else {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      return `${apiUrl}${src}${cacheBuster}`;
+    }
   };
 
   // No authentication check - shop page is accessible to everyone

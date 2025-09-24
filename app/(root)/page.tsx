@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Home from "./Home/page";
+// import Home from "./Home/page";
 import Lenis from "lenis";
 import LoadingScreen from "@/components/custom/LoadingScreen";
 import ComingSoonPage from "../coming-soon/page";

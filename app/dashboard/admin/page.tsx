@@ -187,17 +187,28 @@ const AdminPageContent = () => {
       const cacheBuster = updatedAt
         ? `?t=${new Date(updatedAt).getTime()}`
         : `?t=${Date.now()}`;
-      // Use hardcoded API URL for now to test
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      return `${apiUrl}${path}${cacheBuster}`;
+
+      // In production, use the proxy route instead of direct API URL
+      if (process.env.NODE_ENV === "production") {
+        return `${path}${cacheBuster}`;
+      } else {
+        const apiUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+        return `${apiUrl}${path}${cacheBuster}`;
+      }
     }
 
     // Default case - assume it needs API URL
     const cacheBuster = updatedAt
       ? `?t=${new Date(updatedAt).getTime()}`
       : `?t=${Date.now()}`;
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-    return `${apiUrl}${src}${cacheBuster}`;
+
+    if (process.env.NODE_ENV === "production") {
+      return `${src}${cacheBuster}`;
+    } else {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+      return `${apiUrl}${src}${cacheBuster}`;
+    }
   };
 
   // Categories state
