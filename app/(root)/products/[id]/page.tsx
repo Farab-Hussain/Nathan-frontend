@@ -53,7 +53,19 @@ const ProductDetailPage = () => {
 
       // Always use the full API URL for uploaded images
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl) {
+        console.error("NEXT_PUBLIC_API_URL is not defined");
+        return `${path}${cacheBuster}`;
+      }
       return `${apiUrl}${path}${cacheBuster}`;
+    }
+
+    // Handle full URLs (already complete)
+    if (src.startsWith("http://") || src.startsWith("https://")) {
+      const cacheBuster = updatedAt
+        ? `?t=${new Date(updatedAt).getTime()}`
+        : `?t=${Date.now()}`;
+      return `${src}${cacheBuster}`;
     }
 
     // Default case - assume it needs API URL
@@ -61,9 +73,15 @@ const ProductDetailPage = () => {
       ? `?t=${new Date(updatedAt).getTime()}`
       : `?t=${Date.now()}`;
 
-    // Always use the full API URL for uploaded images
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    return `${apiUrl}${src}${cacheBuster}`;
+    if (!apiUrl) {
+      console.error("NEXT_PUBLIC_API_URL is not defined");
+      return `${src}${cacheBuster}`;
+    }
+
+    // Ensure src starts with / for proper path construction
+    const normalizedSrc = src.startsWith("/") ? src : `/${src}`;
+    return `${apiUrl}${normalizedSrc}${cacheBuster}`;
   };
 
   // Fetch product from backend API
