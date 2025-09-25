@@ -762,9 +762,7 @@ const AdminPageContent = () => {
 
       const { data } = await axios.post(`${API_URL}/admin/flavors`, formData, {
         withCredentials: true,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        // Don't set Content-Type manually - let axios handle it for FormData
       });
 
       // Handle response format - could be direct object or wrapped in response
@@ -815,9 +813,7 @@ const AdminPageContent = () => {
         formData,
         {
           withCredentials: true,
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          // Don't set Content-Type manually - let axios handle it for FormData
         }
       );
 
