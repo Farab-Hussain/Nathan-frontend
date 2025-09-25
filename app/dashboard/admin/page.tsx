@@ -103,6 +103,85 @@ const AdminPageContent = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Enhanced image compression function with progressive quality reduction
+  const compressImage = (
+    file: File,
+    targetSizeMB: number = 5
+  ): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+      const img = new window.Image();
+
+      img.onload = () => {
+        // Calculate new dimensions (max 1200px width, maintain aspect ratio)
+        const maxWidth = 1200;
+        const maxHeight = 1200;
+        let { width, height } = img;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height;
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw and compress with progressive quality reduction
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const compressWithQuality = (quality: number): Promise<File> => {
+          return new Promise((resolveQuality) => {
+            canvas.toBlob(
+              (blob) => {
+                if (blob) {
+                  const sizeMB = blob.size / (1024 * 1024);
+                  if (sizeMB <= targetSizeMB || quality <= 0.3) {
+                    // Accept if within target size or quality is already very low
+                    const compressedFile = new File([blob], file.name, {
+                      type: "image/jpeg",
+                      lastModified: Date.now(),
+                    });
+                    resolveQuality(compressedFile);
+                  } else {
+                    // Try with lower quality
+                    compressWithQuality(quality - 0.1).then(resolveQuality);
+                  }
+                } else {
+                  resolveQuality(file);
+                }
+              },
+              "image/jpeg",
+              quality
+            );
+          });
+        };
+
+        // Start with 80% quality and reduce if needed
+        compressWithQuality(0.8).then(resolve);
+      };
+
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // File size validation function
+  const validateFileSize = (file: File, maxSizeMB: number = 50): boolean => {
+    const sizeMB = file.size / (1024 * 1024);
+    return sizeMB <= maxSizeMB;
+  };
+
   // Flavors state
   const [flavors, setFlavors] = useState<Flavor[]>([]);
   const [editingFlavor, setEditingFlavor] = useState<string | null>(null);
@@ -793,6 +872,14 @@ const AdminPageContent = () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
     setError(null);
     try {
+      // Validate file size before upload
+      if (editFlavorImageFile && !validateFileSize(editFlavorImageFile, 50)) {
+        setError(
+          "Image file is too large. Please compress the image and try again."
+        );
+        return;
+      }
+
       const aliasesArray = editFlavorData.aliases
         .split(",")
         .map((alias) => alias.trim())
@@ -834,10 +921,26 @@ const AdminPageContent = () => {
       // Refresh the flavors list to ensure consistency
       await fetchFlavors();
     } catch (err: unknown) {
-      const errorMessage =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to update flavor";
-      setError(errorMessage);
+      const errorResponse = err as {
+        response?: {
+          status?: number;
+          data?: {
+            message?: string;
+            code?: string;
+            maxSize?: string;
+          };
+        };
+      };
+
+      if (errorResponse?.response?.status === 413) {
+        setError(
+          "File too large. Please compress your image and try again. Maximum size is 50MB."
+        );
+      } else {
+        const errorMessage =
+          errorResponse?.response?.data?.message || "Failed to update flavor";
+        setError(errorMessage);
+      }
     }
   };
 
@@ -1967,15 +2070,20 @@ const AdminPageContent = () => {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          setFlavorImageFile(file);
+                          // Compress image if it's larger than 2MB
+                          let processedFile = file;
+                          if (file.size > 2 * 1024 * 1024) {
+                            processedFile = await compressImage(file);
+                          }
+                          setFlavorImageFile(processedFile);
                           const reader = new FileReader();
                           reader.onload = (e) => {
                             setFlavorImagePreview(e.target?.result as string);
                           };
-                          reader.readAsDataURL(file);
+                          reader.readAsDataURL(processedFile);
                         }
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#FF5D39] file:text-white hover:file:bg-opacity-90"
@@ -2121,21 +2229,56 @@ const AdminPageContent = () => {
                               <input
                                 type="file"
                                 accept="image/*"
-                                onChange={(e) => {
+                                onChange={async (e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
-                                    setEditFlavorImageFile(file);
-                                    const reader = new FileReader();
-                                    reader.onload = (e) => {
-                                      setEditFlavorImagePreview(
-                                        e.target?.result as string
+                                    // Validate file size first
+                                    if (!validateFileSize(file, 50)) {
+                                      setError(
+                                        "File size too large. Please select an image smaller than 50MB."
                                       );
-                                    };
-                                    reader.readAsDataURL(file);
+                                      e.target.value = ""; // Clear the input
+                                      return;
+                                    }
+
+                                    try {
+                                      // Always compress images for optimal upload performance
+                                      let processedFile = file;
+                                      if (file.size > 1 * 1024 * 1024) {
+                                        // Compress if larger than 1MB
+                                        processedFile = await compressImage(
+                                          file,
+                                          5
+                                        ); // Target 5MB max
+                                      }
+
+                                      setEditFlavorImageFile(processedFile);
+                                      const reader = new FileReader();
+                                      reader.onload = (e) => {
+                                        setEditFlavorImagePreview(
+                                          e.target?.result as string
+                                        );
+                                      };
+                                      reader.readAsDataURL(processedFile);
+                                      setError(null); // Clear any previous errors
+                                    } catch (processingError) {
+                                      console.error(
+                                        "Image processing error:",
+                                        processingError
+                                      );
+                                      setError(
+                                        "Failed to process image. Please try a different file."
+                                      );
+                                      e.target.value = ""; // Clear the input
+                                    }
                                   }
                                 }}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#FF5D39] file:text-white hover:file:bg-opacity-90"
                               />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Maximum file size: 50MB. Images larger than 1MB
+                                will be automatically compressed.
+                              </p>
                             </div>
                             {/* Current Image */}
                             {flavor.imageUrl && !editFlavorImagePreview && (
