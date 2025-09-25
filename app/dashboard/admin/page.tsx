@@ -2134,7 +2134,7 @@ const AdminPageContent = () => {
                             {/* Current Image */}
                             {flavor.imageUrl && !editFlavorImagePreview && (
                               <div className="flex-shrink-0">
-                                <Image
+                                <img
                                   width={64}
                                   height={64}
                                   src={normalizeImageSrc(
@@ -2221,7 +2221,7 @@ const AdminPageContent = () => {
                           {/* Flavor Image */}
                           <div className="flex-shrink-0">
                             {flavor.imageUrl ? (
-                              <Image
+                              <img
                                 width={48}
                                 height={48}
                                 src={normalizeImageSrc(

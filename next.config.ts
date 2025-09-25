@@ -50,6 +50,12 @@ const nextConfig: NextConfig = {
         pathname: "/uploads/**",
       },
       {
+        protocol: "http",
+        hostname: "localhost",
+        port: "4000",
+        pathname: "/**",
+      },
+      {
         protocol: "https",
         hostname: "licorice4good.com",
         port: "",
