@@ -68,14 +68,9 @@ const ShopPage = () => {
         ? `?t=${new Date(updatedAt).getTime()}`
         : `?t=${Date.now()}`;
 
-      // In production, use the proxy route instead of direct API URL
-      if (process.env.NODE_ENV === "production") {
-        return `${path}${cacheBuster}`;
-      } else {
-        const apiUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-        return `${apiUrl}${path}${cacheBuster}`;
-      }
+      // Always use the full API URL for uploaded images
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      return `${apiUrl}${path}${cacheBuster}`;
     }
 
     // Default case - assume it needs API URL
@@ -83,12 +78,9 @@ const ShopPage = () => {
       ? `?t=${new Date(updatedAt).getTime()}`
       : `?t=${Date.now()}`;
 
-    if (process.env.NODE_ENV === "production") {
-      return `${src}${cacheBuster}`;
-    } else {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-      return `${apiUrl}${src}${cacheBuster}`;
-    }
+    // Always use the full API URL for uploaded images
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    return `${apiUrl}${src}${cacheBuster}`;
   };
 
   // No authentication check - shop page is accessible to everyone
