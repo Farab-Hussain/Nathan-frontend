@@ -530,11 +530,13 @@ const ProfileContent = () => {
                                     order.shippingStatus === 'delivered' ? 'bg-green-100 text-green-700' :
                                     order.shippingStatus === 'shipped' ? 'bg-blue-100 text-blue-700' :
                                     order.shippingStatus === 'label_created' ? 'bg-yellow-100 text-yellow-700' :
+                                    order.shippingStatus === 'shipment_failed' ? 'bg-red-100 text-red-700' :
                                     'bg-gray-100 text-gray-700'
                                   }`}>
                                     {order.shippingStatus === 'delivered' ? 'Delivered' :
                                      order.shippingStatus === 'shipped' ? 'Shipped' :
                                      order.shippingStatus === 'label_created' ? 'Label Created' :
+                                     order.shippingStatus === 'shipment_failed' ? 'Shipment Failed' :
                                      order.shippingStatus}
                                   </span>
                                 )}
