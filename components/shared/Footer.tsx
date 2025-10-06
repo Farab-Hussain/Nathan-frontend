@@ -22,7 +22,7 @@ const Footer = () => {
       router.push("/auth/register")
     }
   }
-
+// 
   return (
     <footer className="bg-primary layout  z-50 mb-10 h-auto min-h-[500px] w-full">
       <div className="flex flex-col md:flex-row justify-between items-start py-8 md:py-10 gap-8 md:gap-0">
