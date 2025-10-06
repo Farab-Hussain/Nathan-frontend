@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import CustomButton from "@/components/custom/CustomButton";
@@ -105,10 +105,8 @@ const ShopPage = () => {
   // Authentication will be required only for adding items to cart
 
   // Fetch products from backend API (accessible to everyone)
-  useEffect(() => {
+  const fetchProducts = useCallback(async () => {
     // Fetch products regardless of authentication status
-
-    const fetchProducts = async () => {
       try {
         setLoading(true);
         const controller = new AbortController();
@@ -183,10 +181,11 @@ const ShopPage = () => {
       } finally {
         setLoading(false);
       }
-    };
+    }, []);
 
+  useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   // Listen for product data refresh events (triggered after successful orders)
   useEffect(() => {

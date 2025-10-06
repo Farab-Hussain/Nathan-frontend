@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -85,51 +85,51 @@ const ProductDetailPage = () => {
   };
 
   // Fetch product from backend API
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!id) {
-        setError("Product ID is required");
+  const fetchProduct = useCallback(async () => {
+    if (!id) {
+      setError("Product ID is required");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError("Product not found");
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         setLoading(false);
         return;
       }
 
-      try {
-        setLoading(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`, {
-          credentials: "include",
-        });
+      const data = await response.json();
 
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError("Product not found");
-          } else {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          setLoading(false);
-          return;
-        }
-
-        const data = await response.json();
-
-        // Handle different response formats
-        if (data && data.id) {
-          setProduct(data);
-        } else if (data && data.product) {
-          setProduct(data.product);
-        } else {
-          console.error("Unexpected product API response format:", data);
-          throw new Error("Invalid product API response format");
-        }
-      } catch (err) {
-        console.error("Failed to fetch product:", err);
-        setError("Failed to load product. Please try again later.");
-      } finally {
-        setLoading(false);
+      // Handle different response formats
+      if (data && data.id) {
+        setProduct(data);
+      } else if (data && data.product) {
+        setProduct(data.product);
+      } else {
+        console.error("Unexpected product API response format:", data);
+        throw new Error("Invalid product API response format");
       }
-    };
-
-    fetchProduct();
+    } catch (err) {
+      console.error("Failed to fetch product:", err);
+      setError("Failed to load product. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]);
 
   // Listen for product data refresh events (triggered after successful orders)
   useEffect(() => {
