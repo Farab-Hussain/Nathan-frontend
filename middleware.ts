@@ -53,6 +53,14 @@ export async function middleware(req: NextRequest) {
   
   // Check for presence of auth cookie - let client-side handle validation
   const hasAuthCookie = !!rawToken;
+  
+  // Clear expired cookies by checking if they're malformed
+  if (rawToken && rawToken.length < 10) {
+    // Token seems invalid, clear it
+    const response = NextResponse.next();
+    response.cookies.delete("token");
+    return response;
+  }
 
   // 1. Redirect logged-in users away from guest-only pages
   if (hasAuthCookie && matchesPath(pathname, GUEST_ONLY_PATHS)) {

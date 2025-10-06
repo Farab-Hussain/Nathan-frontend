@@ -5,6 +5,7 @@ import axios from "axios";
 import Link from "next/link";
 import AuthCard from "@/components/ui/auth/AuthCard";
 import PasswordInput from "@/components/ui/auth/PasswordInput";
+import { clearAuthCookies, checkCookieExpiry } from "@/utils/cookieUtils";
 import { ToastContainer, toast } from "react-toastify";
 
 // Helper function for fallback error messages
@@ -49,6 +50,13 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Clear expired cookies on component mount
+  React.useEffect(() => {
+    if (checkCookieExpiry()) {
+      clearAuthCookies();
+    }
+  }, []);
+
   // GlobalVerificationCheck handles redirects for logged-in users
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,11 +96,10 @@ const LoginPage = () => {
       toast.success("Login successful!");
       setSuccess("Login successful!");
       
-      // GlobalVerificationCheck will handle verification and redirects
+      // Redirect to home page after successful login
       setTimeout(() => {
-        // Force a page reload to trigger the global verification check
-        window.location.reload();
-      }, 600);
+        router.push("/");
+      }, 1000);
     } catch (err: unknown) {
 
       if (axios.isAxiosError(err)) {

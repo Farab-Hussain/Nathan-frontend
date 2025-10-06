@@ -78,10 +78,10 @@ const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
       newErrors.email = 'Please enter a valid email address';
     }
 
-    // ZIP code validation (US format)
-    const zipRegex = /^\d{5}(-\d{4})?$/;
+    // ZIP code validation - more flexible for international addresses
+    const zipRegex = /^[A-Za-z0-9\s\-]{3,10}$/;
     if (formData.zip && !zipRegex.test(formData.zip)) {
-      newErrors.zip = 'Please enter a valid ZIP code';
+      newErrors.zip = 'Please enter a valid postal code';
     }
 
     setErrors(newErrors);
@@ -107,17 +107,32 @@ const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
       if (response.ok && result.isValid) {
         onAddressSubmit(formData);
       } else {
+        // Show validation suggestions but still allow proceeding
         setErrors({ 
-          street1: result.message || 'Address validation failed. Please check your address and try again.' 
+          street1: result.message || 'Address validation had issues, but you can still proceed if the address is correct.' 
         });
+        
+        // Auto-proceed after 3 seconds if user doesn't take action
+        setTimeout(() => {
+          if (validateForm()) {
+            onAddressSubmit(formData);
+          }
+        }, 3000);
       }
     } catch (error) {
       console.error('Address validation error:', error);
-      setErrors({ 
-        street1: 'Address validation failed. Please check your address and try again.' 
-      });
+      // If validation API fails, just proceed with the address
+      if (validateForm()) {
+        onAddressSubmit(formData);
+      }
     } finally {
       setValidating(false);
+    }
+  };
+
+  const handleSkipValidation = () => {
+    if (validateForm()) {
+      onAddressSubmit(formData);
     }
   };
 
@@ -323,6 +338,14 @@ const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
             disabled={loading || validating}
           >
             Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSkipValidation}
+            className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading || validating}
+          >
+            Skip Validation
           </button>
           <button
             type="submit"
