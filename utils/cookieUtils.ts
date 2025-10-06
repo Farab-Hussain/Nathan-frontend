@@ -11,6 +11,11 @@ export const clearAuthCookies = () => {
     if (window.location.hostname.includes('licorice4good.com')) {
       document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=licorice4good.com;`;
     }
+    
+    // Clear cookie for localhost (development)
+    if (window.location.hostname === 'localhost') {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=localhost;`;
+    }
   });
 };
 

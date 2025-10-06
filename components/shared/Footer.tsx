@@ -24,7 +24,7 @@ const Footer = () => {
   }
 
   return (
-    <footer className="bg-primary layout  z-50 mb-10 h-auto min-h-[500px] w-full border-t border-white">
+    <footer className="bg-primary layout  z-50 mb-10 h-auto min-h-[500px] w-full">
       <div className="flex flex-col md:flex-row justify-between items-start py-8 md:py-10 gap-8 md:gap-0">
         <div className="flex flex-col justify-center items-start  w-full md:w-[48%] h-full pb-8 md:pb-0 md:pr-6">
           <CustomButton

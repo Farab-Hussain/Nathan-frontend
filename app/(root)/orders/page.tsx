@@ -4,7 +4,6 @@ import { useOrdersStore } from "@/store/ordersStore";
 import { useUser } from "@/hooks/useUser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import CustomButton from "@/components/custom/CustomButton";
 
 const OrdersPage = () => {
   const { user, loading: userLoading } = useUser();
@@ -144,22 +143,66 @@ const OrdersPage = () => {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center gap-2 mt-6">
-          <CustomButton
-            title="Prev"
-            className="px-3 py-1 rounded border border-gray-300 text-black disabled:opacity-50 bg-white"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-          />
-          <span className="text-black">
-            Page {page} of {totalPages}
-          </span>
-          <CustomButton
-            title="Next"
-            className="px-3 py-1 rounded border border-gray-300 text-black disabled:opacity-50 bg-white"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page >= totalPages}
-          />
+        <div className="flex items-center justify-between mt-6">
+          <div className="text-sm text-gray-600">
+            Showing {orders.length} orders
+            {pagination && (
+              <span> (Page {pagination.page} of {pagination.pages})</span>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage(1)}
+              disabled={page <= 1}
+              className="px-3 py-2 rounded border border-gray-300 text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              First
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="px-3 py-2 rounded border border-gray-300 text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Previous
+            </button>
+            
+            {/* Page numbers */}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              const pageNum = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
+              if (pageNum <= totalPages) {
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setPage(pageNum)}
+                    className={`px-3 py-2 rounded border cursor-pointer ${
+                      pageNum === page
+                        ? "bg-[#FF5D39] text-white border-[#FF5D39]"
+                        : "border-gray-300 text-black hover:bg-gray-50"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              }
+              return null;
+            })}
+            
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="px-3 py-2 rounded border border-gray-300 text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Next
+            </button>
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={page >= totalPages}
+              className="px-3 py-2 rounded border border-gray-300 text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              Last
+            </button>
+          </div>
         </div>
       )}
     </div>

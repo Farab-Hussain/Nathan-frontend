@@ -111,13 +111,6 @@ const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
         setErrors({ 
           street1: result.message || 'Address validation had issues, but you can still proceed if the address is correct.' 
         });
-        
-        // Auto-proceed after 3 seconds if user doesn't take action
-        setTimeout(() => {
-          if (validateForm()) {
-            onAddressSubmit(formData);
-          }
-        }, 3000);
       }
     } catch (error) {
       console.error('Address validation error:', error);
@@ -130,11 +123,6 @@ const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
     }
   };
 
-  const handleSkipValidation = () => {
-    if (validateForm()) {
-      onAddressSubmit(formData);
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -338,14 +326,6 @@ const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
             disabled={loading || validating}
           >
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSkipValidation}
-            className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={loading || validating}
-          >
-            Skip Validation
           </button>
           <button
             type="submit"

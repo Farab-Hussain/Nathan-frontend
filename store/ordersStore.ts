@@ -71,6 +71,11 @@ type OrdersState = {
     page?: number;
     limit?: number;
   }) => Promise<void>;
+  loadMoreOrders: (params: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) => Promise<void>;
   fetchOrder: (id: string) => Promise<Order | null>;
   fetchOrderById: (id: string) => Promise<void>;
   createOrder: (orderData: Partial<Order>) => Promise<Order | null>;
@@ -111,6 +116,39 @@ export const useOrdersStore = create<OrdersState>((set, get) => ({
       const message =
         error instanceof Error ? error.message : "Failed to fetch orders";
       set({ error: message, loading: false, orders: [] });
+    }
+  },
+
+  // Load more orders (for infinite scroll or load more functionality)
+  loadMoreOrders: async (params = {}) => {
+    const currentState = get();
+    if (currentState.loading) return;
+
+    set({ loading: true, error: null });
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      const queryParams = new URLSearchParams();
+
+      if (params.status) queryParams.append("status", params.status);
+      if (params.page) queryParams.append("page", params.page.toString());
+      if (params.limit) queryParams.append("limit", params.limit.toString());
+
+      const { data } = await axios.get<{
+        orders: Order[];
+        pagination: Pagination;
+      }>(`${API_URL}/orders?${queryParams.toString()}`, {
+        withCredentials: true,
+      });
+
+      set({
+        orders: [...currentState.orders, ...(data.orders || [])],
+        pagination: data.pagination || null,
+        loading: false,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load more orders";
+      set({ error: message, loading: false });
     }
   },
 

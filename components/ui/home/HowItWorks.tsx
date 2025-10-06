@@ -196,7 +196,7 @@ const HowItWorks = () => {
             </svg>
 
             
-              <Image
+              {/* <Image
                 src="/assets/svg/circle.svg"
                 alt="circle background"
                 width={500}
@@ -204,7 +204,7 @@ const HowItWorks = () => {
                 className="absolute -top-20 -right-20 w-40 h-40 sm:w-60 sm:h-60 sm:-top-32 sm:-right-32 md:w-80 md:h-80 md:-top-40 md:-right-40 lg:w-[500px] lg:h-[500px] lg:-top-80 lg:-right-100"
                 sizes="(max-width: 640px) 160px, (max-width: 768px) 240px, (max-width: 1024px) 320px, 500px"
                 priority
-              />
+              /> */}
             
           </div>
           <div className="flex flex-col w-full h-full items-center gap-9 justify-center md:hidden">

@@ -17,6 +17,7 @@ const ProfileContent = () => {
   const { clearCart } = useCartStore();
   const [activeTab, setActiveTab] = useState<"profile" | "orders">("profile");
   const [editMode, setEditMode] = useState(false);
+  const [ordersPage, setOrdersPage] = useState<number>(1);
   const [profileForm, setProfileForm] = useState({
     name: "",
     email: "",
@@ -46,7 +47,8 @@ const ProfileContent = () => {
 
       // Refresh orders data to get updated payment status (with a small delay to ensure webhook processed)
       setTimeout(() => {
-        fetchOrders({ page: 1, limit: 50 });
+        fetchOrders({ page: 1, limit: 10 });
+        setOrdersPage(1);
       }, 2000); // Increased delay to ensure webhook processes
 
       // Clean up URL parameters after handling
@@ -80,16 +82,16 @@ const ProfileContent = () => {
 
   useEffect(() => {
     if (user && !userLoading) {
-      fetchOrders({ page: 1, limit: 50 }); // Increased limit to get more orders
+      fetchOrders({ page: ordersPage, limit: 10 });
     }
-  }, [user, userLoading, fetchOrders]);
+  }, [user, userLoading, fetchOrders, ordersPage]);
 
   // Refresh orders when switching to orders tab
   useEffect(() => {
     if (activeTab === "orders" && user && !userLoading) {
-      fetchOrders({ page: 1, limit: 50 });
+      fetchOrders({ page: ordersPage, limit: 10 });
     }
-  }, [activeTab, user, userLoading, fetchOrders]);
+  }, [activeTab, user, userLoading, fetchOrders, ordersPage]);
 
   // Show loading while checking authentication
   if (userLoading) {
@@ -347,7 +349,10 @@ const ProfileContent = () => {
                   </span>
                 </div>
                 <button
-                  onClick={() => fetchOrders({ page: 1, limit: 50 })}
+                  onClick={() => {
+                    fetchOrders({ page: 1, limit: 10 });
+                    setOrdersPage(1);
+                  }}
                   disabled={ordersLoading}
                   className="w-full sm:w-auto px-4 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
                 >
@@ -572,6 +577,42 @@ const ProfileContent = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {orders.length > 0 && (
+                <div className="mt-6 flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Showing {orders.length} orders
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const newPage = Math.max(1, ordersPage - 1);
+                        setOrdersPage(newPage);
+                        fetchOrders({ page: newPage, limit: 10 });
+                      }}
+                      disabled={ordersPage <= 1 || ordersLoading}
+                      className="px-3 py-2 rounded border border-gray-300 text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-black px-3 py-2">
+                      Page {ordersPage}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const newPage = ordersPage + 1;
+                        setOrdersPage(newPage);
+                        fetchOrders({ page: newPage, limit: 10 });
+                      }}
+                      disabled={ordersLoading}
+                      className="px-3 py-2 rounded border border-gray-300 text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
