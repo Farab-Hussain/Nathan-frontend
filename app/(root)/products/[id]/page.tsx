@@ -131,6 +131,20 @@ const ProductDetailPage = () => {
     fetchProduct();
   }, [id]);
 
+  // Listen for product data refresh events (triggered after successful orders)
+  useEffect(() => {
+    const handleProductDataRefresh = () => {
+      console.log('🔄 Product data refresh triggered - refetching product details');
+      fetchProduct();
+    };
+
+    window.addEventListener('productDataRefresh', handleProductDataRefresh);
+    
+    return () => {
+      window.removeEventListener('productDataRefresh', handleProductDataRefresh);
+    };
+  }, [id]); // Include id as dependency to ensure we refetch the correct product
+
   const router = useRouter();
   const { addItem } = useCartStore();
   const {

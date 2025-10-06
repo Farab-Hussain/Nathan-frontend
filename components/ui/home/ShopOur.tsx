@@ -108,6 +108,20 @@ const ShopOur = () => {
     fetchProducts();
   }, []);
 
+  // Listen for product data refresh events (triggered after successful orders)
+  useEffect(() => {
+    const handleProductDataRefresh = () => {
+      console.log('🔄 Product data refresh triggered - refetching home products');
+      fetchProducts();
+    };
+
+    window.addEventListener('productDataRefresh', handleProductDataRefresh);
+    
+    return () => {
+      window.removeEventListener('productDataRefresh', handleProductDataRefresh);
+    };
+  }, []);
+
   const handlePrevious = () => {
     // Show 4 at a time; allow scrolling only if more than 4
     if (productOptions.length <= 4) return;

@@ -186,6 +186,20 @@ const ShopPage = () => {
     };
 
     fetchProducts();
+  }, []);
+
+  // Listen for product data refresh events (triggered after successful orders)
+  useEffect(() => {
+    const handleProductDataRefresh = () => {
+      console.log('🔄 Product data refresh triggered - refetching products');
+      fetchProducts();
+    };
+
+    window.addEventListener('productDataRefresh', handleProductDataRefresh);
+    
+    return () => {
+      window.removeEventListener('productDataRefresh', handleProductDataRefresh);
+    };
   }, []); // No dependencies - fetch once on component mount
 
   const viewPackage = (id: string) => router.push(`/products/${id}`);

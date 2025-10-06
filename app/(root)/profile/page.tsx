@@ -49,6 +49,15 @@ const ProfileContent = () => {
       setTimeout(() => {
         fetchOrders({ page: 1, limit: 10 });
         setOrdersPage(1);
+        
+        // Trigger a global product data refresh by updating localStorage
+        // This will cause other pages to refetch product data with updated stock levels
+        localStorage.setItem('productDataRefresh', Date.now().toString());
+        
+        // Dispatch a custom event to notify other components
+        window.dispatchEvent(new CustomEvent('productDataRefresh', {
+          detail: { timestamp: Date.now() }
+        }));
       }, 2000); // Increased delay to ensure webhook processes
 
       // Clean up URL parameters after handling
