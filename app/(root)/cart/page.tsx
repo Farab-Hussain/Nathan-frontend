@@ -8,7 +8,7 @@ import { useOrdersStore } from "@/store/ordersStore";
 import { useUser } from "@/hooks/useUser";
 import VerificationGuard from "@/components/auth/VerificationGuard";
 import CustomButton from "@/components/custom/CustomButton";
-import ShippingAddressForm from "@/components/ui/shipping/ShippingAddressForm";
+// Removed ShippingAddressForm import - using Stripe checkout address collection
 import axios from "axios";
 
 // Type definitions
@@ -53,19 +53,7 @@ const CartPage = () => {
   const [flavors, setFlavors] = useState<Array<{ id: string; name: string }>>(
     []
   );
-  const [showShippingForm, setShowShippingForm] = useState(false);
-  const [shippingAddress, setShippingAddress] = useState<{
-    name: string;
-    company?: string;
-    email: string;
-    phone?: string;
-    street1: string;
-    street2?: string;
-    city: string;
-    state: string;
-    zip: string;
-    country: string;
-  } | null>(null);
+  // Removed shipping address modal - Stripe will collect address directly
 
   const fetchRecommendedProducts = useCallback(async () => {
     setRecommendedLoading(true);
@@ -310,28 +298,11 @@ const CartPage = () => {
       return;
     }
 
-    // If no shipping address collected yet, show the form
-    if (!shippingAddress) {
-      setShowShippingForm(true);
-      return;
-    }
-
-    // Proceed with checkout using the collected shipping address
-    await proceedWithCheckout(shippingAddress);
+    // Proceed directly to Stripe checkout - no address collection needed
+    await proceedWithCheckout();
   };
 
-  const proceedWithCheckout = async (address: {
-    name: string;
-    company?: string;
-    email: string;
-    phone?: string;
-    street1: string;
-    street2?: string;
-    city: string;
-    state: string;
-    zip: string;
-    country: string;
-  }) => {
+  const proceedWithCheckout = async () => {
     try {
       setOrderLoading(true);
 
@@ -387,16 +358,7 @@ const CartPage = () => {
         orderItems,
         orderNotes: notes || "Order from website",
         total: getTotal(),
-        shippingAddress: {
-          name: address.name,
-          email: address.email,
-          phone: address.phone || "",
-          street: address.street1,
-          city: address.city,
-          state: address.state,
-          zipCode: address.zip,
-          country: address.country,
-        },
+        // Shipping address will be collected by Stripe checkout
       };
 
       // Create Stripe Checkout Session directly without creating order first
@@ -407,10 +369,10 @@ const CartPage = () => {
         body: JSON.stringify({
           // Pass order data in metadata instead of orderId
           orderData: {
-            shippingAddress: orderData.shippingAddress,
             orderNotes: orderData.orderNotes,
             orderItems: orderData.orderItems,
             total: orderData.total,
+            // Shipping address will be collected by Stripe and provided in webhook
           },
           items: items.map((item) => ({
             productId: item.isCustomPack ? item.id : item.productId,
@@ -469,27 +431,7 @@ const CartPage = () => {
     }
   };
 
-  const handleAddressSubmit = (address: {
-    name: string;
-    company?: string;
-    email: string;
-    phone?: string;
-    street1: string;
-    street2?: string;
-    city: string;
-    state: string;
-    zip: string;
-    country: string;
-  }) => {
-    setShippingAddress(address);
-    setShowShippingForm(false);
-    // Automatically proceed with checkout after address is collected
-    proceedWithCheckout(address);
-  };
-
-  const handleAddressCancel = () => {
-    setShowShippingForm(false);
-  };
+  // Removed address handling functions - Stripe will collect address directly
 
   return (
     <VerificationGuard>
@@ -505,20 +447,7 @@ const CartPage = () => {
             </p>
           </div>
 
-          {/* Shipping Address Form Modal */}
-          {showShippingForm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <ShippingAddressForm
-                  onAddressSubmit={handleAddressSubmit}
-                  onCancel={handleAddressCancel}
-                  loading={orderLoading}
-                  userEmail={user?.email}
-                  userName={user?.name}
-                />
-              </div>
-            </div>
-          )}
+          {/* Shipping address will be collected by Stripe checkout */}
 
           {/* Error Display */}
           {error && (
