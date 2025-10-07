@@ -1046,7 +1046,6 @@ const AdminPageContent = () => {
         formData.append("productImage", hasFile);
 
         // Optimistic update
-        const prev = products;
         setProducts((cur) =>
           cur.map((p) => (p.id === id ? { ...p, ...overrides } : p))
         );
@@ -1095,7 +1094,6 @@ const AdminPageContent = () => {
         };
 
         // Optimistic update
-        const prev = products;
         setProducts((cur) =>
           cur.map((p) => (p.id === id ? { ...p, ...payload } : p))
         );
@@ -1285,8 +1283,29 @@ const AdminPageContent = () => {
       <h1 className="text-3xl font-extrabold text-black mb-6">AddProduct</h1>
 
       {error && (
-        <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-700">
-          {error}
+        <div className="mb-4 p-4 rounded-lg border-l-4 border-red-400 bg-red-50 shadow-sm">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3 flex-1">
+              <p className="text-sm text-red-800 font-medium whitespace-pre-line">
+                {error}
+              </p>
+            </div>
+            <div className="ml-3 flex-shrink-0">
+              <button
+                onClick={() => setError(null)}
+                className="inline-flex text-red-400 hover:text-red-600 focus:outline-none focus:text-red-600 transition ease-in-out duration-150"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1570,21 +1589,69 @@ const AdminPageContent = () => {
                   })()}
                 </div>
                 <div className="mt-3">
+                  <div className="mb-2">
+                    <label className="text-sm text-gray-600">
+                      📷 Choose Product Image
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Maximum file size: 50MB • Images larger than 2MB will be automatically compressed
+                    </p>
+                  </div>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={async (e) => {
                       const file = e.target.files?.[0] || null;
                       if (file) {
-                        // Compress image if it's larger than 2MB
-                        let processedFile = file;
-                        if (file.size > 2 * 1024 * 1024) {
-                          processedFile = await compressImage(file);
+                        // Check file size first (50MB limit)
+                        const maxSizeMB = 50;
+                        const fileSizeMB = file.size / (1024 * 1024);
+                        
+                        if (fileSizeMB > maxSizeMB) {
+                          setError(
+                            `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB. Please choose a smaller image or compress it before uploading.`
+                          );
+                          e.target.value = ""; // Clear the input
+                          return;
                         }
-                        setImageFile(processedFile);
-                        const blobUrl = URL.createObjectURL(processedFile);
-                        setPreview(blobUrl);
-                        setForm((f) => ({ ...f, imageUrl: "" }));
+
+                        try {
+                          // Compress image if it's larger than 2MB
+                          let processedFile = file;
+                          if (file.size > 2 * 1024 * 1024) {
+                            setError("🔄 Compressing your image for better upload performance...");
+                            try {
+                              processedFile = await compressImage(file);
+                              setError(null); // Clear compression message
+                            } catch (compressionError) {
+                              console.error("Compression failed:", compressionError);
+                              setError(
+                                `⚠️ Auto-compression failed! Your image is ${fileSizeMB.toFixed(1)}MB. Please try:
+
+• Choose a smaller image (under 2MB)
+• Use an online image compressor (like TinyPNG or Compressor.io)
+• Try a different image format (JPG/PNG)
+• Reduce image dimensions before uploading
+
+💡 Tip: Most phones take photos that are too large. Try resizing them first!`
+                              );
+                              e.target.value = ""; // Clear the input
+                              return;
+                            }
+                          }
+                          
+                          setImageFile(processedFile);
+                          const blobUrl = URL.createObjectURL(processedFile);
+                          setPreview(blobUrl);
+                          setForm((f) => ({ ...f, imageUrl: "" }));
+                          setError(null); // Clear any previous errors
+                        } catch (generalError) {
+                          console.error("Image processing error:", generalError);
+                          setError(
+                            "❌ Failed to process your image. Please try a different file or check if the image is corrupted."
+                          );
+                          e.target.value = ""; // Clear the input
+                        }
                       } else {
                         if (preview?.startsWith("blob:"))
                           URL.revokeObjectURL(preview);
@@ -1913,8 +1980,11 @@ const AdminPageContent = () => {
               {/* Flavor Image Upload */}
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Flavor Image (Optional)
+                  📷 Flavor Image (Optional)
                 </label>
+                <p className="text-xs text-gray-500 mb-3">
+                  Maximum file size: 50MB • Images larger than 2MB will be automatically compressed
+                </p>
                 <div className="flex items-center gap-4">
                   <div className="flex-1">
                     <input
@@ -1923,17 +1993,57 @@ const AdminPageContent = () => {
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          // Compress image if it's larger than 2MB
-                          let processedFile = file;
-                          if (file.size > 2 * 1024 * 1024) {
-                            processedFile = await compressImage(file);
+                          // Check file size first (50MB limit)
+                          const maxSizeMB = 50;
+                          const fileSizeMB = file.size / (1024 * 1024);
+                          
+                          if (fileSizeMB > maxSizeMB) {
+                            setError(
+                              `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB. Please choose a smaller image or compress it before uploading.`
+                            );
+                            e.target.value = ""; // Clear the input
+                            return;
                           }
-                          setFlavorImageFile(processedFile);
-                          const reader = new FileReader();
-                          reader.onload = (e) => {
-                            setFlavorImagePreview(e.target?.result as string);
-                          };
-                          reader.readAsDataURL(processedFile);
+
+                          try {
+                            // Compress image if it's larger than 2MB
+                            let processedFile = file;
+                            if (file.size > 2 * 1024 * 1024) {
+                              setError("🔄 Compressing your image for better upload performance...");
+                              try {
+                                processedFile = await compressImage(file);
+                                setError(null); // Clear compression message
+                              } catch (compressionError) {
+                                console.error("Compression failed:", compressionError);
+                                setError(
+                                  `⚠️ Auto-compression failed! Your image is ${fileSizeMB.toFixed(1)}MB. Please try:
+
+• Choose a smaller image (under 2MB)
+• Use an online image compressor (like TinyPNG or Compressor.io)
+• Try a different image format (JPG/PNG)
+• Reduce image dimensions before uploading
+
+💡 Tip: Most phones take photos that are too large. Try resizing them first!`
+                                );
+                                e.target.value = ""; // Clear the input
+                                return;
+                              }
+                            }
+                            
+                            setFlavorImageFile(processedFile);
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                              setFlavorImagePreview(e.target?.result as string);
+                            };
+                            reader.readAsDataURL(processedFile);
+                            setError(null); // Clear any previous errors
+                          } catch (generalError) {
+                            console.error("Image processing error:", generalError);
+                            setError(
+                              "❌ Failed to process your image. Please try a different file or check if the image is corrupted."
+                            );
+                            e.target.value = ""; // Clear the input
+                          }
                         }
                       }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#FF5D39] file:text-white hover:file:bg-opacity-90"
@@ -2072,8 +2182,11 @@ const AdminPageContent = () => {
                         {/* Image Upload for Edit */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Update Flavor Image
+                            📷 Update Flavor Image
                           </label>
+                          <p className="text-xs text-gray-500 mb-3">
+                            Maximum file size: 50MB • Images larger than 1MB will be automatically compressed
+                          </p>
                           <div className="flex items-center gap-4">
                             <div className="flex-1">
                               <input
@@ -2082,10 +2195,13 @@ const AdminPageContent = () => {
                                 onChange={async (e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
-                                    // Validate file size first
-                                    if (!validateFileSize(file, 50)) {
+                                    // Check file size first (50MB limit)
+                                    const maxSizeMB = 50;
+                                    const fileSizeMB = file.size / (1024 * 1024);
+                                    
+                                    if (fileSizeMB > maxSizeMB) {
                                       setError(
-                                        "File size too large. Please select an image smaller than 50MB."
+                                        `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB. Please choose a smaller image or compress it before uploading.`
                                       );
                                       e.target.value = ""; // Clear the input
                                       return;
@@ -2096,10 +2212,28 @@ const AdminPageContent = () => {
                                       let processedFile = file;
                                       if (file.size > 1 * 1024 * 1024) {
                                         // Compress if larger than 1MB
-                                        processedFile = await compressImage(
-                                          file,
-                                          5
-                                        ); // Target 5MB max
+                                        setError("🔄 Compressing your image for better upload performance...");
+                                        try {
+                                          processedFile = await compressImage(
+                                            file,
+                                            5
+                                          ); // Target 5MB max
+                                          setError(null); // Clear compression message
+                                        } catch (compressionError) {
+                                          console.error("Compression failed:", compressionError);
+                                          setError(
+                                            `⚠️ Auto-compression failed! Your image is ${fileSizeMB.toFixed(1)}MB. Please try:
+
+• Choose a smaller image (under 1MB)
+• Use an online image compressor (like TinyPNG or Compressor.io)
+• Try a different image format (JPG/PNG)
+• Reduce image dimensions before uploading
+
+💡 Tip: Most phones take photos that are too large. Try resizing them first!`
+                                          );
+                                          e.target.value = ""; // Clear the input
+                                          return;
+                                        }
                                       }
 
                                       setEditFlavorImageFile(processedFile);
@@ -2111,13 +2245,13 @@ const AdminPageContent = () => {
                                       };
                                       reader.readAsDataURL(processedFile);
                                       setError(null); // Clear any previous errors
-                                    } catch (processingError) {
+                                    } catch (generalError) {
                                       console.error(
                                         "Image processing error:",
-                                        processingError
+                                        generalError
                                       );
                                       setError(
-                                        "Failed to process image. Please try a different file."
+                                        "❌ Failed to process your image. Please try a different file or check if the image is corrupted."
                                       );
                                       e.target.value = ""; // Clear the input
                                     }
@@ -2125,10 +2259,6 @@ const AdminPageContent = () => {
                                 }}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#FF5D39] file:text-white hover:file:bg-opacity-90"
                               />
-                              <p className="text-xs text-gray-500 mt-1">
-                                Maximum file size: 50MB. Images larger than 1MB
-                                will be automatically compressed.
-                              </p>
                             </div>
                             {/* Current Image */}
                             {flavor.imageUrl && !editFlavorImagePreview && (
