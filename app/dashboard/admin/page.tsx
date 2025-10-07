@@ -1573,11 +1573,16 @@ const AdminPageContent = () => {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0] || null;
                       if (file) {
-                        setImageFile(file);
-                        const blobUrl = URL.createObjectURL(file);
+                        // Compress image if it's larger than 2MB
+                        let processedFile = file;
+                        if (file.size > 2 * 1024 * 1024) {
+                          processedFile = await compressImage(file);
+                        }
+                        setImageFile(processedFile);
+                        const blobUrl = URL.createObjectURL(processedFile);
                         setPreview(blobUrl);
                         setForm((f) => ({ ...f, imageUrl: "" }));
                       } else {
