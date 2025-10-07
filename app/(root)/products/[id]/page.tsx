@@ -219,10 +219,10 @@ const ProductDetailPage = () => {
   }
 
   return (
-    <div className="w-full min-h-screen layout py-10 bg-shop-bg">
-      <div className="max-w-6xl mx-auto px-4">
+    <div className="w-full min-h-screen layout py-6 sm:py-10 bg-shop-bg">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4">
         {/* Navigation */}
-        <nav className="text-xs sm:text-sm mb-6 flex items-center gap-2 text-white">
+        <nav className="text-xs sm:text-sm mb-4 sm:mb-6 flex items-center gap-2 text-white">
           <Link href="/shop" className="hover:underline">
             Shop
           </Link>
@@ -230,21 +230,21 @@ const ProductDetailPage = () => {
           <span className="text-white font-semibold">{product.name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 bg-white rounded-2xl shadow-lg p-6 md:p-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-12 bg-white rounded-lg sm:rounded-xl lg:rounded-2xl shadow-lg p-3 sm:p-4 lg:p-10">
           {/* Product Image */}
           <div className="relative">
-            <div className="rounded-2xl overflow-hidden border-2 border-gray-100 shadow-md bg-white relative group">
+            <div className="rounded-xl lg:rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white relative group">
               <Image
                 src={normalizeImageSrc(product.imageUrl, product.updatedAt)}
                 alt={product.name}
                 width={1000}
                 height={750}
-                className="w-full h-64 sm:h-80 md:h-[28rem] object-cover transition-transform duration-300 group-hover:scale-105"
+                className="w-full h-48 sm:h-64 lg:h-80 object-cover transition-transform duration-300 group-hover:scale-105"
                 sizes="(max-width: 640px) 100vw, (max-width: 768px) 80vw, 600px"
                 priority
               />
               <span
-                className="absolute top-4 left-4 text-white text-xs px-3 py-1 rounded-full shadow font-semibold"
+                className="absolute top-3 left-3 text-white text-xs px-2 py-1 rounded-full shadow font-semibold"
                 style={{
                   background:
                     product.category === "Traditional"
@@ -262,33 +262,32 @@ const ProductDetailPage = () => {
           </div>
 
           {/* Product Details */}
-          <div className="flex flex-col justify-between">
-            <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-black mb-3">
+          <div className="flex flex-col justify-between space-y-3 sm:space-y-4 lg:space-y-6">
+            <div className="space-y-2 sm:space-y-3 lg:space-y-4">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-black">
                 {product.name}
               </h1>
 
               {/* SKU */}
-              <div className="text-xs sm:text-sm text-gray-500 mb-4 font-mono">
+              <div className="text-xs text-gray-500 font-mono">
                 SKU: {product.sku}
               </div>
 
               {/* Price */}
-              <div className="mb-6">
-                <div className="flex items-center gap-4 mb-2">
+              <div className="space-y-2 sm:space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                   <span
-                    className="text-2xl sm:text-3xl font-bold"
+                    className="text-xl sm:text-2xl font-bold"
                     style={{ color: ORANGE }}
                   >
                     ${product.price.toFixed(2)}
                   </span>
-                  <span className="text-xs sm:text-sm text-gray-500">
-                    {/* per 3-pack */}
-                    per pack 3 flavors
+                  <span className="text-xs text-gray-500">
+                    per pack
                   </span>
                   {product.stock !== undefined && (
                     <span
-                      className={`text-xs sm:text-sm font-semibold px-3 py-1 rounded-full ${
+                      className={`text-xs font-semibold px-2 py-1 rounded-full ${
                         product.stock > 20
                           ? "bg-green-100 text-green-700"
                           : product.stock > 10
@@ -300,48 +299,34 @@ const ProductDetailPage = () => {
                         ? "In Stock"
                         : product.stock > 10
                         ? "Low Stock"
-                        : "Limited Stock"}{" "}
+                        : "Limited"}{" "}
                       ({product.stock})
                     </span>
                   )}
                 </div>
                 {/* Total Price Display */}
-                <div
-                  className={`rounded-lg p-3 border transition-all ${
-                    quantity > 1
-                      ? "bg-orange-50 border-orange-200 shadow-sm"
-                      : "bg-gray-50 border-gray-200"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">
-                      Total for {quantity} pack{quantity > 1 ? "s" : ""}:
-                    </span>
-                    <span
-                      className={`text-xl font-bold transition-all ${
-                        quantity > 1 ? "text-orange-600" : ""
-                      }`}
-                      style={{ color: quantity > 1 ? ORANGE : "#374151" }}
-                    >
-                      ${(product.price * quantity).toFixed(2)}
-                    </span>
-                  </div>
-                  {quantity > 1 && (
-                    <div className="mt-1 text-xs text-orange-600 font-medium">
-                      Great choice! You&lsquo;re getting {quantity} packs.
+                {quantity > 1 && (
+                  <div className="rounded-lg p-2 bg-orange-50 border border-orange-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">
+                        Total for {quantity} pack{quantity > 1 ? "s" : ""}:
+                      </span>
+                      <span className="text-lg font-bold text-orange-600">
+                        ${(product.price * quantity).toFixed(2)}
+                      </span>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
               {/* Description */}
-              <p className="text-gray-700 mb-6 leading-relaxed text-base sm:text-lg">
+              <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
                 {product.description}
               </p>
 
               {/* Flavors */}
-              <div className="mb-6">
-                <h3 className="font-semibold text-black mb-3 text-sm sm:text-base">
+              <div>
+                <h3 className="font-medium text-black mb-2 text-sm">
                   Contains:
                 </h3>
                 <div className="space-y-2">
@@ -352,7 +337,7 @@ const ProductDetailPage = () => {
                         key={index}
                         className="flex items-center gap-2 text-sm"
                       >
-                        <span className="w-2 h-2 rounded-full bg-primary"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
                         <span className="text-gray-700">
                           {flavor.name}{" "}
                           {flavor.quantity > 1 && `×${flavor.quantity}`}
@@ -369,19 +354,20 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Add to Cart Section */}
-            <div>
-              <div className="flex items-center gap-3 sm:gap-4 mb-6">
-                <span className="text-black font-medium text-sm sm:text-base">
+            <div className="space-y-4">
+              <div className="flex flex-row items-center gap-4">
+                <span className="text-black font-medium text-sm">
                   Quantity
                 </span>
-                <div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                <div className="flex items-center border border-gray-300 rounded-lg bg-white overflow-hidden">
                   <button
                     type="button"
-                    className="px-3 sm:px-4 py-2 text-lg sm:text-xl hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-[#FF5D39] cursor-pointer"
-                    style={{ color: ORANGE }}
+                    className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   >
-                    −
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
                   </button>
                   <input
                     type="number"
@@ -399,27 +385,28 @@ const ProductDetailPage = () => {
                         )
                       )
                     }
-                    className="w-14 sm:w-16 text-center text-black bg-white focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-base sm:text-lg font-semibold"
+                    className="w-12 h-8 text-center font-medium text-sm text-gray-900 bg-transparent outline-none border-0 border-l border-r border-gray-300"
                   />
                   <button
                     type="button"
-                    className="px-3 sm:px-4 py-2 text-lg sm:text-xl hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-[#FF5D39] cursor-pointer"
-                    style={{ color: ORANGE }}
+                    className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                     onClick={() =>
                       setQuantity((q) => Math.min(product.stock || 99, q + 1))
                     }
                   >
-                    +
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
                   </button>
                 </div>
                 {product.stock !== undefined && (
-                  <span className="text-xs sm:text-sm text-gray-500">
+                  <span className="text-xs text-gray-500 ml-2">
                     Max: {product.stock}
                   </span>
                 )}
               </div>
 
-              <div className="flex gap-3 mb-4">
+              <div className="flex gap-2">
                 <button
                   type="button"
                   disabled={
@@ -427,7 +414,7 @@ const ProductDetailPage = () => {
                     (product.stock !== undefined && product.stock <= 0)
                   }
                   onClick={handleAddToCart}
-                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-white font-bold text-base sm:text-lg shadow-lg hover:opacity-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                  className="flex-1 px-4 py-3 rounded-lg text-white font-bold text-sm shadow-lg hover:opacity-90 transition-all disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
                   style={{ background: ORANGE }}
                 >
                   {addingToCart
@@ -439,14 +426,14 @@ const ProductDetailPage = () => {
                 <button
                   type="button"
                   onClick={handleWishlistToggle}
-                  className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#FF5D39] cursor-pointer ${
+                  className={`px-3 py-3 rounded-lg border transition-all focus:outline-none focus:ring-2 focus:ring-[#FF5D39] cursor-pointer ${
                     isInWishlist(product.id)
                       ? "border-red-500 text-red-500 hover:bg-red-50"
                       : "border-gray-300 text-gray-600 hover:border-[#FF5D39] hover:text-[#FF5D39]"
                   }`}
                 >
                   <svg
-                    className="w-5 h-5 sm:w-6 sm:h-6"
+                    className="w-5 h-5"
                     fill={isInWishlist(product.id) ? "currentColor" : "none"}
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -462,18 +449,14 @@ const ProductDetailPage = () => {
               </div>
 
               {/* Features */}
-              <div className="mt-6 grid grid-cols-1 gap-3 text-sm text-gray-600">
-                <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-3">
+              <div className="grid grid-cols-1 gap-2 text-xs text-gray-600">
+                <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
                   <span className="text-green-600">✓</span>
                   Free shipping on orders over $50
                 </div>
-                <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
                   <span className="text-green-600">✓</span>
                   30-day money-back guarantee
-                </div>
-                <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-3">
-                  <span className="text-green-600">✓</span>
-                  Secure checkout
                 </div>
               </div>
             </div>
