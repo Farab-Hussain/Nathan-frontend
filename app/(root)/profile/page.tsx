@@ -49,15 +49,6 @@ const ProfileContent = () => {
       setTimeout(() => {
         fetchOrders({ page: 1, limit: 10 });
         setOrdersPage(1);
-        
-        // Trigger a global product data refresh by updating localStorage
-        // This will cause other pages to refetch product data with updated stock levels
-        localStorage.setItem('productDataRefresh', Date.now().toString());
-        
-        // Dispatch a custom event to notify other components
-        window.dispatchEvent(new CustomEvent('productDataRefresh', {
-          detail: { timestamp: Date.now() }
-        }));
       }, 2000); // Increased delay to ensure webhook processes
 
       // Clean up URL parameters after handling
@@ -530,13 +521,11 @@ const ProfileContent = () => {
                                     order.shippingStatus === 'delivered' ? 'bg-green-100 text-green-700' :
                                     order.shippingStatus === 'shipped' ? 'bg-blue-100 text-blue-700' :
                                     order.shippingStatus === 'label_created' ? 'bg-yellow-100 text-yellow-700' :
-                                    order.shippingStatus === 'shipment_failed' ? 'bg-red-100 text-red-700' :
                                     'bg-gray-100 text-gray-700'
                                   }`}>
                                     {order.shippingStatus === 'delivered' ? 'Delivered' :
                                      order.shippingStatus === 'shipped' ? 'Shipped' :
                                      order.shippingStatus === 'label_created' ? 'Label Created' :
-                                     order.shippingStatus === 'shipment_failed' ? 'Shipment Failed' :
                                      order.shippingStatus}
                                   </span>
                                 )}

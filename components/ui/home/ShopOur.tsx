@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import AnimatedText from "@/components/custom/AnimatedText";
@@ -41,85 +41,71 @@ const ShopOur = () => {
   const [buyNowLoading, setBuyNowLoading] = useState(false);
 
   // Fetch products from backend API
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
-        method: 'GET',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Handle the correct API response format: {products: [], pagination: {}}
-      if (data && Array.isArray(data.products)) {
-        const options = data.products.map((product: Product) => ({
-          id: product.id,
-          title: product.name,
-          kind: product.category as "Traditional" | "Sour" | "Sweet",
-          active: product.isActive !== false // Default to true if not specified
-        }));
-        setProductOptions(options);
-      } else if (Array.isArray(data)) {
-        // Fallback: if response is directly an array
-        const options = data.map((product: Product) => ({
-          id: product.id,
-          title: product.name,
-          kind: product.category as "Traditional" | "Sour" | "Sweet",
-          active: product.isActive !== false
-        }));
-        setProductOptions(options);
-      } else {
-        console.error('Unexpected API response format:', data);
-        throw new Error('Invalid API response format');
-      }
-    } catch (err) {
-      console.error('Failed to fetch products:', err);
-      if (err instanceof Error) {
-        if (err.name === 'AbortError') {
-          setError('Request timed out. Please try again.');
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Handle the correct API response format: {products: [], pagination: {}}
+        if (data && Array.isArray(data.products)) {
+          const options = data.products.map((product: Product) => ({
+            id: product.id,
+            title: product.name,
+            kind: product.category as "Traditional" | "Sour" | "Sweet",
+            active: product.isActive !== false // Default to true if not specified
+          }));
+          setProductOptions(options);
+        } else if (Array.isArray(data)) {
+          // Fallback: if response is directly an array
+          const options = data.map((product: Product) => ({
+            id: product.id,
+            title: product.name,
+            kind: product.category as "Traditional" | "Sour" | "Sweet",
+            active: product.isActive !== false
+          }));
+          setProductOptions(options);
+        } else {
+          console.error('Unexpected API response format:', data);
+          throw new Error('Invalid API response format');
+        }
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+        if (err instanceof Error) {
+          if (err.name === 'AbortError') {
+            setError('Request timed out. Please try again.');
+          } else {
+            setError('Failed to load products. Please try again later.');
+          }
         } else {
           setError('Failed to load products. Please try again later.');
         }
-      } else {
-        setError('Failed to load products. Please try again later.');
+        // Keep empty array to show error state
+        setProductOptions([]);
+      } finally {
+        setLoading(false);
       }
-      // Keep empty array to show error state
-      setProductOptions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    };
 
-  useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
-
-  // Listen for product data refresh events (triggered after successful orders)
-  useEffect(() => {
-    const handleProductDataRefresh = () => {
-      console.log('🔄 Product data refresh triggered - refetching home products');
-      fetchProducts();
-    };
-
-    window.addEventListener('productDataRefresh', handleProductDataRefresh);
-    
-    return () => {
-      window.removeEventListener('productDataRefresh', handleProductDataRefresh);
-    };
   }, []);
 
   const handlePrevious = () => {

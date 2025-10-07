@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import CustomButton from "@/components/custom/CustomButton";
@@ -105,8 +105,10 @@ const ShopPage = () => {
   // Authentication will be required only for adding items to cart
 
   // Fetch products from backend API (accessible to everyone)
-  const fetchProducts = useCallback(async () => {
+  useEffect(() => {
     // Fetch products regardless of authentication status
+
+    const fetchProducts = async () => {
       try {
         setLoading(true);
         const controller = new AbortController();
@@ -181,24 +183,9 @@ const ShopPage = () => {
       } finally {
         setLoading(false);
       }
-    }, []);
+    };
 
-  useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
-
-  // Listen for product data refresh events (triggered after successful orders)
-  useEffect(() => {
-    const handleProductDataRefresh = () => {
-      console.log('🔄 Product data refresh triggered - refetching products');
-      fetchProducts();
-    };
-
-    window.addEventListener('productDataRefresh', handleProductDataRefresh);
-    
-    return () => {
-      window.removeEventListener('productDataRefresh', handleProductDataRefresh);
-    };
   }, []); // No dependencies - fetch once on component mount
 
   const viewPackage = (id: string) => router.push(`/products/${id}`);
