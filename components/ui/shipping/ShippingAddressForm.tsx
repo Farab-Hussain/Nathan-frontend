@@ -72,6 +72,18 @@ const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
     if (!formData.state.trim()) newErrors.state = 'State is required';
     if (!formData.zip.trim()) newErrors.zip = 'ZIP code is required';
 
+    // Prevent test/fake addresses
+    const testWords = ['test', 'fake', 'demo', 'sample', 'example', 'dummy'];
+    const isTestAddress = testWords.some(word => 
+      formData.name.toLowerCase().includes(word) ||
+      formData.street1.toLowerCase().includes(word) ||
+      formData.city.toLowerCase().includes(word)
+    );
+
+    if (isTestAddress) {
+      newErrors.city = 'Please enter a real address for shipping. Test addresses like "test" are not allowed.';
+    }
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (formData.email && !emailRegex.test(formData.email)) {
