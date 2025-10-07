@@ -151,6 +151,8 @@ const ProfileContent = () => {
         return "bg-yellow-100 text-yellow-700";
       case "pending":
         return "bg-gray-100 text-gray-700";
+      case "shipping_failed":
+        return "bg-red-100 text-red-700";
       default:
         return "bg-gray-100 text-gray-700";
     }
@@ -410,6 +412,7 @@ const ProfileContent = () => {
                                order.status === "shipped" ? "Shipped" :
                                order.status === "confirmed" ? "Confirmed" :
                                order.status === "pending" ? "Processing" :
+                               order.status === "shipping_failed" ? "Shipping Failed" :
                                order.status || "Processing"}
                             </span>
                             <p className="text-lg font-bold text-[#FF5D39]">
@@ -521,11 +524,13 @@ const ProfileContent = () => {
                                     order.shippingStatus === 'delivered' ? 'bg-green-100 text-green-700' :
                                     order.shippingStatus === 'shipped' ? 'bg-blue-100 text-blue-700' :
                                     order.shippingStatus === 'label_created' ? 'bg-yellow-100 text-yellow-700' :
+                                    order.shippingStatus === 'failed' ? 'bg-red-100 text-red-700' :
                                     'bg-gray-100 text-gray-700'
                                   }`}>
                                     {order.shippingStatus === 'delivered' ? 'Delivered' :
                                      order.shippingStatus === 'shipped' ? 'Shipped' :
                                      order.shippingStatus === 'label_created' ? 'Label Created' :
+                                     order.shippingStatus === 'failed' ? 'Failed' :
                                      order.shippingStatus}
                                   </span>
                                 )}
@@ -570,6 +575,21 @@ const ProfileContent = () => {
                                 {order.shippingCost && order.shippingCost > 0 && (
                                   <span>Cost: ${order.shippingCost.toFixed(2)}</span>
                                 )}
+                              </div>
+                            )}
+                            
+                            {/* Shipping Error Display */}
+                            {order.shippingError && (
+                              <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+                                <div className="flex items-start">
+                                  <svg className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                  </svg>
+                                  <div className="text-sm">
+                                    <p className="font-medium text-red-800">Shipping Issue</p>
+                                    <p className="text-red-700 mt-1">{order.shippingError}</p>
+                                  </div>
+                                </div>
                               </div>
                             )}
                           </div>

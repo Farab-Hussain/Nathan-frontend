@@ -19,7 +19,7 @@ export type Order = {
     quantity: number;
   }>;
   total: number;
-  status?: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+  status?: "pending" | "confirmed" | "shipped" | "delivered" | "cancelled" | "shipping_failed";
   paymentStatus?:
     | "pending"
     | "paid"
@@ -51,6 +51,7 @@ export type Order = {
   shippingCarrier?: string;
   shippingService?: string;
   shippingCost?: number;
+  shippingError?: string;
 };
 
 type Pagination = {

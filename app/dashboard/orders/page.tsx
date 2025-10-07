@@ -29,6 +29,7 @@ type Order = {
   shippingCarrier?: string | null;
   shippingService?: string | null;
   shippingCost?: number | null;
+  shippingError?: string | null;
 };
 
 type Pagination = { pages: number; total: number };
@@ -122,6 +123,18 @@ const AdminOrdersPage = () => {
       if (Array.isArray(data.orders)) {
         setAdminOrders(data.orders);
         setAdminPagination(data.pagination || null);
+        
+        // Check for shipping failures and show toast
+        const failedOrders = data.orders.filter((order: Order) => 
+          order.status === 'shipping_failed' || order.shippingStatus === 'failed'
+        );
+        
+        if (failedOrders.length > 0) {
+          const { showWarningToast } = await import('../../../utils/errorHandler');
+          showWarningToast(
+            `${failedOrders.length} order(s) have shipping issues. Please check the orders page for details.`
+          );
+        }
       } else {
         throw new Error("Invalid response format");
       }
@@ -279,6 +292,8 @@ const AdminOrdersPage = () => {
         return "bg-green-100 text-green-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
+      case "shipping_failed":
+        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -404,6 +419,7 @@ const AdminOrdersPage = () => {
               <option value="shipped">Shipped</option>
               <option value="delivered">Delivered</option>
               <option value="cancelled">Cancelled</option>
+              <option value="shipping_failed">Shipping Failed</option>
             </select>
           </div>
 
@@ -783,9 +799,13 @@ const AdminOrdersPage = () => {
                             order.shippingStatus === 'delivered' ? 'bg-green-100 text-green-800' :
                             order.shippingStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
                             order.shippingStatus === 'in_transit' ? 'bg-yellow-100 text-yellow-800' :
+                            order.shippingStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                            order.shippingStatus === 'label_created' ? 'bg-purple-100 text-purple-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
-                            {order.shippingStatus}
+                            {order.shippingStatus === 'failed' ? 'Failed' : 
+                             order.shippingStatus === 'label_created' ? 'Label Created' :
+                             order.shippingStatus}
                           </span>
                         ) : (
                           <span className="text-gray-400 text-xs">No shipment</span>
@@ -793,6 +813,11 @@ const AdminOrdersPage = () => {
                         {order.shippingCost && (
                           <div className="text-xs text-gray-500 mt-1">
                             ${order.shippingCost.toFixed(2)}
+                          </div>
+                        )}
+                        {order.shippingError && (
+                          <div className="text-xs text-red-600 mt-1 bg-red-50 px-2 py-1 rounded">
+                            Error: {order.shippingError}
                           </div>
                         )}
                       </div>
