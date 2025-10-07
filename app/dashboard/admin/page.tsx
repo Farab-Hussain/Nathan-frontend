@@ -1014,7 +1014,8 @@ const AdminPageContent = () => {
 
   const updateProductByRow = async (
     row: Product,
-    overrides: Partial<Product>
+    overrides: Partial<Product>,
+    imageFile?: File | null
   ) => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
     setSaving(true);
@@ -1026,43 +1027,83 @@ const AdminPageContent = () => {
         setSaving(false);
         return;
       }
-      const payload = {
-        name: overrides.name ?? row.name,
-        price: Number(overrides.price ?? row.price ?? 0),
-        stock: Number(overrides.stock ?? row.stock ?? 0),
-        category: overrides.category ?? row.category,
-        description: overrides.description ?? row.description,
-        imageUrl: overrides.imageUrl ?? row.imageUrl,
-        imageBase64:
-          (overrides as { imageBase64?: string }).imageBase64 || undefined,
-        isActive: overrides.isActive ?? row.isActive ?? true,
-        sku: overrides.sku ?? row.sku,
-        flavors: normalizeFlavorsForSave(overrides.flavors ?? row.flavors),
-      };
-
-      // Optimistic update
-      const prev = products;
-      setProducts((cur) =>
-        cur.map((p) => (p.id === id ? { ...p, ...payload } : p))
-      );
-
+      // Check if there's a file to upload
+      const hasFile = imageFile;
+      
       let dataResp: Product;
-      try {
-        // Primary route
-        const { data } = await axios.put<Product>(
-          `${API_URL}/products/admin/${id}`,
-          payload,
-          {
-            withCredentials: true,
-            headers: { "Content-Type": "application/json" },
-          }
+      
+      if (hasFile) {
+        // Use FormData for file upload
+        const formData = new FormData();
+        formData.append("name", overrides.name ?? row.name ?? "");
+        formData.append("price", String(Number(overrides.price ?? row.price ?? 0)));
+        formData.append("stock", String(Number(overrides.stock ?? row.stock ?? 0)));
+        formData.append("category", overrides.category ?? row.category ?? "");
+        formData.append("description", overrides.description ?? row.description ?? "");
+        formData.append("isActive", String(overrides.isActive ?? row.isActive ?? true));
+        formData.append("sku", overrides.sku ?? row.sku ?? "");
+        formData.append("flavors", JSON.stringify(normalizeFlavorsForSave(overrides.flavors ?? row.flavors)));
+        formData.append("productImage", hasFile);
+
+        // Optimistic update
+        const prev = products;
+        setProducts((cur) =>
+          cur.map((p) => (p.id === id ? { ...p, ...overrides } : p))
         );
-        dataResp = data;
-      } catch (e) {
-        if (axios.isAxiosError(e) && e.response?.status === 404) {
-          // Fallback legacy mount
+
+        try {
+          // Primary route with FormData
           const { data } = await axios.put<Product>(
-            `${API_URL}/products/admin/products/${id}`,
+            `${API_URL}/products/admin/${id}`,
+            formData,
+            {
+              withCredentials: true,
+              // Don't set Content-Type manually - let axios handle it for FormData
+            }
+          );
+          dataResp = data;
+        } catch (e) {
+          if (axios.isAxiosError(e) && e.response?.status === 404) {
+            // Fallback legacy mount
+            const { data } = await axios.put<Product>(
+              `${API_URL}/products/admin/products/${id}`,
+              formData,
+              {
+                withCredentials: true,
+                // Don't set Content-Type manually - let axios handle it for FormData
+              }
+            );
+            dataResp = data;
+          } else {
+            throw e;
+          }
+        }
+      } else {
+        // Use JSON payload for non-file updates
+        const payload = {
+          name: overrides.name ?? row.name,
+          price: Number(overrides.price ?? row.price ?? 0),
+          stock: Number(overrides.stock ?? row.stock ?? 0),
+          category: overrides.category ?? row.category,
+          description: overrides.description ?? row.description,
+          imageUrl: overrides.imageUrl ?? row.imageUrl,
+          imageBase64:
+            (overrides as { imageBase64?: string }).imageBase64 || undefined,
+          isActive: overrides.isActive ?? row.isActive ?? true,
+          sku: overrides.sku ?? row.sku,
+          flavors: normalizeFlavorsForSave(overrides.flavors ?? row.flavors),
+        };
+
+        // Optimistic update
+        const prev = products;
+        setProducts((cur) =>
+          cur.map((p) => (p.id === id ? { ...p, ...payload } : p))
+        );
+
+        try {
+          // Primary route
+          const { data } = await axios.put<Product>(
+            `${API_URL}/products/admin/${id}`,
             payload,
             {
               withCredentials: true,
@@ -1070,10 +1111,21 @@ const AdminPageContent = () => {
             }
           );
           dataResp = data;
-        } else {
-          // Revert optimistic update
-          setProducts(prev);
-          throw e;
+        } catch (e) {
+          if (axios.isAxiosError(e) && e.response?.status === 404) {
+            // Fallback legacy mount
+            const { data } = await axios.put<Product>(
+              `${API_URL}/products/admin/products/${id}`,
+              payload,
+              {
+                withCredentials: true,
+                headers: { "Content-Type": "application/json" },
+              }
+            );
+            dataResp = data;
+          } else {
+            throw e;
+          }
         }
       }
       const updated = dataResp as Product;
@@ -1611,7 +1663,7 @@ const AdminPageContent = () => {
                         ? form.imageUrl
                         : undefined,
                   };
-                  updateProductByRow(row, overrides);
+                  updateProductByRow(row, overrides, imageFile);
                 }}
                 className="px-4 py-2 rounded bg-[#F1A900] text-black cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
