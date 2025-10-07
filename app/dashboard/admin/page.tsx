@@ -34,11 +34,6 @@ type Flavor = {
   };
 };
 
-type Category = {
-  name: string;
-  productCount: number;
-};
-
 type InventoryAlert = {
   id: string;
   flavorId: string;
@@ -98,7 +93,7 @@ const AdminPageContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "products" | "flavors" | "categories" | "inventory" | "config"
+    "products" | "flavors" | "inventory" | "config"
   >("products");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -300,10 +295,7 @@ const AdminPageContent = () => {
     return `${apiUrl}${normalizedSrc}${cacheBuster}`;
   };
 
-  // Categories state
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [newCategory, setNewCategory] = useState("");
-  const [creatingCategory, setCreatingCategory] = useState(false);
+  // Categories state - removed unused variables
 
   // Inventory state
   const [inventoryAlerts, setInventoryAlerts] = useState<InventoryAlert[]>([]);
@@ -344,7 +336,6 @@ const AdminPageContent = () => {
   const [availableFlavors, setAvailableFlavors] = useState<
     Array<{ id: string; name: string }>
   >([]);
-  const [showNewFlavorForm, setShowNewFlavorForm] = useState<boolean>(false);
   const [newFlavor, setNewFlavor] = useState({
     name: "",
     aliases: "",
@@ -354,9 +345,6 @@ const AdminPageContent = () => {
     null
   );
   const [creatingFlavor, setCreatingFlavor] = useState<boolean>(false);
-  const [deletingFlavor, setDeletingFlavor] = useState<{
-    [key: string]: boolean;
-  }>({});
 
   useEffect(() => {
     if (!userLoading && (!user || user.role !== "admin")) {
@@ -369,7 +357,7 @@ const AdminPageContent = () => {
     const tabParam = searchParams.get("tab");
     if (
       tabParam &&
-      ["products", "flavors", "categories", "inventory", "config"].includes(
+      ["products", "flavors", "inventory", "config"].includes(
         tabParam
       )
     ) {
@@ -377,7 +365,6 @@ const AdminPageContent = () => {
         tabParam as
           | "products"
           | "flavors"
-          | "categories"
           | "inventory"
           | "config"
       );
@@ -545,49 +532,6 @@ const AdminPageContent = () => {
     }
   };
 
-  const fetchCategories = async () => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    try {
-      // Add cache-busting parameter to ensure fresh data
-      const { data } = await axios.get(
-        `${API_URL}/admin/categories?_t=${Date.now()}`,
-        {
-          withCredentials: true,
-        }
-      );
-
-      // Handle both array format and object with categories property
-      if (Array.isArray(data)) {
-        setCategories(data);
-      } else if (data && Array.isArray(data.categories)) {
-        setCategories(data.categories);
-      } else {
-        console.warn("Categories API returned unexpected data format:", data);
-        setCategories([]);
-      }
-    } catch (err) {
-      console.error("Failed to fetch categories:", err);
-
-      // Check if it's an authentication error
-      if (axios.isAxiosError(err) && err.response?.status === 401) {
-        const errorData = err.response.data;
-        if (errorData?.code === "NO_TOKEN") {
-          // Show the authentication error message to user
-          setError(
-            errorData.message ||
-              "Authentication required. Please log in to access this resource."
-          );
-          // Redirect to login page after a short delay to show the message
-          setTimeout(() => {
-            window.location.href = "/auth/login";
-          }, 2000);
-          return;
-        }
-      }
-
-      setCategories([]);
-    }
-  };
 
   const fetchInventoryAlerts = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -865,6 +809,35 @@ const AdminPageContent = () => {
       setError(errorMessage);
     } finally {
       setCreatingFlavor(false);
+    }
+  };
+
+  const deleteFlavor = async (flavorId: string) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this flavor? This action cannot be undone and will affect any products using this flavor."
+      )
+    ) {
+      return;
+    }
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    setError(null);
+    try {
+      await axios.delete(`${API_URL}/admin/flavors/${flavorId}`, {
+        withCredentials: true,
+      });
+
+      // Remove the flavor from the flavors list
+      setFlavors((prev) => prev.filter((f) => f.id !== flavorId));
+      
+      // Remove the flavor from available flavors
+      setAvailableFlavors((prev) => prev.filter((f) => f.id !== flavorId));
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to delete flavor";
+      setError(errorMessage);
     }
   };
 
@@ -1147,103 +1120,7 @@ const AdminPageContent = () => {
     }
   };
 
-  const deleteFlavor = async (flavorId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this flavor? This action cannot be undone and will affect any products using this flavor."
-      )
-    ) {
-      return;
-    }
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    setDeletingFlavor((prev) => ({ ...prev, [flavorId]: true }));
-    setError(null);
-    try {
-      // Try new admin endpoint first
-      await axios.delete(`${API_URL}/admin/flavors/${flavorId}`, {
-        withCredentials: true,
-      });
-
-      // Remove the flavor from the available flavors list
-      setAvailableFlavors((prev) => prev.filter((f) => f.id !== flavorId));
-
-      // Remove the flavor from any products that are using it
-      setForm((prev) => ({
-        ...prev,
-        flavors: prev.flavors?.filter((f) => f.id !== flavorId) || [],
-      }));
-    } catch (err: unknown) {
-      // Show the actual error message from the API
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message ||
-        (err as { message?: string })?.message ||
-        "Unable to delete flavor. Please try again.";
-      setError(message);
-      // Fallback to old endpoint
-      try {
-        await axios.delete(`${API_URL}/3pack/admin/flavors/${flavorId}`, {
-          withCredentials: true,
-        });
-
-        setAvailableFlavors((prev) => prev.filter((f) => f.id !== flavorId));
-        setForm((prev) => ({
-          ...prev,
-          flavors: prev.flavors?.filter((f) => f.id !== flavorId) || [],
-        }));
-      } catch (e2: unknown) {
-        const message =
-          (e2 as { response?: { data?: { message?: string } } })?.response?.data
-            ?.message ||
-          (e2 as { message?: string })?.message ||
-          "Unable to delete flavor. Please try again.";
-        setError(message);
-      }
-    } finally {
-      setDeletingFlavor((prev) => ({ ...prev, [flavorId]: false }));
-    }
-  };
-
-  const createCategory = async () => {
-    if (!newCategory.trim()) {
-      setError("Category name is required");
-      return;
-    }
-
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    setCreatingCategory(true);
-    setError(null);
-    try {
-      const { data } = await axios.post(
-        `${API_URL}/admin/categories`,
-        { name: newCategory.trim() },
-        {
-          withCredentials: true,
-        }
-      );
-
-      console.log("Category creation response:", data);
-
-      // Add the new category to the state immediately
-      const newCategoryData = {
-        name: data.category || newCategory.trim(),
-        productCount: 0,
-        generatedCode: data.generatedCode || "",
-      };
-      console.log("Adding new category to state:", newCategoryData);
-      setCategories((prev) => {
-        const updated = [...prev, newCategoryData];
-        console.log("Updated categories state:", updated);
-        return updated;
-      });
-      setNewCategory("");
-    } catch {
-      setError("Failed to create category");
-    } finally {
-      setCreatingCategory(false);
-    }
-  };
 
   const updateInventory = async (flavorId: string, newStock: number) => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -1288,9 +1165,6 @@ const AdminPageContent = () => {
           break;
         case "flavors":
           await fetchFlavors();
-          break;
-        case "categories":
-          await fetchCategories();
           break;
         case "inventory":
           await fetchInventoryAlerts();
@@ -1369,7 +1243,6 @@ const AdminPageContent = () => {
         {[
           { id: "products", label: "Products" },
           { id: "flavors", label: "Flavors" },
-          { id: "categories", label: "Categories" },
           { id: "inventory", label: "Inventory" },
           { id: "config", label: "System Config" },
         ].map((tab) => (
@@ -1380,7 +1253,6 @@ const AdminPageContent = () => {
                 tab.id as
                   | "products"
                   | "flavors"
-                  | "categories"
                   | "inventory"
                   | "config"
               )
@@ -1542,7 +1414,8 @@ const AdminPageContent = () => {
                             value={flavor.id}
                             onChange={(e) => {
                               if (e.target.value === "add_new") {
-                                setShowNewFlavorForm(true);
+                                // Redirect to Flavors tab instead of opening form
+                                setActiveTab("flavors");
                               } else {
                                 updateFlavor(index, "id", e.target.value);
                               }
@@ -1557,8 +1430,9 @@ const AdminPageContent = () => {
                             <option
                               value="add_new"
                               className="text-[#FF5D39] font-semibold"
+                              disabled
                             >
-                              + Add New Flavor
+                              + Add New Flavor (Use Flavors Tab)
                             </option>
                           </select>
                         </div>
@@ -1599,98 +1473,17 @@ const AdminPageContent = () => {
                     )}
                   </div>
 
-                  {/* Add New Flavor Form */}
-                  {showNewFlavorForm && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <h4 className="text-sm font-semibold text-black mb-3">
-                        Add New Flavor
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
-                            Flavor Name *
-                          </label>
-                          <input
-                            type="text"
-                            value={newFlavor.name}
-                            onChange={(e) =>
-                              setNewFlavor({
-                                ...newFlavor,
-                                name: e.target.value,
-                              })
-                            }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm text-black bg-white"
-                            placeholder="e.g., Tropical Punch"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
-                            Aliases (comma-separated)
-                          </label>
-                          <input
-                            type="text"
-                            value={newFlavor.aliases}
-                            onChange={(e) =>
-                              setNewFlavor({
-                                ...newFlavor,
-                                aliases: e.target.value,
-                              })
-                            }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm text-black bg-white"
-                            placeholder="e.g., tropical, punch, fruit"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex gap-2 mt-3">
-                        <button
-                          onClick={createFlavor}
-                          disabled={creatingFlavor || !newFlavor.name.trim()}
-                          className="bg-[#FF5D39] text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm cursor-pointer"
-                        >
-                          {creatingFlavor ? "Creating..." : "Create Flavor"}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowNewFlavorForm(false);
-                            setNewFlavor({ name: "", aliases: "" });
-                          }}
-                          className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                  {/* Note: Flavor management moved to dedicated Flavors tab */}
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-sm text-blue-800">
+                        <strong>Note:</strong> To add new flavors or manage existing ones, please use the <strong>Flavors</strong> tab above.
+                      </p>
                     </div>
-                  )}
-
-                  {/* Manage Existing Flavors */}
-                  {availableFlavors.length > 0 && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <h4 className="text-sm font-semibold text-black mb-3">
-                        Manage Existing Flavors
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {availableFlavors.map((flavor) => (
-                          <div
-                            key={flavor.id}
-                            className="flex items-center justify-between p-2 bg-white rounded border border-gray-200"
-                          >
-                            <span className="text-sm text-black truncate flex-1 mr-2">
-                              {flavor.name}
-                            </span>
-                            <button
-                              onClick={() => deleteFlavor(flavor.id)}
-                              disabled={deletingFlavor[flavor.id]}
-                              className="px-2 py-1 text-xs bg-red-100 text-red-700 hover:bg-red-200 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                            >
-                              {deletingFlavor[flavor.id]
-                                ? "Deleting..."
-                                : "Delete"}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
               </div>
               <div className="lg:col-span-1">
@@ -2481,72 +2274,6 @@ const AdminPageContent = () => {
         </div>
       )}
 
-      {/* Categories Tab */}
-      {activeTab === "categories" && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg border p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-black">
-                Manage Categories
-              </h2>
-              <button
-                onClick={fetchCategories}
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
-              >
-                Refresh Categories
-              </button>
-            </div>
-
-            {/* Create New Category */}
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <h3 className="text-lg font-semibold text-black mb-3">
-                Add New Category
-              </h3>
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white"
-                  placeholder="e.g., Premium, Organic, Sugar-Free"
-                />
-                <button
-                  onClick={createCategory}
-                  disabled={creatingCategory || !newCategory.trim()}
-                  className="bg-[#FF5D39] text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {creatingCategory ? "Creating..." : "Create Category"}
-                </button>
-              </div>
-            </div>
-
-            {/* Categories List */}
-            <div className="space-y-3">
-              {Array.isArray(categories) &&
-                categories.map((category, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg"
-                  >
-                    <div>
-                      <h4 className="font-semibold text-black">
-                        {category.name}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {category.productCount} products
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              {(!Array.isArray(categories) || categories.length === 0) && (
-                <div className="text-center py-8">
-                  <p className="text-gray-600">No categories found.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Inventory Tab */}
       {activeTab === "inventory" && (

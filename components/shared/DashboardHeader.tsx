@@ -2,7 +2,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import axios from "axios";
+import { useUser } from "@/hooks/useUser";
 
 const NavLink = ({
   href,
@@ -49,9 +51,29 @@ const NavLink = ({
 
 export default function DashboardHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const router = useRouter();
+  const { user, clearUser } = useUser();
 
   // Close menu on navigation
   const handleNavClick = () => setMenuOpen(false);
+
+  const handleLogout = async () => {
+    setLogoutLoading(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
+      clearUser(); // Clear user state immediately
+      router.push("/"); // Redirect to home page
+    } catch (err) {
+      console.error("Logout failed:", err);
+      // Even if logout fails, clear local state
+      clearUser();
+      router.push("/");
+    } finally {
+      setLogoutLoading(false);
+    }
+  };
 
   return (
     <div className="w-full bg-primary sticky top-0 z-30 shadow-sm">
@@ -110,9 +132,15 @@ export default function DashboardHeader() {
 
         {/* Desktop User Actions */}
         <div className="hidden sm:flex items-center gap-2 sm:gap-3">
-          <span className="text-xs sm:text-sm text-white/90">Admin User</span>
-          <button className="px-2.5 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm bg-white/15 text-white hover:bg-white/20 transition shadow-[0_0_0_1px_rgba(255,255,255,0.25)]">
-            Logout
+          <span className="text-xs sm:text-sm text-white/90">
+            {user?.name || user?.email || "Admin User"}
+          </span>
+          <button 
+            onClick={handleLogout}
+            disabled={logoutLoading}
+            className="px-2.5 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm bg-white/15 text-white hover:bg-white/20 transition shadow-[0_0_0_1px_rgba(255,255,255,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {logoutLoading ? "Logging out..." : "Logout"}
           </button>
         </div>
       </div>
@@ -139,12 +167,15 @@ export default function DashboardHeader() {
             />
           </nav>
           <div className="flex flex-col gap-2 mt-3">
-            <span className="text-xs sm:text-sm text-white/90">Admin User</span>
+            <span className="text-xs sm:text-sm text-white/90">
+              {user?.name || user?.email || "Admin User"}
+            </span>
             <button
-              onClick={() => setMenuOpen(false)}
-              className="w-full px-3 py-1.5 rounded-md text-xs sm:text-sm bg-white/15 text-white hover:bg-white/20 transition shadow-[0_0_0_1px_rgba(255,255,255,0.25)]"
+              onClick={handleLogout}
+              disabled={logoutLoading}
+              className="w-full px-3 py-1.5 rounded-md text-xs sm:text-sm bg-white/15 text-white hover:bg-white/20 transition shadow-[0_0_0_1px_rgba(255,255,255,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Logout
+              {logoutLoading ? "Logging out..." : "Logout"}
             </button>
           </div>
         </div>
