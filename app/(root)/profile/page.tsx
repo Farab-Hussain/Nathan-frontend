@@ -162,14 +162,14 @@ const ProfileContent = () => {
   return (
     <VerificationGuard>
       <div className="min-h-screen bg-white">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="max-w-6xl mx-auto px-4 py-8">
           {/* Payment Success Notification */}
           {paymentSuccess && (
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg sm:rounded-xl shadow-lg border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+            <div className="mb-6 p-4 rounded-xl shadow-lg border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <svg
-                    className="w-5 h-5 sm:w-6 sm:h-6 text-green-600"
+                    className="w-6 h-6 text-green-600"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -182,11 +182,11 @@ const ProfileContent = () => {
                     />
                   </svg>
                 </div>
-                <div className="ml-2 sm:ml-3">
-                  <h3 className="text-base sm:text-lg font-bold text-green-800">
+                <div className="ml-3">
+                  <h3 className="text-lg font-bold text-green-800">
                     Payment Successful! 🎉
                   </h3>
-                  <p className="text-xs sm:text-sm text-green-700">
+                  <p className="text-sm text-green-700">
                     Your order has been confirmed and your cart has been
                     cleared.
                     {orderId ? (
@@ -209,17 +209,17 @@ const ProfileContent = () => {
 
 
           {/* Header */}
-          <div className="text-center mb-8 sm:mb-12">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 bg-gradient-to-r from-[#FF5D39] to-[#F1A900] bg-clip-text text-transparent">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-[#FF5D39] to-[#F1A900] bg-clip-text text-transparent">
               My Account
             </h1>
-            <p className="text-sm sm:text-base lg:text-lg" style={{ color: BLACK, opacity: 0.7 }}>
+            <p className="text-lg" style={{ color: BLACK, opacity: 0.7 }}>
               Manage your profile and view your order history
             </p>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex border-b border-gray-200 mb-6 sm:mb-8">
+          <div className="flex border-b border-gray-200 mb-8">
             {[
               { id: "profile", label: "Profile", icon: "👤" },
               { id: "orders", label: "Order History", icon: "📦" },
@@ -227,15 +227,14 @@ const ProfileContent = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as "profile" | "orders")}
-                className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-6 py-2 sm:py-3 font-medium transition-colors text-sm sm:text-base ${
+                className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors ${
                   activeTab === tab.id
                     ? "border-b-2 border-[#FF5D39] text-[#FF5D39]"
                     : "text-gray-500 hover:text-[#FF5D39]"
                 }`}
               >
-                <span className="text-sm sm:text-base">{tab.icon}</span>
-                <span className="hidden sm:inline">{tab.label}</span>
-                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+                <span>{tab.icon}</span>
+                {tab.label}
               </button>
             ))}
           </div>
@@ -341,13 +340,13 @@ const ProfileContent = () => {
 
           {/* Orders Tab */}
           {activeTab === "orders" && (
-            <div className="bg-white rounded-lg sm:rounded-2xl shadow-lg border p-4 sm:p-6 lg:p-8">
-              <div className="flex flex-col gap-3 mb-4 sm:mb-6">
+            <div className="bg-white rounded-2xl shadow-lg border p-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
                 <div>
-                  <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-black">
+                  <h2 className="text-2xl font-bold text-black">
                     Order History
                   </h2>
-                  <span className="block text-xs sm:text-sm text-gray-600 mt-1">
+                  <span className="block sm:inline text-sm text-gray-600 mt-1 sm:mt-0 sm:ml-2">
                     {orders.length} order{orders.length !== 1 ? "s" : ""} found
                   </span>
                 </div>
@@ -357,7 +356,7 @@ const ProfileContent = () => {
                     setOrdersPage(1);
                   }}
                   disabled={ordersLoading}
-                  className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 text-sm sm:text-base"
+                  className="w-full sm:w-auto px-4 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
                 >
                   {ordersLoading ? "Refreshing..." : "Refresh"}
                 </button>
@@ -385,55 +384,57 @@ const ProfileContent = () => {
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-4">
                   {orders.map((order) => (
                     <div
                       key={order.id}
-                      className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow"
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-0 mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-black text-sm sm:text-base">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold text-black">
                             Order #{order.id?.slice(0, 8) || "Unknown"}
                           </h3>
-                          <p className="text-xs sm:text-sm text-gray-600">
+                          <p className="text-sm text-gray-600">
                             {order.createdAt
                               ? new Date(order.createdAt).toLocaleDateString()
                               : "Date not available"}
                           </p>
                         </div>
-                        <div className="flex justify-between sm:flex-col sm:text-right sm:items-end gap-2">
-                          <span
-                            className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor(
-                              order.status || "pending"
-                            )}`}
-                          >
-                            {order.status === "delivered" ? "Delivered" :
-                             order.status === "shipped" ? "Shipped" :
-                             order.status === "confirmed" ? "Confirmed" :
-                             order.status === "pending" ? "Processing" :
-                             order.status === "shipping_failed" ? "Shipping Failed" :
-                             order.status || "Processing"}
-                          </span>
-                          <p className="text-base sm:text-lg font-bold text-[#FF5D39]">
-                            ${order.total.toFixed(2)}
-                          </p>
+                        <div className="text-right">
+                          <div className="flex flex-col gap-2 items-end">
+                            <span
+                              className={`text-xs font-semibold px-3 py-1 rounded-full ${getStatusColor(
+                                order.status || "pending"
+                              )}`}
+                            >
+                              {order.status === "delivered" ? "Delivered" :
+                               order.status === "shipped" ? "Shipped" :
+                               order.status === "confirmed" ? "Confirmed" :
+                               order.status === "pending" ? "Processing" :
+                               order.status === "shipping_failed" ? "Shipping Failed" :
+                               order.status || "Processing"}
+                            </span>
+                            <p className="text-lg font-bold text-[#FF5D39]">
+                              ${order.total.toFixed(2)}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <div className="space-y-2 sm:space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                          <p className="text-xs sm:text-sm text-gray-600">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-gray-600">
                             {order.orderItems?.length || 0} item
                             {order.orderItems?.length !== 1 ? "s" : ""}
                           </p>
                           
                           {/* Simple Status Display */}
-                          <div className="flex items-center text-xs sm:text-sm">
+                          <div className="flex items-center text-sm">
                             {(order.paymentStatus === "completed" ||
                               order.paymentStatus === "paid") ? (
                               <div className="flex items-center text-green-600">
                                 <svg
-                                  className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
+                                  className="w-4 h-4 mr-1"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -450,7 +451,7 @@ const ProfileContent = () => {
                             ) : order.paymentStatus === "failed" ? (
                               <div className="flex items-center text-red-600">
                                 <svg
-                                  className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
+                                  className="w-4 h-4 mr-1"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -477,7 +478,7 @@ const ProfileContent = () => {
                                 ) : (
                                   <div className="flex items-center text-gray-600">
                                     <svg
-                                      className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
+                                      className="w-4 h-4 mr-1"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -499,11 +500,11 @@ const ProfileContent = () => {
 
                         {/* Shipping Information */}
                         {(order.shipmentId || order.trackingNumber || order.shippingStatus) && (
-                          <div className="border-t border-gray-100 pt-2 sm:pt-3">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs sm:text-sm">
+                          <div className="border-t border-gray-100 pt-3">
+                            <div className="flex items-center justify-between text-sm">
                               <div className="flex items-center text-gray-600">
                                 <svg
-                                  className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"
+                                  className="w-4 h-4 mr-2"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -517,7 +518,7 @@ const ProfileContent = () => {
                                 </svg>
                                 <span className="font-medium">Shipping:</span>
                               </div>
-                              <div className="text-left sm:text-right">
+                              <div className="text-right">
                                 {order.shippingStatus && (
                                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                     order.shippingStatus === 'delivered' ? 'bg-green-100 text-green-700' :
@@ -537,10 +538,10 @@ const ProfileContent = () => {
                             </div>
                             
                             {order.trackingNumber && (
-                              <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs sm:text-sm">
+                              <div className="mt-2 flex items-center justify-between text-sm">
                                 <span className="text-gray-600">Tracking:</span>
                                 <div className="flex items-center gap-2">
-                                  <span className="font-mono text-blue-600 text-xs sm:text-sm">
+                                  <span className="font-mono text-blue-600">
                                     {order.trackingNumber}
                                   </span>
                                   {order.trackingUrl && (
@@ -579,12 +580,12 @@ const ProfileContent = () => {
                             
                             {/* Shipping Error Display */}
                             {order.shippingError && (
-                              <div className="mt-2 sm:mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+                              <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
                                 <div className="flex items-start">
-                                  <svg className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-4 h-4 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                                   </svg>
-                                  <div className="text-xs sm:text-sm">
+                                  <div className="text-sm">
                                     <p className="font-medium text-red-800">Shipping Issue</p>
                                     <p className="text-red-700 mt-1">{order.shippingError}</p>
                                   </div>
@@ -601,11 +602,11 @@ const ProfileContent = () => {
 
               {/* Pagination Controls */}
               {orders.length > 0 && (
-                <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
+                <div className="mt-6 flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
                     Showing {orders.length} orders
                   </div>
-                  <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
                         const newPage = Math.max(1, ordersPage - 1);
@@ -613,11 +614,11 @@ const ProfileContent = () => {
                         fetchOrders({ page: newPage, limit: 10 });
                       }}
                       disabled={ordersPage <= 1 || ordersLoading}
-                      className="px-2 sm:px-3 py-1 sm:py-2 rounded border border-gray-300 text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-xs sm:text-sm"
+                      className="px-3 py-2 rounded border border-gray-300 text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                     >
                       Previous
                     </button>
-                    <span className="text-black px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm">
+                    <span className="text-black px-3 py-2">
                       Page {ordersPage}
                     </span>
                     <button
@@ -627,7 +628,7 @@ const ProfileContent = () => {
                         fetchOrders({ page: newPage, limit: 10 });
                       }}
                       disabled={ordersLoading}
-                      className="px-2 sm:px-3 py-1 sm:py-2 rounded border border-gray-300 text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-xs sm:text-sm"
+                      className="px-3 py-2 rounded border border-gray-300 text-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                     >
                       Next
                     </button>

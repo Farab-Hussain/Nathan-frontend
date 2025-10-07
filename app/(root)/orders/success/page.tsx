@@ -59,39 +59,39 @@ function OrderSuccessContent() {
       <div className="fixed inset-0 bg-black/30" />
       {/* Modal */}
       <div
-        className="relative z-10 w-full max-w-sm sm:max-w-md rounded-2xl shadow-2xl border p-4 sm:p-6 text-center"
+        className="relative z-10 w-full max-w-md rounded-2xl shadow-2xl border p-6 text-center"
         style={{ background: WHITE, borderColor: "#F3F3F3" }}
       >
-        <div className="mx-auto w-12 h-12 sm:w-14 sm:h-14 rounded-full mb-3 sm:mb-4 flex items-center justify-center" style={{ background: `${ORANGE}10` }}>
-          <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 24 24" fill="none" stroke={ORANGE}>
+        <div className="mx-auto w-14 h-14 rounded-full mb-4 flex items-center justify-center" style={{ background: `${ORANGE}10` }}>
+          <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke={ORANGE}>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M12 22a10 10 0 110-20 10 10 0 010 20z" />
           </svg>
         </div>
-        <h1 className="text-xl sm:text-2xl font-extrabold mb-1" style={{ color: BLACK }}>Payment Successful</h1>
-        <p className="text-xs sm:text-sm mb-3 sm:mb-4" style={{ color: BLACK, opacity: 0.8 }}>
+        <h1 className="text-2xl font-extrabold mb-1" style={{ color: BLACK }}>Payment Successful</h1>
+        <p className="text-sm mb-4" style={{ color: BLACK, opacity: 0.8 }}>
           Thank you! Your order has been placed successfully.
         </p>
-        <div className="text-xs mb-4 sm:mb-6" style={{ color: BLACK, opacity: 0.7 }}>
+        <div className="text-xs mb-6" style={{ color: BLACK, opacity: 0.7 }}>
           {orderId && <div>Order: <span className="font-semibold" style={{ color: BLACK }}>{orderId.slice(0, 8)}</span></div>}
           {sessionId && <div>Session: <span className="font-mono" style={{ color: BLACK }}>{sessionId.slice(0, 10)}...</span></div>}
         </div>
-        <div className="flex flex-col gap-2 sm:gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={() => router.replace("/profile")}
-            className="w-full font-semibold py-2.5 sm:py-3 rounded-xl text-sm sm:text-base"
+            className="w-full sm:flex-1 font-semibold py-3 rounded-xl"
             style={{ background: `linear-gradient(90deg, ${ORANGE}, ${YELLOW})`, color: WHITE, border: "none" }}
           >
             View Orders
           </button>
           <button
             onClick={() => router.replace("/shop")}
-            className="w-full font-semibold py-2.5 sm:py-3 rounded-xl text-sm sm:text-base"
+            className="w-full sm:flex-1 font-semibold py-3 rounded-xl"
             style={{ border: `2px solid ${ORANGE}`, color: ORANGE, background: WHITE }}
           >
             Continue Shopping
           </button>
         </div>
-        <p className="text-xs mt-3 sm:mt-4" style={{ color: BLACK, opacity: 0.6 }}>
+        <p className="text-xs mt-4" style={{ color: BLACK, opacity: 0.6 }}>
           Redirecting to your orders in {seconds}s…
         </p>
       </div>

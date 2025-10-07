@@ -326,33 +326,32 @@ const AdminOrdersPage = () => {
   return (
     <div className="w-full h-full layout">
       {/* Header with Stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6 mb-4 sm:mb-6">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-black">Order Management</h1>
-          <p className="text-xs sm:text-sm text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-black">Order Management</h1>
+          <p className="text-gray-600 mt-1">
             Managing {totalOrders.toLocaleString()} orders • Page {page} of{" "}
             {totalPages}
           </p>
         </div>
 
         {/* Auto-refresh controls */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 text-xs sm:text-sm text-black">
+            <label className="flex items-center gap-2 text-sm text-black">
               <input
                 type="checkbox"
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
                 className="rounded border-gray-300"
               />
-              <span className="hidden sm:inline">Auto-refresh</span>
-              <span className="sm:hidden">Auto</span>
+              Auto-refresh
             </label>
             {autoRefresh && (
               <select
                 value={refreshInterval}
                 onChange={(e) => setRefreshInterval(Number(e.target.value))}
-                className="text-xs sm:text-sm border border-gray-300 rounded px-2 py-1 text-black"
+                className="text-sm border border-gray-300 rounded px-2 py-1 text-black"
               >
                 <option value={10000}>10s</option>
                 <option value={30000}>30s</option>
@@ -365,7 +364,7 @@ const AdminOrdersPage = () => {
           <button
             onClick={fetchAdminOrders}
             disabled={loading}
-            className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 text-xs sm:text-sm"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             {loading ? "Refreshing..." : "Refresh"}
           </button>
@@ -373,17 +372,17 @@ const AdminOrdersPage = () => {
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-white rounded-lg border p-3 sm:p-4 mb-4 sm:mb-6">
-        <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">
+      <div className="bg-white rounded-lg border p-4 mb-6">
+        <h3 className="text-lg font-semibold text-black mb-4">
           Filters & Search
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {/* Search */}
-          <div className="sm:col-span-2 lg:col-span-2 xl:col-span-2">
+          <div className="xl:col-span-2">
             <label
               htmlFor="search-input"
-              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
               Search
             </label>
@@ -393,7 +392,7 @@ const AdminOrdersPage = () => {
               placeholder="Order ID, user email, or name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full border border-gray-300 rounded px-2 sm:px-3 py-2 text-xs sm:text-sm text-black bg-white"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
             />
           </div>
 
@@ -401,7 +400,7 @@ const AdminOrdersPage = () => {
           <div>
             <label
               htmlFor="status-select"
-              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
               Status
             </label>
@@ -412,7 +411,7 @@ const AdminOrdersPage = () => {
                 setPage(1);
                 setStatus(e.target.value);
               }}
-              className="w-full border border-gray-300 rounded px-2 sm:px-3 py-2 text-xs sm:text-sm text-black bg-white"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
             >
               <option value="">All statuses</option>
               <option value="pending">Pending</option>
@@ -428,7 +427,7 @@ const AdminOrdersPage = () => {
           <div>
             <label
               htmlFor="payment-select"
-              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
               Payment
             </label>
@@ -439,7 +438,7 @@ const AdminOrdersPage = () => {
                 setPage(1);
                 setPaymentStatus(e.target.value);
               }}
-              className="w-full border border-gray-300 rounded px-2 sm:px-3 py-2 text-xs sm:text-sm text-black bg-white"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
             >
               <option value="">All payments</option>
               <option value="pending">Pending</option>
@@ -452,7 +451,7 @@ const AdminOrdersPage = () => {
           <div>
             <label
               htmlFor="date-select"
-              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
               Date
             </label>
@@ -463,7 +462,7 @@ const AdminOrdersPage = () => {
                 setPage(1);
                 setDateFilter(e.target.value);
               }}
-              className="w-full border border-gray-300 rounded px-2 sm:px-3 py-2 text-xs sm:text-sm text-black bg-white"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
             >
               <option value="">All dates</option>
               <option value="today">Today</option>
@@ -477,7 +476,7 @@ const AdminOrdersPage = () => {
           <div>
             <label
               htmlFor="sort-select"
-              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
               Sort by
             </label>
@@ -490,7 +489,7 @@ const AdminOrdersPage = () => {
                 setSortOrder(order as "asc" | "desc");
                 setPage(1);
               }}
-              className="w-full border border-gray-300 rounded px-2 sm:px-3 py-2 text-xs sm:text-sm text-black bg-white"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
             >
               <option value="createdAt-desc">Newest first</option>
               <option value="createdAt-asc">Oldest first</option>
@@ -502,11 +501,11 @@ const AdminOrdersPage = () => {
         </div>
 
         {/* Value Range Filter */}
-        <div className="mt-3 sm:mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label
               htmlFor="min-value-input"
-              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
               Min Value ($)
             </label>
@@ -521,13 +520,13 @@ const AdminOrdersPage = () => {
                   min: e.target.value,
                 }))
               }
-              className="w-full border border-gray-300 rounded px-2 sm:px-3 py-2 text-xs sm:text-sm text-black bg-white"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
             />
           </div>
           <div>
             <label
               htmlFor="max-value-input"
-              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
               Max Value ($)
             </label>
@@ -542,13 +541,13 @@ const AdminOrdersPage = () => {
                   max: e.target.value,
                 }))
               }
-              className="w-full border border-gray-300 rounded px-2 sm:px-3 py-2 text-xs sm:text-sm text-black bg-white"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
             />
           </div>
           <div>
             <label
               htmlFor="limit-select"
-              className="block text-xs sm:text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
               Items per page
             </label>
@@ -559,7 +558,7 @@ const AdminOrdersPage = () => {
                 setPage(1);
                 setLimit(Number(e.target.value));
               }}
-              className="w-full border border-gray-300 rounded px-2 sm:px-3 py-2 text-xs sm:text-sm text-black bg-white"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-black bg-white"
             >
               <option value={25}>25 per page</option>
               <option value={50}>50 per page</option>
@@ -580,7 +579,7 @@ const AdminOrdersPage = () => {
                 setPage(1);
               }}
               id="clear-filters-button"
-              className="w-full px-3 sm:px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-xs sm:text-sm"
+              className="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
             >
               Clear Filters
             </button>
@@ -590,42 +589,39 @@ const AdminOrdersPage = () => {
 
       {/* Bulk Actions */}
       {selectedOrders.size > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-              <span className="text-blue-800 font-medium text-sm sm:text-base">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-blue-800 font-medium">
                 {selectedOrders.size} orders selected
               </span>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2">
                 <button
                   onClick={() => handleBulkAction("confirm")}
                   disabled={bulkActionLoading}
-                  className="px-2 sm:px-3 py-1 bg-blue-600 text-white text-xs sm:text-sm rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
-                  <span className="hidden sm:inline">Confirm All</span>
-                  <span className="sm:hidden">Confirm</span>
+                  Confirm All
                 </button>
                 <button
                   onClick={() => handleBulkAction("ship")}
                   disabled={bulkActionLoading}
-                  className="px-2 sm:px-3 py-1 bg-indigo-600 text-white text-xs sm:text-sm rounded hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                  className="px-3 py-1 bg-indigo-600 text-white text-sm rounded hover:bg-indigo-700 transition-colors disabled:opacity-50"
                 >
-                  <span className="hidden sm:inline">Ship All</span>
-                  <span className="sm:hidden">Ship</span>
+                  Ship All
                 </button>
                 <button
                   onClick={() => handleBulkAction("cancel")}
                   disabled={bulkActionLoading}
-                  className="px-2 sm:px-3 py-1 bg-red-600 text-white text-xs sm:text-sm rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+                  className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
-                  <span className="hidden sm:inline">Cancel All</span>
-                  <span className="sm:hidden">Cancel</span>
+                  Cancel All
                 </button>
               </div>
             </div>
             <button
               onClick={() => setSelectedOrders(new Set())}
-              className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm self-start sm:self-auto"
+              className="text-blue-600 hover:text-blue-800 text-sm"
             >
               Clear Selection
             </button>
@@ -635,20 +631,20 @@ const AdminOrdersPage = () => {
 
       {/* Error Display */}
       {error && (
-        <div className="mb-3 sm:mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-700 text-xs sm:text-sm">
+        <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-700">
           {error}
         </div>
       )}
 
       {/* Payment Status Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
         <div className="flex items-start">
-          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 mt-0.5 mr-2 sm:mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <h4 className="text-xs sm:text-sm font-semibold text-blue-800 mb-1">Payment Status Management</h4>
-            <p className="text-xs sm:text-sm text-blue-700">
+            <h4 className="text-sm font-semibold text-blue-800 mb-1">Payment Status Management</h4>
+            <p className="text-sm text-blue-700">
               Payment statuses are automatically managed by Stripe webhooks and cannot be changed manually. 
               Only order statuses (pending → confirmed → shipped → delivered) can be updated by admins.
             </p>
@@ -662,7 +658,7 @@ const AdminOrdersPage = () => {
           <table className="min-w-full">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left">
+                <th className="px-4 py-3 text-left">
                   <input
                     type="checkbox"
                     checked={
@@ -673,34 +669,34 @@ const AdminOrdersPage = () => {
                     className="rounded border-gray-300"
                   />
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-black font-semibold text-xs sm:text-sm">
+                <th className="px-4 py-3 text-left text-black font-semibold">
                   Order ID
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-black font-semibold text-xs sm:text-sm">
+                <th className="px-4 py-3 text-left text-black font-semibold">
                   Customer
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-black font-semibold text-xs sm:text-sm">
+                <th className="px-4 py-3 text-left text-black font-semibold">
                   Status
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-black font-semibold text-xs sm:text-sm">
+                <th className="px-4 py-3 text-left text-black font-semibold">
                   Payment
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-black font-semibold text-xs sm:text-sm">
+                <th className="px-4 py-3 text-left text-black font-semibold">
                   Total
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-black font-semibold text-xs sm:text-sm">
+                <th className="px-4 py-3 text-left text-black font-semibold">
                   Date
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-black font-semibold text-xs sm:text-sm">
+                <th className="px-4 py-3 text-left text-black font-semibold">
                   Items
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-black font-semibold text-xs sm:text-sm">
+                <th className="px-4 py-3 text-left text-black font-semibold">
                   Shipping
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-black font-semibold text-xs sm:text-sm">
+                <th className="px-4 py-3 text-left text-black font-semibold">
                   Tracking
                 </th>
-                <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-black font-semibold text-xs sm:text-sm">
+                <th className="px-4 py-3 text-left text-black font-semibold">
                   Payment Status
                 </th>
               </tr>
@@ -708,10 +704,10 @@ const AdminOrdersPage = () => {
             <tbody className="divide-y divide-gray-100">
               {loading && (
                 <tr>
-                  <td colSpan={11} className="px-2 sm:px-4 py-6 sm:py-8 text-center">
+                  <td colSpan={11} className="px-4 py-8 text-center">
                     <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-[#FF5D39] mr-2 sm:mr-3"></div>
-                      <span className="text-xs sm:text-sm">Loading orders...</span>
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#FF5D39] mr-3"></div>
+                      Loading orders...
                     </div>
                   </td>
                 </tr>
@@ -721,7 +717,7 @@ const AdminOrdersPage = () => {
                 <tr>
                   <td
                     colSpan={11}
-                    className="px-2 sm:px-4 py-6 sm:py-8 text-center text-gray-500 text-xs sm:text-sm"
+                    className="px-4 py-8 text-center text-gray-500"
                   >
                     No orders found matching your criteria
                   </td>
@@ -738,7 +734,7 @@ const AdminOrdersPage = () => {
                       selectedOrders.has(order.id) ? "bg-blue-50" : ""
                     }`}
                   >
-                    <td className="px-2 sm:px-4 py-2 sm:py-3">
+                    <td className="px-4 py-3">
                       <input
                         type="checkbox"
                         checked={selectedOrders.has(order.id)}
@@ -746,13 +742,13 @@ const AdminOrdersPage = () => {
                         className="rounded border-gray-300"
                       />
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3">
-                      <div className="font-mono text-xs sm:text-sm text-black">
-                        {order.id.slice(0, 8)}...
+                    <td className="px-4 py-3">
+                      <div className="font-mono text-sm text-black">
+                        {order.id.slice(0, 12)}...
                       </div>
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3">
-                      <div className="text-xs sm:text-sm">
+                    <td className="px-4 py-3">
+                      <div className="text-sm">
                         <div className="font-medium text-black">
                           {order.user?.name || "N/A"}
                         </div>
@@ -761,45 +757,45 @@ const AdminOrdersPage = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3">
+                    <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
                           order.status
                         )}`}
                       >
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3">
+                    <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(
                           order.paymentStatus
                         )}`}
                       >
                         {order.paymentStatus}
                       </span>
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3">
-                      <div className="font-semibold text-black text-xs sm:text-sm">
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-black">
                         ${order.total.toFixed(2)}
                       </div>
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3">
-                      <div className="text-xs sm:text-sm text-gray-600">
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-gray-600">
                         {order.createdAt
                           ? new Date(order.createdAt).toLocaleDateString()
                           : "N/A"}
                       </div>
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3">
-                      <div className="text-xs sm:text-sm text-gray-600">
+                    <td className="px-4 py-3">
+                      <div className="text-sm text-gray-600">
                         {order.orderItems?.length || 0} items
                       </div>
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3">
-                      <div className="text-xs sm:text-sm">
+                    <td className="px-4 py-3">
+                      <div className="text-sm">
                         {order.shippingStatus ? (
-                          <span className={`inline-flex items-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium ${
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             order.shippingStatus === 'delivered' ? 'bg-green-100 text-green-800' :
                             order.shippingStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
                             order.shippingStatus === 'in_transit' ? 'bg-yellow-100 text-yellow-800' :
@@ -820,18 +816,18 @@ const AdminOrdersPage = () => {
                           </div>
                         )}
                         {order.shippingError && (
-                          <div className="text-xs text-red-600 mt-1 bg-red-50 px-1 sm:px-2 py-1 rounded">
+                          <div className="text-xs text-red-600 mt-1 bg-red-50 px-2 py-1 rounded">
                             Error: {order.shippingError}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3">
-                      <div className="text-xs sm:text-sm">
+                    <td className="px-4 py-3">
+                      <div className="text-sm">
                         {order.trackingNumber ? (
                           <div>
                             <div className="font-mono text-xs text-blue-600">
-                              {order.trackingNumber.slice(0, 8)}...
+                              {order.trackingNumber.slice(0, 12)}...
                             </div>
                             {order.trackingUrl && (
                               <a 
@@ -854,16 +850,16 @@ const AdminOrdersPage = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-2 sm:px-4 py-2 sm:py-3">
-                      <div className="text-xs sm:text-sm">
+                    <td className="px-4 py-3">
+                      <div className="text-sm">
                         <span
-                          className={`inline-flex items-center px-1 sm:px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(
                             order.paymentStatus
                           )} bg-gray-100`}
                           title="Payment status is managed by Stripe - cannot be changed manually"
                         >
                           {order.paymentStatus}
-                          <svg className="w-2 h-2 sm:w-3 sm:h-3 ml-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-3 h-3 ml-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                           </svg>
                         </span>
@@ -878,41 +874,39 @@ const AdminOrdersPage = () => {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mt-4 sm:mt-6">
-          <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
+        <div className="flex items-center justify-between mt-6">
+          <div className="text-sm text-gray-600">
             Showing {(page - 1) * limit + 1} to{" "}
             {Math.min(page * limit, totalOrders)} of{" "}
             {totalOrders.toLocaleString()} orders
           </div>
 
-          <div className="flex items-center justify-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-2">
             <button
-              className="px-2 sm:px-3 py-1 sm:py-2 rounded border border-gray-300 text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-xs sm:text-sm"
+              className="px-3 py-2 rounded border border-gray-300 text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               onClick={() => setPage(1)}
               disabled={page <= 1}
             >
-              <span className="hidden sm:inline">First</span>
-              <span className="sm:hidden">1</span>
+              First
             </button>
             <button
-              className="px-2 sm:px-3 py-1 sm:py-2 rounded border border-gray-300 text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-xs sm:text-sm"
+              className="px-3 py-2 rounded border border-gray-300 text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
             >
-              <span className="hidden sm:inline">Prev</span>
-              <span className="sm:hidden">‹</span>
+              Prev
             </button>
 
             {/* Page numbers */}
-            {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const pageNum =
-                Math.max(1, Math.min(totalPages - 2, page - 1)) + i;
+                Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
               if (pageNum <= totalPages) {
                 return (
                   <button
                     key={pageNum}
                     onClick={() => setPage(pageNum)}
-                    className={`px-2 sm:px-3 py-1 sm:py-2 rounded border cursor-pointer text-xs sm:text-sm ${
+                    className={`px-3 py-2 rounded border cursor-pointer ${
                       pageNum === page
                         ? "bg-blue-600 text-white border-blue-600"
                         : "border-gray-300 text-black hover:bg-gray-50"
@@ -926,20 +920,18 @@ const AdminOrdersPage = () => {
             })}
 
             <button
-              className="px-2 sm:px-3 py-1 sm:py-2 rounded border border-gray-300 text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-xs sm:text-sm"
+              className="px-3 py-2 rounded border border-gray-300 text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
             >
-              <span className="hidden sm:inline">Next</span>
-              <span className="sm:hidden">›</span>
+              Next
             </button>
             <button
-              className="px-2 sm:px-3 py-1 sm:py-2 rounded border border-gray-300 text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 text-xs sm:text-sm"
+              className="px-3 py-2 rounded border border-gray-300 text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               onClick={() => setPage(totalPages)}
               disabled={page >= totalPages}
             >
-              <span className="hidden sm:inline">Last</span>
-              <span className="sm:hidden">{totalPages}</span>
+              Last
             </button>
           </div>
         </div>
