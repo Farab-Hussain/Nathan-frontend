@@ -1521,8 +1521,7 @@ const AdminPageContent = () => {
               </button>
             </div>
           </div>
-          </div>
-          </div>
+        </div>
 
         {/* Existing Products Table */}
         <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6">
