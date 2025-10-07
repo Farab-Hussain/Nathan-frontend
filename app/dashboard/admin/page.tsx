@@ -1449,7 +1449,7 @@ const AdminPageContent = () => {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="Product name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base text-gray-900"
                   />
                 </div>
                 
@@ -1462,7 +1462,7 @@ const AdminPageContent = () => {
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
                       placeholder="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base text-gray-900"
                   />
                 </div>
 
@@ -1470,49 +1470,144 @@ const AdminPageContent = () => {
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Stock
                     </label>
-                          <input
-                            type="number"
+                    <input
+                      type="number"
                     value={form.stock}
                     onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })}
                     placeholder="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
-                  />
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base text-gray-900"
+                    />
                   </div>
 
                         <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     SKU
                           </label>
-                          <input
+                    <input
                             type="text"
                     value={form.sku}
                     onChange={(e) => setForm({ ...form, sku: e.target.value })}
                     placeholder="e.g., 3P-SWE-WAT-BERRY"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base text-gray-900"
                           />
-                        </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    value={form.description || ""}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    placeholder="Product description"
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base resize-none text-gray-900"
+                  />
+                </div>
                 
                 <div className="sm:col-span-2">
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Category
-                          </label>
-                  <select
+                    </label>
+                          <select
                     value={form.category}
                     onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base text-gray-900"
                   >
                     <option value="">Select category</option>
                     {productCategories.map((category) => (
                       <option key={category} value={category}>
                         {category}
-                      </option>
-                    ))}
-                  </select>
-                      </div>
-                    </div>
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                  </div>
+
+
+              {/* Image Upload Section */}
+                        <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                  Product Image
+                          </label>
+                <div className="space-y-3">
+                          <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0] || null;
+                      if (file) {
+                        // Check file size first (50MB limit)
+                        const maxSizeMB = 50;
+                        const fileSizeMB = file.size / (1024 * 1024);
+                        
+                        if (fileSizeMB > maxSizeMB) {
+                          setError(
+                            `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB. Please choose a smaller image or compress it before uploading.`
+                          );
+                          e.target.value = ""; // Clear the input
+                          return;
+                        }
+
+                        try {
+                          // Compress image if it's larger than 2MB
+                          let processedFile = file;
+                          if (file.size > 2 * 1024 * 1024) {
+                            setError("🔄 Compressing your image for better upload performance...");
+                            try {
+                              processedFile = await compressImage(file);
+                              setError(null); // Clear compression message
+                            } catch (compressionError) {
+                              console.error("Compression failed:", compressionError);
+                              setError(
+                                `⚠️ Auto-compression failed! Your image is ${fileSizeMB.toFixed(1)}MB. Please try:\n\n• Choose a smaller image (under 2MB)\n• Use an online image compressor (like TinyPNG or Compressor.io)\n• Try a different image format (JPG/PNG)\n• Reduce image dimensions before uploading\n\n💡 Tip: Most phones take photos that are too large. Try resizing them first!`
+                              );
+                              e.target.value = ""; // Clear the input
+                              return;
+                            }
+                          }
+                          
+                          setImageFile(processedFile);
+                          const blobUrl = URL.createObjectURL(processedFile);
+                        setPreview(blobUrl);
+                        setForm((f) => ({ ...f, imageUrl: "" }));
+                          setError(null); // Clear any previous errors
+                        } catch (generalError) {
+                          console.error("Image processing error:", generalError);
+                          setError(
+                            "❌ Failed to process your image. Please try a different file or check if the image is corrupted."
+                          );
+                          e.target.value = ""; // Clear the input
+                        }
+                      } else {
+                        if (preview?.startsWith("blob:"))
+                          URL.revokeObjectURL(preview);
+                        setPreview(null);
+                        setImageFile(null);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-xs sm:text-sm text-gray-900"
+                  />
+                  
+                  {/* Image Preview */}
+                  {preview && (
+                    <div className="mt-3">
+                      <img
+                        src={preview}
+                        alt="Preview"
+                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                      />
+              </div>
+                  )}
+                  
+                  <p className="text-xs text-gray-500">
+                    📁 Max file size: 50MB • 🔄 Auto-compression for files over 2MB • 📱 Supported: JPG, PNG, GIF
+                  </p>
+            </div>
+              </div>
               
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                            <button
+              <button
                 onClick={createProduct}
                 disabled={saving}
                   className="flex-1 sm:flex-none px-4 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 text-sm sm:text-base"
@@ -1521,7 +1616,7 @@ const AdminPageContent = () => {
               </button>
             </div>
           </div>
-        </div>
+          </div>
 
         {/* Existing Products Table */}
         <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6">
