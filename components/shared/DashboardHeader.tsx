@@ -77,25 +77,26 @@ export default function DashboardHeader() {
 
   return (
     <div className="w-full bg-primary sticky top-0 z-30 shadow-sm">
-      <div className="h-14 sm:h-16 flex items-center justify-between border-b border-white/10 layout">
+      <div className="h-12 sm:h-14 lg:h-16 flex items-center justify-between border-b border-white/10 layout">
         {/* Left: Logo/Title */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <Link
             href="/dashboard/admin"
-            className="text-lg sm:text-xl font-extrabold text-white drop-shadow"
+            className="text-sm sm:text-lg lg:text-xl font-extrabold text-white drop-shadow"
           >
             <Image
               src="/assets/svg/logo.svg"
               alt="logo"
-              width={140}
-              height={48}
+              width={120}
+              height={40}
+              className="sm:w-[140px] sm:h-[48px]"
             />
           </Link>
         </div>
 
         {/* Hamburger for mobile */}
         <button
-          className="sm:hidden flex items-center justify-center p-2 rounded-md text-white hover:bg-white/10 focus:outline-none"
+          className="md:hidden flex items-center justify-center p-2 rounded-md text-white hover:bg-white/10 focus:outline-none"
           aria-label="Open menu"
           onClick={() => setMenuOpen((v) => !v)}
         >
@@ -123,7 +124,7 @@ export default function DashboardHeader() {
         </button>
 
         {/* Desktop Nav */}
-        <nav className="hidden sm:flex items-center gap-1.5 sm:gap-2">
+        <nav className="hidden md:flex items-center gap-1 sm:gap-1.5 lg:gap-2">
           <NavLink href="/shop" label="Shop" />
           <NavLink href="/dashboard" label="Overview" />
           <NavLink href="/dashboard/orders" label="Orders" />
@@ -131,14 +132,14 @@ export default function DashboardHeader() {
         </nav>
 
         {/* Desktop User Actions */}
-        <div className="hidden sm:flex items-center gap-2 sm:gap-3">
-          <span className="text-xs sm:text-sm text-white/90">
+        <div className="hidden md:flex items-center gap-1 sm:gap-2 lg:gap-3">
+          <span className="text-xs lg:text-sm text-white/90">
             {user?.name || user?.email || "Admin User"}
           </span>
           <button 
             onClick={handleLogout}
             disabled={logoutLoading}
-            className="px-2.5 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm bg-white/15 text-white hover:bg-white/20 transition shadow-[0_0_0_1px_rgba(255,255,255,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5 rounded-md text-xs lg:text-sm bg-white/15 text-white hover:bg-white/20 transition shadow-[0_0_0_1px_rgba(255,255,255,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {logoutLoading ? "Logging out..." : "Logout"}
           </button>
@@ -147,7 +148,7 @@ export default function DashboardHeader() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="sm:hidden bg-primary border-t border-white/10 px-3 sm:px-4 pb-4">
+        <div className="md:hidden bg-primary border-t border-white/10 px-3 pb-3">
           <nav className="flex flex-col gap-1 mt-2">
             <NavLink href="/shop" label="Shop" onClick={handleNavClick} />
             <NavLink
@@ -167,13 +168,13 @@ export default function DashboardHeader() {
             />
           </nav>
           <div className="flex flex-col gap-2 mt-3">
-            <span className="text-xs sm:text-sm text-white/90">
+            <span className="text-xs text-white/90">
               {user?.name || user?.email || "Admin User"}
             </span>
             <button
               onClick={handleLogout}
               disabled={logoutLoading}
-              className="w-full px-3 py-1.5 rounded-md text-xs sm:text-sm bg-white/15 text-white hover:bg-white/20 transition shadow-[0_0_0_1px_rgba(255,255,255,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-1.5 rounded-md text-xs bg-white/15 text-white hover:bg-white/20 transition shadow-[0_0_0_1px_rgba(255,255,255,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {logoutLoading ? "Logging out..." : "Logout"}
             </button>

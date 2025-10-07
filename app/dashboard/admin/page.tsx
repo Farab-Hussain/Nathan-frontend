@@ -10,6 +10,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { useUser } from "@/hooks/useUser";
 import Image from "next/image";
+import { toast } from "react-toastify";
 
 type Flavor = {
   id: string;
@@ -97,6 +98,7 @@ const AdminPageContent = () => {
   >("products");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Enhanced image compression function with progressive quality reduction
   const compressImage = (
@@ -199,6 +201,7 @@ const AdminPageContent = () => {
   const bulkUpdateFlavorImages = async () => {
     if (!bulkImageUrl.trim()) {
       setError("Please enter an image URL");
+      toast.error("Please enter an image URL");
       return;
     }
 
@@ -238,6 +241,7 @@ const AdminPageContent = () => {
         (err as { response?: { data?: { message?: string } } })?.response?.data
           ?.message || "Failed to update flavor images";
       setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setBulkUpdating(false);
     }
@@ -265,7 +269,7 @@ const AdminPageContent = () => {
       // Always use the full API URL for uploaded images
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       if (!apiUrl) {
-        console.error("NEXT_PUBLIC_API_URL is not defined");
+        toast.error("NEXT_PUBLIC_API_URL is not defined");
         return `${path}${cacheBuster}`;
       }
       return `${apiUrl}${path}${cacheBuster}`;
@@ -286,7 +290,7 @@ const AdminPageContent = () => {
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     if (!apiUrl) {
-      console.error("NEXT_PUBLIC_API_URL is not defined");
+      toast.error("NEXT_PUBLIC_API_URL is not defined");
       return `${src}${cacheBuster}`;
     }
 
@@ -339,6 +343,7 @@ const AdminPageContent = () => {
   const [newFlavor, setNewFlavor] = useState({
     name: "",
     aliases: "",
+    active: true,
   });
   const [flavorImageFile, setFlavorImageFile] = useState<File | null>(null);
   const [flavorImagePreview, setFlavorImagePreview] = useState<string | null>(
@@ -357,17 +362,9 @@ const AdminPageContent = () => {
     const tabParam = searchParams.get("tab");
     if (
       tabParam &&
-      ["products", "flavors", "inventory", "config"].includes(
-        tabParam
-      )
+      ["products", "flavors", "inventory", "config"].includes(tabParam)
     ) {
-      setActiveTab(
-        tabParam as
-          | "products"
-          | "flavors"
-          | "inventory"
-          | "config"
-      );
+      setActiveTab(tabParam as "products" | "flavors" | "inventory" | "config");
     }
   }, [searchParams]);
 
@@ -478,11 +475,11 @@ const AdminPageContent = () => {
       } else if (data && Array.isArray(data.flavors)) {
         setFlavors(data.flavors);
       } else {
-        console.warn("Flavors API returned unexpected data format:", data);
+        toast.error("Flavors API returned unexpected data format");
         setFlavors([]);
       }
     } catch (err) {
-      console.error("Failed to fetch flavors:", err);
+      toast.error("Failed to fetch flavors");
 
       // Check if it's an authentication error
       if (axios.isAxiosError(err) && err.response?.status === 401) {
@@ -490,6 +487,10 @@ const AdminPageContent = () => {
         if (errorData?.code === "NO_TOKEN") {
           // Show the authentication error message to user
           setError(
+            errorData.message ||
+              "Authentication required. Please log in to access this resource."
+          );
+          toast.error(
             errorData.message ||
               "Authentication required. Please log in to access this resource."
           );
@@ -517,7 +518,7 @@ const AdminPageContent = () => {
           setFlavors([]);
         }
       } catch (fallbackErr) {
-        console.error("Fallback flavors fetch also failed:", fallbackErr);
+        toast.error("Fallback flavors fetch also failed");
         setFlavors([]);
         // Show user-friendly error message
         if (
@@ -525,13 +526,14 @@ const AdminPageContent = () => {
           fallbackErr.response?.data?.message
         ) {
           setError(fallbackErr.response.data.message);
+          toast.error(fallbackErr.response.data.message);
         } else {
           setError("Failed to load flavors. Please try again.");
+          toast.error("Failed to load flavors. Please try again.");
         }
       }
     }
   };
-
 
   const fetchInventoryAlerts = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -548,14 +550,11 @@ const AdminPageContent = () => {
       } else if (data && Array.isArray(data.alerts)) {
         setInventoryAlerts(data.alerts);
       } else {
-        console.warn(
-          "Inventory alerts API returned unexpected data format:",
-          data
-        );
+        toast.error("Inventory alerts API returned unexpected data format");
         setInventoryAlerts([]);
       }
     } catch (err) {
-      console.error("Failed to fetch inventory alerts:", err);
+      toast.error("Failed to fetch inventory alerts");
 
       // Check if it's an authentication error
       if (axios.isAxiosError(err) && err.response?.status === 401) {
@@ -563,6 +562,10 @@ const AdminPageContent = () => {
         if (errorData?.code === "NO_TOKEN") {
           // Show the authentication error message to user
           setError(
+            errorData.message ||
+              "Authentication required. Please log in to access this resource."
+          );
+          toast.error(
             errorData.message ||
               "Authentication required. Please log in to access this resource."
           );
@@ -591,7 +594,7 @@ const AdminPageContent = () => {
       const configData = data.config || data;
       setSystemConfig(configData);
     } catch (err) {
-      console.error("Failed to fetch system config:", err);
+      toast.error("Failed to fetch system config");
 
       // Check if it's an authentication error
       if (axios.isAxiosError(err) && err.response?.status === 401) {
@@ -599,6 +602,10 @@ const AdminPageContent = () => {
         if (errorData?.code === "NO_TOKEN") {
           // Show the authentication error message to user
           setError(
+            errorData.message ||
+              "Authentication required. Please log in to access this resource."
+          );
+          toast.error(
             errorData.message ||
               "Authentication required. Please log in to access this resource."
           );
@@ -671,6 +678,7 @@ const AdminPageContent = () => {
             (e2 as { message?: string })?.message ||
             "Unable to load products. Please try again.";
           setError(message);
+          toast.error(message);
           setProducts([]);
           setPagination(null);
         }
@@ -679,6 +687,7 @@ const AdminPageContent = () => {
           (e as { message?: string })?.message ||
           "Unable to load products. Please try again.";
         setError(message);
+        toast.error(message);
         setProducts([]);
         setPagination(null);
       }
@@ -752,7 +761,7 @@ const AdminPageContent = () => {
           }));
         setAvailableFlavors(activeFlavors);
       } catch (e2) {
-        console.error("Failed to load flavors:", e2);
+        toast.error("Failed to load flavors");
         setAvailableFlavors([]);
       }
     }
@@ -761,6 +770,7 @@ const AdminPageContent = () => {
   const createFlavor = async () => {
     if (!newFlavor.name.trim()) {
       setError("Flavor name is required");
+      toast.error("Flavor name is required");
       return;
     }
 
@@ -796,7 +806,7 @@ const AdminPageContent = () => {
         ...prev,
         { id: flavorData.id, name: flavorData.name },
       ]);
-      setNewFlavor({ name: "", aliases: "" });
+      setNewFlavor({ name: "", aliases: "", active: true });
       setFlavorImageFile(null);
       setFlavorImagePreview(null);
 
@@ -807,6 +817,7 @@ const AdminPageContent = () => {
         (err as { response?: { data?: { message?: string } } })?.response?.data
           ?.message || "Failed to create flavor";
       setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setCreatingFlavor(false);
     }
@@ -830,7 +841,7 @@ const AdminPageContent = () => {
 
       // Remove the flavor from the flavors list
       setFlavors((prev) => prev.filter((f) => f.id !== flavorId));
-      
+
       // Remove the flavor from available flavors
       setAvailableFlavors((prev) => prev.filter((f) => f.id !== flavorId));
     } catch (err: unknown) {
@@ -838,6 +849,7 @@ const AdminPageContent = () => {
         (err as { response?: { data?: { message?: string } } })?.response?.data
           ?.message || "Failed to delete flavor";
       setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -848,6 +860,9 @@ const AdminPageContent = () => {
       // Validate file size before upload
       if (editFlavorImageFile && !validateFileSize(editFlavorImageFile, 50)) {
         setError(
+          "Image file is too large. Please compress the image and try again."
+        );
+        toast.error(
           "Image file is too large. Please compress the image and try again."
         );
         return;
@@ -909,10 +924,14 @@ const AdminPageContent = () => {
         setError(
           "File too large. Please compress your image and try again. Maximum size is 50MB."
         );
+        toast.error(
+          "File too large. Please compress your image and try again. Maximum size is 50MB."
+        );
       } else {
         const errorMessage =
           errorResponse?.response?.data?.message || "Failed to update flavor";
         setError(errorMessage);
+        toast.error(errorMessage);
       }
     }
   };
@@ -1007,6 +1026,7 @@ const AdminPageContent = () => {
         (e as { message?: string })?.message ||
         "Unable to create product. Please try again.";
       setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -1024,25 +1044,43 @@ const AdminPageContent = () => {
       const id = row.id;
       if (!id) {
         setError("Missing product id");
+        toast.error("Missing product id");
         setSaving(false);
         return;
       }
       // Check if there's a file to upload
       const hasFile = imageFile;
-      
+
       let dataResp: Product;
-      
+
       if (hasFile) {
         // Use FormData for file upload
         const formData = new FormData();
         formData.append("name", overrides.name ?? row.name ?? "");
-        formData.append("price", String(Number(overrides.price ?? row.price ?? 0)));
-        formData.append("stock", String(Number(overrides.stock ?? row.stock ?? 0)));
+        formData.append(
+          "price",
+          String(Number(overrides.price ?? row.price ?? 0))
+        );
+        formData.append(
+          "stock",
+          String(Number(overrides.stock ?? row.stock ?? 0))
+        );
         formData.append("category", overrides.category ?? row.category ?? "");
-        formData.append("description", overrides.description ?? row.description ?? "");
-        formData.append("isActive", String(overrides.isActive ?? row.isActive ?? true));
+        formData.append(
+          "description",
+          overrides.description ?? row.description ?? ""
+        );
+        formData.append(
+          "isActive",
+          String(overrides.isActive ?? row.isActive ?? true)
+        );
         formData.append("sku", overrides.sku ?? row.sku ?? "");
-        formData.append("flavors", JSON.stringify(normalizeFlavorsForSave(overrides.flavors ?? row.flavors)));
+        formData.append(
+          "flavors",
+          JSON.stringify(
+            normalizeFlavorsForSave(overrides.flavors ?? row.flavors)
+          )
+        );
         formData.append("productImage", hasFile);
 
         // Optimistic update
@@ -1134,6 +1172,7 @@ const AdminPageContent = () => {
       const message =
         (e as { message?: string })?.message || "Failed to update product";
       setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -1165,12 +1204,11 @@ const AdminPageContent = () => {
         (e as { message?: string })?.message ||
         "Unable to delete product. Please try again.";
       setError(message);
+      toast.error(message);
     } finally {
       setDeleting((prev) => ({ ...prev, [id]: false }));
     }
   };
-
-
 
   const updateInventory = async (flavorId: string, newStock: number) => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -1189,6 +1227,7 @@ const AdminPageContent = () => {
       await fetchFlavors(); // Refresh flavors with updated inventory data
     } catch {
       setError("Failed to update inventory");
+      toast.error("Failed to update inventory");
     } finally {
       setUpdatingInventory((prev) => ({ ...prev, [flavorId]: false }));
     }
@@ -1225,6 +1264,7 @@ const AdminPageContent = () => {
       }
     } catch {
       setError("Failed to load data");
+      toast.error("Failed to load data");
     } finally {
       setLoading(false);
     }
@@ -1280,28 +1320,44 @@ const AdminPageContent = () => {
 
   return (
     <div className="w-full h-full layout">
-      <h1 className="text-3xl font-extrabold text-black mb-6">AddProduct</h1>
+      <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-black mb-4 sm:mb-6">Add Product</h1>
 
       {error && (
-        <div className="mb-4 p-4 rounded-lg border-l-4 border-red-400 bg-red-50 shadow-sm">
+        <div className="mb-3 sm:mb-4 p-3 sm:p-4 rounded-lg border-l-4 border-red-400 bg-red-50 shadow-sm">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              <svg
+                className="h-4 w-4 sm:h-5 sm:w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
-            <div className="ml-3 flex-1">
-              <p className="text-sm text-red-800 font-medium whitespace-pre-line">
+            <div className="ml-2 sm:ml-3 flex-1">
+              <p className="text-xs sm:text-sm text-red-800 font-medium whitespace-pre-line">
                 {error}
               </p>
             </div>
-            <div className="ml-3 flex-shrink-0">
+            <div className="ml-2 sm:ml-3 flex-shrink-0">
               <button
                 onClick={() => setError(null)}
                 className="inline-flex text-red-400 hover:text-red-600 focus:outline-none focus:text-red-600 transition ease-in-out duration-150"
               >
-                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                <svg
+                  className="h-4 w-4 sm:h-5 sm:w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </button>
             </div>
@@ -1309,294 +1365,187 @@ const AdminPageContent = () => {
         </div>
       )}
 
-      {/* Tab Navigation */}
-      <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
-        {[
-          { id: "products", label: "Products" },
-          { id: "flavors", label: "Flavors" },
-          { id: "inventory", label: "Inventory" },
-          { id: "config", label: "System Config" },
-        ].map((tab) => (
+      {/* Hamburger Menu */}
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Admin Panel</h2>
           <button
-            key={tab.id}
-            onClick={() =>
-              setActiveTab(
-                tab.id as
-                  | "products"
-                  | "flavors"
-                  | "inventory"
-                  | "config"
-              )
-            }
-            className={`px-4 py-2 rounded-md font-medium transition-colors ${
-              activeTab === tab.id
-                ? "bg-white text-[#FF5D39] shadow-sm"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-[#FF5D39] hover:bg-gray-100 focus:outline-none transition-colors"
+            aria-label="Toggle menu"
           >
-            {tab.label}
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              {menuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
           </button>
-        ))}
+        </div>
+
+        {/* Dropdown Menu */}
+        {menuOpen && (
+          <div className="mt-3 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+            {[
+              { id: "products", label: "Products", icon: "📦" },
+              { id: "flavors", label: "Flavors", icon: "🍭" },
+              { id: "inventory", label: "Inventory", icon: "📊" },
+              { id: "config", label: "Config", icon: "⚙️" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id as "products" | "flavors" | "inventory" | "config");
+                  setMenuOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? "bg-[#FF5D39] text-white"
+                    : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <span className="text-lg">{tab.icon}</span>
+                <span className="text-sm sm:text-base">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Products Tab */}
       {activeTab === "products" && (
-        <div className="space-y-6">
-          {/* Create / Edit form */}
-          <div className="rounded-2xl border shadow bg-white p-6 mb-8">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl font-bold text-black">
-                {openId ? "Edit product" : "Add new product"}
-              </h2>
-              {openId && (
-                <button
-                  onClick={() => {
-                    setOpenId(null);
-                    resetForm();
-                  }}
-                  className="text-sm text-black underline cursor-pointer"
-                >
-                  Cancel edit
-                </button>
-              )}
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <div className="text-sm font-semibold text-black/80 mb-2">
-                    Product details
-                  </div>
-                  <div className="h-px w-full bg-gray-200 mb-3" />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black/70">Name</label>
+        <div className="space-y-4 sm:space-y-6">
+          {/* Add new product form */}
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold text-black mb-3 sm:mb-4">Add new product</h2>
+            <div className="space-y-3 sm:space-y-4">
+              <div>
+                <h3 className="text-sm sm:text-base font-medium text-black mb-2">Product details</h3>
+                <hr className="border-gray-200 mb-3 sm:mb-4" />
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Name
+                  </label>
                   <input
-                    className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="Product name"
-                    value={form.name || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, name: e.target.value }))
-                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
                   />
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-sm text-black/70">Price</label>
+                
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Price
+                  </label>
                   <input
-                    className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                    placeholder="0.00"
                     type="number"
-                    value={form.price || 0}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, price: Number(e.target.value) }))
-                    }
+                    value={form.price}
+                    onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+                    placeholder="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
                   />
                 </div>
-                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-sm text-black/70">Stock</label>
-                    <input
-                      className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                      placeholder="0"
-                      type="number"
-                      value={form.stock || 0}
-                      onChange={(e) =>
-                        setForm((f) => ({
-                          ...f,
-                          stock: Number(e.target.value),
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-sm text-black/70">SKU</label>
-                    <input
-                      className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                      placeholder="e.g., 3P-SWE-WAT-BERRY-CHE"
-                      value={form.sku || ""}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, sku: e.target.value }))
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1 md:col-span-2">
-                  <label className="text-sm text-black/70">Category</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <select
-                      className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                      value={form.category || ""}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, category: e.target.value }))
-                      }
-                    >
-                      <option value="">Select category</option>
-                      {productCategories.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                      placeholder="Or type new category"
-                      value={form.category || ""}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, category: e.target.value }))
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1 md:col-span-2">
-                  <label className="text-sm text-black/70">Description</label>
-                  <textarea
-                    className="border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                    rows={3}
-                    placeholder="Optional description"
-                    value={form.description || ""}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, description: e.target.value }))
-                    }
+                
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Stock
+                  </label>
+                  <input
+                    type="number"
+                    value={form.stock}
+                    onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })}
+                    placeholder="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
                   />
                 </div>
-                <div className="flex flex-col gap-1 md:col-span-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm text-black/70">
-                      Flavors (Max 3)
-                    </label>
-                    <button
-                      type="button"
-                      onClick={addFlavor}
-                      disabled={(form.flavors?.length || 0) >= 3}
-                      className="text-sm text-[#FF5D39] hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      + Add Flavor
-                    </button>
-                  </div>
-                  <div className="space-y-2">
-                    {form.flavors?.map((flavor, index) => (
-                      <div
-                        key={index}
-                        className="grid grid-cols-12 gap-2 items-center"
-                      >
-                        <div className="col-span-8 sm:col-span-9">
-                          <select
-                            className="w-full border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                            value={flavor.id}
-                            onChange={(e) => {
-                              if (e.target.value === "add_new") {
-                                // Redirect to Flavors tab instead of opening form
-                                setActiveTab("flavors");
-                              } else {
-                                updateFlavor(index, "id", e.target.value);
-                              }
-                            }}
-                          >
-                            <option value="">Select flavor</option>
-                            {availableFlavors.map((f) => (
-                              <option key={f.id} value={f.id}>
-                                {f.name}
-                              </option>
-                            ))}
-                            <option
-                              value="add_new"
-                              className="text-[#FF5D39] font-semibold"
-                              disabled
-                            >
-                              + Add New Flavor (Use Flavors Tab)
-                            </option>
-                          </select>
-                        </div>
-                        <div className="col-span-3 sm:col-span-2">
-                          <input
-                            type="number"
-                            min="1"
-                            max="3"
-                            className="w-full border rounded px-3 py-2 bg-white text-black focus:outline-none focus:ring-2 focus:ring-[#FF5D39]"
-                            placeholder="Qty"
-                            value={flavor.quantity}
-                            onChange={(e) =>
-                              updateFlavor(
-                                index,
-                                "quantity",
-                                parseInt(e.target.value) || 1
-                              )
-                            }
-                          />
-                        </div>
-                        <div className="col-span-1 text-right">
-                          <button
-                            type="button"
-                            onClick={() => removeFlavor(index)}
-                            className="px-2 py-2 text-red-500 hover:text-red-700 cursor-pointer"
-                            aria-label="Remove flavor"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
+                
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    SKU
+                  </label>
+                  <input
+                    type="text"
+                    value={form.sku}
+                    onChange={(e) => setForm({ ...form, sku: e.target.value })}
+                    placeholder="e.g., 3P-SWE-WAT-BERRY"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                  />
+                </div>
+                
+                <div className="sm:col-span-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Category
+                  </label>
+                  <select
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                  >
+                    <option value="">Select category</option>
+                    {productCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
                     ))}
-                    {(!form.flavors || form.flavors.length === 0) && (
-                      <div className="text-sm text-gray-500 italic">
-                        No flavors added. Click &quot;Add Flavor&quot; to add up
-                        to 3 flavors.
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Note: Flavor management moved to dedicated Flavors tab */}
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex items-center gap-2">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p className="text-sm text-blue-800">
-                        <strong>Note:</strong> To add new flavors or manage existing ones, please use the <strong>Flavors</strong> tab above.
-                      </p>
-                    </div>
-                  </div>
+                  </select>
                 </div>
               </div>
-              <div className="lg:col-span-1">
-                <div className="rounded-xl border bg-white p-3 flex flex-col items-center justify-center">
-                  <div className="text-sm text-black/70 mb-2">Preview</div>
-                  {(() => {
-                    if (preview) {
-                      return (
-                        <Image
-                          width={240}
-                          height={180}
-                          src={preview}
-                          alt={form.name || "preview"}
-                          className="w-full max-w-[260px] aspect-[4/3] object-cover rounded"
-                        />
-                      );
-                    }
-                    if (form.imageUrl) {
-                      return (
-                        <Image
-                          src={normalizeImageSrc(form.imageUrl)}
-                          alt={form.name || "preview"}
-                          width={240}
-                          height={180}
-                          className="w-full max-w-[260px] aspect-[4/3] object-cover rounded"
-                        />
-                      );
-                    }
-                    return (
-                      <div className="w-full max-w-[260px] aspect-[4/3] bg-gray-100 rounded" />
-                    );
-                  })()}
-                </div>
-                <div className="mt-3">
-                  <div className="mb-2">
-                    <label className="text-sm text-gray-600">
-                      📷 Choose Product Image
-                    </label>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Maximum file size: 50MB • Images larger than 2MB will be automatically compressed
-                    </p>
-                  </div>
+              
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <button
+                  onClick={createProduct}
+                  disabled={saving}
+                  className="flex-1 sm:flex-none px-4 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 text-sm sm:text-base"
+                >
+                  {saving ? "Creating..." : "Create Product"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Flavors Tab */}
+      {activeTab === "flavors" && (
+        <div className="space-y-4 sm:space-y-6">
+          {/* Create New Flavor */}
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold text-black mb-3 sm:mb-4">Create New Flavor</h2>
+            
+            {/* File Upload Info */}
+            <div className="mb-3 sm:mb-4">
+              <p className="text-xs sm:text-sm text-gray-600">
+                Maximum file size: 50MB • Images larger than 2MB will be automatically compressed
+              </p>
+            </div>
+
+            {/* File Upload */}
+            <div className="space-y-3 sm:space-y-4">
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                  Flavor Image
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <input
                     type="file"
                     accept="image/*"
@@ -1626,24 +1575,16 @@ const AdminPageContent = () => {
                             } catch (compressionError) {
                               console.error("Compression failed:", compressionError);
                               setError(
-                                `⚠️ Auto-compression failed! Your image is ${fileSizeMB.toFixed(1)}MB. Please try:
-
-• Choose a smaller image (under 2MB)
-• Use an online image compressor (like TinyPNG or Compressor.io)
-• Try a different image format (JPG/PNG)
-• Reduce image dimensions before uploading
-
-💡 Tip: Most phones take photos that are too large. Try resizing them first!`
+                                `⚠️ Auto-compression failed! Your image is ${fileSizeMB.toFixed(1)}MB. Please try:\n\n• Choose a smaller image (under 2MB)\n• Use an online image compressor (like TinyPNG or Compressor.io)\n• Try a different image format (JPG/PNG)\n• Reduce image dimensions before uploading\n\n💡 Tip: Most phones take photos that are too large. Try resizing them first!`
                               );
                               e.target.value = ""; // Clear the input
                               return;
                             }
                           }
                           
-                          setImageFile(processedFile);
+                          setFlavorImageFile(processedFile);
                           const blobUrl = URL.createObjectURL(processedFile);
-                          setPreview(blobUrl);
-                          setForm((f) => ({ ...f, imageUrl: "" }));
+                          setFlavorImagePreview(blobUrl);
                           setError(null); // Clear any previous errors
                         } catch (generalError) {
                           console.error("Image processing error:", generalError);
@@ -1653,1446 +1594,568 @@ const AdminPageContent = () => {
                           e.target.value = ""; // Clear the input
                         }
                       } else {
-                        if (preview?.startsWith("blob:"))
-                          URL.revokeObjectURL(preview);
-                        setPreview(null);
-                        setImageFile(null);
+                        if (flavorImagePreview?.startsWith("blob:"))
+                          URL.revokeObjectURL(flavorImagePreview);
+                        setFlavorImagePreview(null);
+                        setFlavorImageFile(null);
                       }
                     }}
-                    className="block text-black text-sm"
+                    className="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs sm:file:text-sm file:font-medium file:bg-[#FF5D39] file:text-white hover:file:bg-[#FF5D39]/90"
                   />
+                  <span className="text-xs sm:text-sm text-gray-500 self-center">
+                    {flavorImageFile ? flavorImageFile.name : "No file chosen"}
+                  </span>
                 </div>
-                <label className="mt-4 flex items-center gap-2 text-black">
-                  <input
-                    type="checkbox"
-                    checked={!!form.isActive}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, isActive: e.target.checked }))
-                    }
-                  />
-                  Active
-                </label>
               </div>
-            </div>
-            <div className="mt-5 flex flex-wrap items-center gap-3 justify-end">
-              <button
-                disabled={
-                  saving ||
-                  !form.name ||
-                  !form.category ||
-                  !form.sku ||
-                  Number(form.price || 0) <= 0 ||
-                  !form.flavors ||
-                  form.flavors.length === 0 ||
-                  !!openId
-                }
-                onClick={createProduct}
-                className="px-4 py-2 rounded bg-[#FF5D39] text-white cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {saving ? "Saving..." : "Add product"}
-              </button>
-              <button
-                disabled={
-                  saving ||
-                  !openId ||
-                  !form.name ||
-                  !form.category ||
-                  Number(form.price || 0) <= 0
-                }
-                onClick={() => {
-                  if (!openId) return;
-                  const row = products.find((p) => p.id === openId);
-                  if (!row) return;
-                  // Build overrides without empty-string fields to avoid clearing data
-                  const overrides: Partial<Product> = {
-                    name: form.name || undefined,
-                    category: form.category || undefined,
-                    price:
-                      typeof form.price === "number"
-                        ? form.price
-                        : Number(form.price || 0),
-                    stock:
-                      typeof form.stock === "number"
-                        ? form.stock
-                        : Number(form.stock || 0),
-                    description:
-                      form.description && form.description.trim() !== ""
-                        ? form.description
-                        : undefined,
-                    sku:
-                      form.sku && form.sku.trim() !== "" ? form.sku : undefined,
-                    isActive:
-                      typeof form.isActive === "boolean"
-                        ? form.isActive
-                        : row.isActive,
-                    flavors:
-                      form.flavors && form.flavors.length > 0
-                        ? form.flavors
-                        : undefined,
-                    // Do not pass imageUrl here unless explicitly set to avoid wiping existing image
-                    imageUrl:
-                      form.imageUrl && form.imageUrl.trim() !== ""
-                        ? form.imageUrl
-                        : undefined,
-                  };
-                  updateProductByRow(row, overrides, imageFile);
-                }}
-                className="px-4 py-2 rounded bg-[#F1A900] text-black cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {saving ? "Saving..." : "Save changes"}
-              </button>
-              <button
-                disabled={saving}
-                onClick={resetForm}
-                className="px-4 py-2 rounded border border-gray-300 text-black bg-white hover:bg-gray-50 cursor-pointer disabled:cursor-not-allowed"
-              >
-                Reset
-              </button>
-            </div>
-          </div>
 
-          {/* Filters */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 mb-4">
-            <input
-              className="border rounded px-3 py-2 bg-white text-black w-full md:w-auto"
-              placeholder="Search products by name"
-              value={search}
-              onChange={(e) => {
-                setPage(1);
-                setSearch(e.target.value);
-              }}
-            />
-            <select
-              className="border rounded px-3 py-2 bg-white text-black"
-              value={categoryFilter}
-              onChange={(e) => {
-                setPage(1);
-                setCategoryFilter(e.target.value);
-              }}
-            >
-              <option value="">All categories</option>
-              {productCategories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <select
-              className="border rounded px-3 py-2 bg-white text-black"
-              value={limit}
-              onChange={(e) => {
-                setPage(1);
-                setLimit(parseInt(e.target.value) || 10);
-              }}
-            >
-              <option value={10}>10 per page</option>
-              <option value={20}>20 per page</option>
-              <option value={50}>50 per page</option>
-            </select>
-          </div>
-
-          {/* Products table */}
-          <div className="overflow-x-auto border border-gray-200 rounded">
-            <table className="min-w-full text-left">
-              <thead className="bg-gray-50 sticky top-0  z-20">
-                <tr>
-                  <th className="px-4 py-2 text-black">Image</th>
-                  <th className="px-4 py-2 text-black">Name</th>
-                  <th className="px-4 py-2 text-black">Price</th>
-                  <th className="px-4 py-2 text-black">Category</th>
-                  <th className="px-4 py-2 text-black">SKU</th>
-                  <th className="px-4 py-2 text-black">Stock</th>
-                  <th className="px-4 py-2 text-black">Flavors</th>
-                  <th className="px-4 py-2 text-black">Active</th>
-                  <th className="px-4 py-2 text-black">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {products.map((p, idx) => {
-                  // Use only 'id' for Product type, remove reference to '_id'
-                  const pid = p.id || "";
-                  return (
-                    <tr
-                      key={pid || idx}
-                      className={
-                        idx % 2 === 0
-                          ? "bg-white"
-                          : "bg-gray-50 hover:bg-gray-100"
-                      }
-                    >
-                      <td className="px-4 py-2">
-                        {p.imageUrl ? (
-                          <Image
-                            src={normalizeImageSrc(p.imageUrl, p.updatedAt)}
-                            alt={p.name}
-                            width={64}
-                            height={48}
-                            className="w-16 h-12 object-cover rounded border"
-                          />
-                        ) : (
-                          <div className="w-16 h-12 rounded bg-gray-100 border" />
-                        )}
-                      </td>
-                      <td className="px-4 py-2 text-black">{p.name}</td>
-                      <td className="px-4 py-2 text-black">
-                        ${Number(p.price || 0).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 text-black">{p.category}</td>
-                      <td className="px-4 py-2 text-black text-sm">
-                        {p.sku || "-"}
-                      </td>
-                      <td className="px-4 py-2 text-black">{p.stock || 0}</td>
-                      <td className="px-4 py-2 text-black text-sm">
-                        {formatFlavors(
-                          extractFlavors(
-                            (p as unknown as { flavors?: unknown }).flavors ??
-                              (p as unknown as { flavours?: unknown })
-                                .flavours ??
-                              (p as unknown as { flavor?: unknown }).flavor ??
-                              (p as unknown as { options?: unknown }).options
-                          )
-                        )}
-                      </td>
-                      <td className="px-4 py-2">
-                        <span
-                          className={`text-xs font-semibold px-2 py-1 rounded ${
-                            p.isActive
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-200 text-gray-700"
-                          }`}
-                        >
-                          {p.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <button
-                            className="px-3 py-1 rounded border text-white hover:opacity-90 bg-secondary cursor-pointer"
-                            onClick={() => {
-                              setOpenId(pid);
-                              setForm(p);
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="px-3 py-1 rounded border text-white hover:opacity-90 bg-primary disabled:opacity-60 disabled:cursor-not-allowed"
-                            disabled={deleting[pid]}
-                            onClick={() => deleteProduct(pid)}
-                          >
-                            {deleting[pid] ? (
-                              <div className="flex items-center">
-                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                                Deleting...
-                              </div>
-                            ) : (
-                              "Delete"
-                            )}
-                          </button>
-                          <button
-                            className="px-3 py-1 rounded border bg-secondary cursor-pointer"
-                            onClick={() =>
-                              updateProductByRow(p as Product, {
-                                isActive: !p.isActive,
-                              })
-                            }
-                          >
-                            {p.isActive ? "Deactivate" : "Activate"}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center gap-2 mt-6">
-              <button
-                className="px-3 py-1 rounded border text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-              >
-                Prev
-              </button>
-              <span className="text-black">
-                Page {page} of {totalPages}
-              </span>
-              <button
-                className="px-3 py-1 rounded border text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-              >
-                Next
-              </button>
-            </div>
-          )}
-          {loading && <div className="mt-4 text-black">Loading...</div>}
-        </div>
-      )}
-
-      {/* Flavors Tab */}
-      {activeTab === "flavors" && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg border p-6">
-            <h2 className="text-xl font-bold text-black mb-4">
-              Manage Flavors
-            </h2>
-
-            {/* Create New Flavor */}
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <h3 className="text-lg font-semibold text-black mb-3">
-                Add New Flavor
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Flavor Name *
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                    Flavor Name
                   </label>
                   <input
                     type="text"
                     value={newFlavor.name}
-                    onChange={(e) =>
-                      setNewFlavor({ ...newFlavor, name: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white"
-                    placeholder="e.g., Chocolate Mint"
+                    onChange={(e) => setNewFlavor({ ...newFlavor, name: e.target.value })}
+                    placeholder="Enter flavor name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
                   />
                 </div>
+                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                     Aliases (comma-separated)
                   </label>
                   <input
                     type="text"
                     value={newFlavor.aliases}
-                    onChange={(e) =>
-                      setNewFlavor({ ...newFlavor, aliases: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white"
-                    placeholder="e.g., chocolate, mint, cocoa"
+                    onChange={(e) => setNewFlavor({ ...newFlavor, aliases: e.target.value })}
+                    placeholder="e.g., Berry, Blue"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
                   />
                 </div>
               </div>
 
-              {/* Flavor Image Upload */}
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  📷 Flavor Image (Optional)
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="active"
+                  checked={newFlavor.active}
+                  onChange={(e) => setNewFlavor({ ...newFlavor, active: e.target.checked })}
+                  className="w-4 h-4 text-[#FF5D39] border-gray-300 rounded focus:ring-[#FF5D39]"
+                />
+                <label htmlFor="active" className="text-xs sm:text-sm text-gray-700">
+                  Active
                 </label>
-                <p className="text-xs text-gray-500 mb-3">
-                  Maximum file size: 50MB • Images larger than 2MB will be automatically compressed
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          // Check file size first (50MB limit)
-                          const maxSizeMB = 50;
-                          const fileSizeMB = file.size / (1024 * 1024);
-                          
-                          if (fileSizeMB > maxSizeMB) {
-                            setError(
-                              `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB. Please choose a smaller image or compress it before uploading.`
-                            );
-                            e.target.value = ""; // Clear the input
-                            return;
-                          }
-
-                          try {
-                            // Compress image if it's larger than 2MB
-                            let processedFile = file;
-                            if (file.size > 2 * 1024 * 1024) {
-                              setError("🔄 Compressing your image for better upload performance...");
-                              try {
-                                processedFile = await compressImage(file);
-                                setError(null); // Clear compression message
-                              } catch (compressionError) {
-                                console.error("Compression failed:", compressionError);
-                                setError(
-                                  `⚠️ Auto-compression failed! Your image is ${fileSizeMB.toFixed(1)}MB. Please try:
-
-• Choose a smaller image (under 2MB)
-• Use an online image compressor (like TinyPNG or Compressor.io)
-• Try a different image format (JPG/PNG)
-• Reduce image dimensions before uploading
-
-💡 Tip: Most phones take photos that are too large. Try resizing them first!`
-                                );
-                                e.target.value = ""; // Clear the input
-                                return;
-                              }
-                            }
-                            
-                            setFlavorImageFile(processedFile);
-                            const reader = new FileReader();
-                            reader.onload = (e) => {
-                              setFlavorImagePreview(e.target?.result as string);
-                            };
-                            reader.readAsDataURL(processedFile);
-                            setError(null); // Clear any previous errors
-                          } catch (generalError) {
-                            console.error("Image processing error:", generalError);
-                            setError(
-                              "❌ Failed to process your image. Please try a different file or check if the image is corrupted."
-                            );
-                            e.target.value = ""; // Clear the input
-                          }
-                        }
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#FF5D39] file:text-white hover:file:bg-opacity-90"
-                    />
-                  </div>
-                  {flavorImagePreview && (
-                    <div className="flex-shrink-0">
-                      <Image
-                        src={flavorImagePreview}
-                        alt="Flavor preview"
-                        width={64}
-                        height={64}
-                        className="w-16 h-16 object-cover rounded-lg border border-gray-300"
-                      />
-                    </div>
-                  )}
-                </div>
-                {flavorImageFile && (
-                  <button
-                    onClick={() => {
-                      setFlavorImageFile(null);
-                      setFlavorImagePreview(null);
-                    }}
-                    className="mt-2 text-sm text-red-600 hover:text-red-800"
-                  >
-                    Remove image
-                  </button>
-                )}
               </div>
+
               <button
                 onClick={createFlavor}
-                disabled={creatingFlavor || !newFlavor.name.trim()}
-                className="mt-3 bg-[#FF5D39] text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={creatingFlavor}
+                className="w-full sm:w-auto px-4 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 text-sm sm:text-base"
               >
                 {creatingFlavor ? "Creating..." : "Create Flavor"}
               </button>
             </div>
-
-            {/* Bulk Image Update Section */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Bulk Update Flavor Images
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Image URL for All Flavors
-                  </label>
-                  <input
-                    type="text"
-                    value={bulkImageUrl}
-                    onChange={(e) => setBulkImageUrl(e.target.value)}
-                    placeholder="Enter image URL (e.g., /uploads/flavors/flavorImage-123.png)"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white"
-                  />
-                </div>
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={bulkUpdateFlavorImages}
-                    disabled={bulkUpdating || !bulkImageUrl.trim()}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {bulkUpdating ? "Updating..." : "Update All Flavors"}
-                  </button>
-                  <span className="text-sm text-gray-600">
-                    This will update all {flavors.length} flavors with the same
-                    image
-                  </span>
-                </div>
-                {bulkImageUrl && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Preview:
-                    </label>
-                    <Image
-                      width={96}
-                      height={96}
-                      src={normalizeImageSrc(bulkImageUrl)}
-                      alt="Bulk image preview"
-                      className="w-24 h-24 object-cover rounded-lg border border-gray-300"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Flavors List */}
-            <div className="space-y-3">
-              {Array.isArray(flavors) &&
-                flavors.map((flavor) => (
-                  <div
-                    key={flavor.id}
-                    className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg"
-                  >
-                    {editingFlavor === flavor.id ? (
-                      <div className="flex-1 space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Flavor Name
-                            </label>
-                            <input
-                              type="text"
-                              value={editFlavorData.name}
-                              onChange={(e) =>
-                                setEditFlavorData({
-                                  ...editFlavorData,
-                                  name: e.target.value,
-                                })
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Aliases (comma-separated)
-                            </label>
-                            <input
-                              type="text"
-                              value={editFlavorData.aliases}
-                              onChange={(e) =>
-                                setEditFlavorData({
-                                  ...editFlavorData,
-                                  aliases: e.target.value,
-                                })
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white"
-                              placeholder="Aliases (comma-separated)"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Image Upload for Edit */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            📷 Update Flavor Image
-                          </label>
-                          <p className="text-xs text-gray-500 mb-3">
-                            Maximum file size: 50MB • Images larger than 1MB will be automatically compressed
-                          </p>
-                          <div className="flex items-center gap-4">
-                            <div className="flex-1">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    // Check file size first (50MB limit)
-                                    const maxSizeMB = 50;
-                                    const fileSizeMB = file.size / (1024 * 1024);
-                                    
-                                    if (fileSizeMB > maxSizeMB) {
-                                      setError(
-                                        `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB. Please choose a smaller image or compress it before uploading.`
-                                      );
-                                      e.target.value = ""; // Clear the input
-                                      return;
-                                    }
-
-                                    try {
-                                      // Always compress images for optimal upload performance
-                                      let processedFile = file;
-                                      if (file.size > 1 * 1024 * 1024) {
-                                        // Compress if larger than 1MB
-                                        setError("🔄 Compressing your image for better upload performance...");
-                                        try {
-                                          processedFile = await compressImage(
-                                            file,
-                                            5
-                                          ); // Target 5MB max
-                                          setError(null); // Clear compression message
-                                        } catch (compressionError) {
-                                          console.error("Compression failed:", compressionError);
-                                          setError(
-                                            `⚠️ Auto-compression failed! Your image is ${fileSizeMB.toFixed(1)}MB. Please try:
-
-• Choose a smaller image (under 1MB)
-• Use an online image compressor (like TinyPNG or Compressor.io)
-• Try a different image format (JPG/PNG)
-• Reduce image dimensions before uploading
-
-💡 Tip: Most phones take photos that are too large. Try resizing them first!`
-                                          );
-                                          e.target.value = ""; // Clear the input
-                                          return;
-                                        }
-                                      }
-
-                                      setEditFlavorImageFile(processedFile);
-                                      const reader = new FileReader();
-                                      reader.onload = (e) => {
-                                        setEditFlavorImagePreview(
-                                          e.target?.result as string
-                                        );
-                                      };
-                                      reader.readAsDataURL(processedFile);
-                                      setError(null); // Clear any previous errors
-                                    } catch (generalError) {
-                                      console.error(
-                                        "Image processing error:",
-                                        generalError
-                                      );
-                                      setError(
-                                        "❌ Failed to process your image. Please try a different file or check if the image is corrupted."
-                                      );
-                                      e.target.value = ""; // Clear the input
-                                    }
-                                  }
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-black bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#FF5D39] file:text-white hover:file:bg-opacity-90"
-                              />
-                            </div>
-                            {/* Current Image */}
-                            {flavor.imageUrl && !editFlavorImagePreview && (
-                              <div className="flex-shrink-0">
-                                <Image
-                                  width={64}
-                                  height={64}
-                                  src={normalizeImageSrc(
-                                    flavor.imageUrl,
-                                    flavor.updatedAt
-                                  )}
-                                  alt={flavor.name}
-                                  className="w-16 h-16 object-cover rounded-lg border border-gray-300"
-                                />
-                                <p className="text-xs text-gray-500 mt-1 text-center">
-                                  Current
-                                </p>
-                              </div>
-                            )}
-                            {/* Preview of New Image */}
-                            {editFlavorImagePreview && (
-                              <div className="flex-shrink-0">
-                                <Image
-                                  width={48}
-                                  height={48}
-                                  src={editFlavorImagePreview}
-                                  alt="New preview"
-                                  className="w-16 h-16 object-cover rounded-lg border border-gray-300"
-                                />
-                                <p className="text-xs text-green-600 mt-1 text-center">
-                                  New
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                          {editFlavorImageFile && (
-                            <button
-                              onClick={() => {
-                                setEditFlavorImageFile(null);
-                                setEditFlavorImagePreview(null);
-                              }}
-                              className="mt-2 text-sm text-red-600 hover:text-red-800"
-                            >
-                              Remove new image
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <label className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={editFlavorData.active}
-                              onChange={(e) =>
-                                setEditFlavorData({
-                                  ...editFlavorData,
-                                  active: e.target.checked,
-                                })
-                              }
-                              className="rounded border-gray-300 text-[#FF5D39] focus:ring-[#FF5D39]"
-                            />
-                            <span className="text-sm font-medium text-gray-700">
-                              Active
-                            </span>
-                          </label>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => updateFlavorAdmin(flavor.id)}
-                              className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors"
-                            >
-                              Save Changes
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingFlavor(null);
-                                setEditFlavorImageFile(null);
-                                setEditFlavorImagePreview(null);
-                              }}
-                              className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-600 transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex items-center gap-4 flex-1">
-                          {/* Flavor Image */}
-                          <div className="flex-shrink-0">
-                            {flavor.imageUrl ? (
-                              <Image
-                                width={48}
-                                height={48}
-                                src={normalizeImageSrc(
-                                  flavor.imageUrl,
-                                  flavor.updatedAt
-                                )}
-                                alt={flavor.name}
-                                className="w-12 h-12 object-cover rounded-lg border border-gray-300"
-                                onError={(e) => {
-                                  console.error(
-                                    "Image failed to load for",
-                                    flavor.name,
-                                    "URL:",
-                                    e.currentTarget.src
-                                  );
-                                  e.currentTarget.style.display = "none";
-                                }}
-                              />
-                            ) : (
-                              <div className="w-12 h-12 bg-gray-200 rounded-lg border border-gray-300 flex items-center justify-center">
-                                <svg
-                                  className="w-6 h-6 text-gray-400"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                  />
-                                </svg>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Flavor Info */}
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3">
-                              <h4 className="font-semibold text-black">
-                                {flavor.name}
-                              </h4>
-                              <span
-                                className={`text-xs px-2 py-1 rounded ${
-                                  flavor.active
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-gray-100 text-gray-700"
-                                }`}
-                              >
-                                {flavor.active ? "Active" : "Inactive"}
-                              </span>
-                            </div>
-                            {flavor.aliases && flavor.aliases.length > 0 && (
-                              <p className="text-sm text-gray-600 mt-1">
-                                Aliases: {flavor.aliases.join(", ")}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingFlavor(flavor.id);
-                              setEditFlavorData({
-                                name: flavor.name,
-                                aliases: flavor.aliases.join(", "),
-                                active: flavor.active,
-                              });
-                              // Clear image edit state
-                              setEditFlavorImageFile(null);
-                              setEditFlavorImagePreview(null);
-
-                              // Force refresh the flavor data to get the latest image
-                              setFlavors((prev) =>
-                                prev.map((f) =>
-                                  f.id === flavor.id
-                                    ? {
-                                        ...f,
-                                        updatedAt: new Date().toISOString(),
-                                      }
-                                    : f
-                                )
-                              );
-                            }}
-                            className="bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => deleteFlavor(flavor.id)}
-                            className="bg-red-600 text-white px-3 py-1 rounded text-sm"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              {(!Array.isArray(flavors) || flavors.length === 0) && (
-                <div className="text-center py-8">
-                  <p className="text-gray-600">No flavors found.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {/* Inventory Tab */}
-      {activeTab === "inventory" && (
-        <div className="space-y-6">
-          {/* Header with Summary */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg
-                    className="w-6 h-6 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Inventory Management
-                  </h2>
-                  <p className="text-gray-600">
-                    Monitor and manage stock levels
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-blue-600">
-                  {Array.isArray(inventoryAlerts) ? inventoryAlerts.length : 0}
-                </div>
-                <div className="text-sm text-gray-600">Active Alerts</div>
-              </div>
-            </div>
           </div>
 
-          {/* Inventory Alerts */}
-          <div className="bg-white rounded-xl border shadow-sm">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-red-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+          {/* Bulk Update Flavor Images */}
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold text-black mb-3 sm:mb-4">Bulk Update Flavor Images</h2>
+            
+            <div className="space-y-3 sm:space-y-4">
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                  Image URL for All Flavors
+                </label>
+                <input
+                  type="url"
+                  value={bulkImageUrl}
+                  onChange={(e) => setBulkImageUrl(e.target.value)}
+                  placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                />
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-center">
+                <button
+                  onClick={bulkUpdateFlavorImages}
+                  disabled={bulkUpdating}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 text-sm sm:text-base"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                  />
-                </svg>
-                Low Stock Alerts
-              </h3>
-            </div>
-
-            {Array.isArray(inventoryAlerts) && inventoryAlerts.length > 0 ? (
-              <div className="p-6">
-                <div className="grid gap-4">
-                  {inventoryAlerts.map((alert) => (
-                    <div
-                      key={alert.id}
-                      className="group relative bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-xl p-6 hover:shadow-md transition-all duration-200"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="p-2 bg-red-100 rounded-lg">
-                              <svg
-                                className="w-5 h-5 text-red-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                            </div>
-                            <div>
-                              <h4 className="text-lg font-semibold text-gray-900">
-                                {alert.flavor?.name || "Unknown Flavor"}
-                              </h4>
-                              {alert.flavor?.aliases &&
-                                alert.flavor.aliases.length > 0 && (
-                                  <p className="text-sm text-gray-500">
-                                    Also known as:{" "}
-                                    {alert.flavor.aliases.join(", ")}
-                                  </p>
-                                )}
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            <div className="bg-white rounded-lg p-3 border border-gray-200">
-                              <div className="flex items-center gap-2 mb-1">
-                                <svg
-                                  className="w-4 h-4 text-green-600"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                                  />
-                                </svg>
-                                <span className="text-sm font-medium text-gray-600">
-                                  On Hand
-                                </span>
-                              </div>
-                              <div className="text-xl font-bold text-gray-900">
-                                {alert.onHand || 0}
-                              </div>
-                            </div>
-
-                            <div className="bg-white rounded-lg p-3 border border-gray-200">
-                              <div className="flex items-center gap-2 mb-1">
-                                <svg
-                                  className="w-4 h-4 text-yellow-600"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </svg>
-                                <span className="text-sm font-medium text-gray-600">
-                                  Reserved
-                                </span>
-                              </div>
-                              <div className="text-xl font-bold text-gray-900">
-                                {alert.reserved || 0}
-                              </div>
-                            </div>
-
-                            <div className="bg-white rounded-lg p-3 border border-gray-200">
-                              <div className="flex items-center gap-2 mb-1">
-                                <svg
-                                  className="w-4 h-4 text-red-600"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                                  />
-                                </svg>
-                                <span className="text-sm font-medium text-gray-600">
-                                  Safety Stock
-                                </span>
-                              </div>
-                              <div className="text-xl font-bold text-red-600">
-                                {alert.safetyStock || 0}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-3 ml-6">
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="number"
-                              min="0"
-                              defaultValue={alert.onHand || 0}
-                              id={`inventory-input-${alert.flavorId}`}
-                              className="w-24 px-3 py-2 border-2 border-gray-400 rounded-lg text-sm font-bold text-gray-900 bg-yellow-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:bg-white transition-colors"
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  const newStock = parseInt(
-                                    (e.target as HTMLInputElement).value
-                                  );
-                                  if (!isNaN(newStock)) {
-                                    updateInventory(alert.flavorId, newStock);
-                                  }
-                                }
-                              }}
-                            />
-                            <span className="text-sm text-gray-500">units</span>
-                          </div>
-                          <button
-                            onClick={() => {
-                              const input = document.getElementById(
-                                `inventory-input-${alert.flavorId}`
-                              ) as HTMLInputElement;
-                              const newStock = parseInt(input.value);
-                              if (!isNaN(newStock)) {
-                                updateInventory(alert.flavorId, newStock);
-                              }
-                            }}
-                            disabled={updatingInventory[alert.flavorId]}
-                            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                          >
-                            {updatingInventory[alert.flavorId] ? (
-                              <>
-                                <svg
-                                  className="w-4 h-4 animate-spin"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  ></circle>
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                  ></path>
-                                </svg>
-                                Updating...
-                              </>
-                            ) : (
-                              <>
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                                  />
-                                </svg>
-                                Update Stock
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                  {bulkUpdating ? "Updating..." : "Update All Flavors"}
+                </button>
+                <span className="text-xs sm:text-sm text-gray-600">
+                  This will update all {flavors.length} flavors with the same image
+                </span>
               </div>
-            ) : (
-              <div className="p-12 text-center">
-                <div className="mx-auto w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <svg
-                    className="w-12 h-12 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  All Good!
-                </h3>
-                <p className="text-gray-600">
-                  No inventory alerts at this time. All stock levels are within
-                  safe limits.
+            </div>
+          </div>
+
+          {/* Existing Flavors List */}
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold text-black mb-3 sm:mb-4">Existing Flavors</h2>
+            
+            {flavors.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-4">🍭</div>
+                <h3 className="text-lg font-semibold mb-2 text-black">No flavors yet</h3>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  Create your first flavor to get started.
                 </p>
               </div>
-            )}
-          </div>
-
-          {/* All Flavors Inventory Management */}
-          <div className="bg-white rounded-xl border shadow-sm">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-blue-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                  />
-                </svg>
-                All Flavors Inventory
-              </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                Manage stock levels for all flavors
-              </p>
-            </div>
-
-            <div className="p-6">
-              <div className="grid gap-4">
+            ) : (
+              <div className="space-y-3 sm:space-y-4">
                 {flavors.map((flavor) => (
                   <div
                     key={flavor.id}
-                    className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h4 className="text-lg font-semibold text-gray-900">
-                            {flavor.name}
-                          </h4>
-                          {!flavor.active && (
-                            <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                              Inactive
-                            </span>
-                          )}
-                        </div>
-                        {flavor.aliases && flavor.aliases.length > 0 && (
-                          <p className="text-sm text-gray-500 mb-3">
-                            Also known as: {flavor.aliases.join(", ")}
-                          </p>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                          <div className="bg-white rounded-lg p-3 border">
-                            <div className="flex items-center gap-2 mb-1">
-                              <svg
-                                className="w-4 h-4 text-green-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                                />
-                              </svg>
-                              <span className="text-sm font-medium text-gray-600">
-                                On Hand
-                              </span>
-                            </div>
-                            <div className="text-xl font-bold text-gray-900">
-                              {flavor.inventory?.onHand ?? 0}
-                            </div>
-                          </div>
-
-                          <div className="bg-white rounded-lg p-3 border">
-                            <div className="flex items-center gap-2 mb-1">
-                              <svg
-                                className="w-4 h-4 text-yellow-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                              <span className="text-sm font-medium text-gray-600">
-                                Reserved
-                              </span>
-                            </div>
-                            <div className="text-xl font-bold text-gray-900">
-                              {flavor.inventory?.reserved ?? 0}
-                            </div>
-                          </div>
-
-                          <div className="bg-white rounded-lg p-3 border">
-                            <div className="flex items-center gap-2 mb-1">
-                              <svg
-                                className="w-4 h-4 text-red-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                                />
-                              </svg>
-                              <span className="text-sm font-medium text-gray-600">
-                                Safety Stock
-                              </span>
-                            </div>
-                            <div className="text-xl font-bold text-gray-900">
-                              {flavor.inventory?.safetyStock ?? 5}
-                            </div>
-                          </div>
-
-                          <div className="bg-white rounded-lg p-3 border">
-                            <div className="flex items-center gap-2 mb-1">
-                              <svg
-                                className="w-4 h-4 text-blue-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                                />
-                              </svg>
-                              <span className="text-sm font-medium text-gray-600">
-                                Available
-                              </span>
-                            </div>
-                            <div className="text-xl font-bold text-blue-600">
-                              {Math.max(
-                                0,
-                                (flavor.inventory?.onHand ?? 0) -
-                                  (flavor.inventory?.reserved ?? 0) -
-                                  (flavor.inventory?.safetyStock ?? 5)
-                              )}
-                            </div>
-                          </div>
-                        </div>
+                    <div className="flex items-center gap-3">
+                      {flavor.imageUrl && (
+                        <img
+                          src={normalizeImageSrc(flavor.imageUrl, flavor.updatedAt)}
+                          alt={flavor.name}
+                          className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg"
+                        />
+                      )}
+                      <div>
+                        <h3 className="font-semibold text-black text-sm sm:text-base">{flavor.name}</h3>
+                        <p className="text-xs sm:text-sm text-gray-600">
+                          {flavor.aliases.length > 0 ? flavor.aliases.join(", ") : "No aliases"}
+                        </p>
                       </div>
-
-                      <div className="flex items-center gap-3 ml-6">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min="0"
-                            defaultValue={flavor.inventory?.onHand ?? 0}
-                            id={`inventory-input-all-${flavor.id}`}
-                            className="w-24 px-3 py-2 border-2 border-gray-400 rounded-lg text-sm font-bold text-gray-900 bg-blue-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm hover:bg-white transition-colors"
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                const newStock = parseInt(
-                                  (e.target as HTMLInputElement).value
-                                );
-                                if (!isNaN(newStock)) {
-                                  updateInventory(flavor.id, newStock);
-                                }
-                              }
-                            }}
-                          />
-                          <span className="text-sm text-gray-500">units</span>
-                        </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          flavor.active
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {flavor.active ? "Active" : "Inactive"}
+                      </span>
+                      
+                      <div className="flex gap-1 sm:gap-2">
                         <button
                           onClick={() => {
-                            const input = document.getElementById(
-                              `inventory-input-all-${flavor.id}`
-                            ) as HTMLInputElement;
-                            const newStock = parseInt(input.value);
-                            if (!isNaN(newStock)) {
-                              updateInventory(flavor.id, newStock);
-                            }
+                            setEditingFlavor(flavor.id);
+                            setEditFlavorData({
+                              name: flavor.name,
+                              aliases: flavor.aliases.join(", "),
+                              active: flavor.active,
+                            });
                           }}
-                          disabled={updatingInventory[flavor.id]}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                          className="px-2 sm:px-3 py-1 sm:py-2 bg-blue-600 text-white rounded text-xs sm:text-sm hover:opacity-90 transition-opacity"
                         >
-                          {updatingInventory[flavor.id] ? (
-                            <>
-                              <svg
-                                className="w-4 h-4 animate-spin"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                ></circle>
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
-                              </svg>
-                              Updating...
-                            </>
-                          ) : (
-                            <>
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                                />
-                              </svg>
-                              Update Stock
-                            </>
-                          )}
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteFlavor(flavor.id)}
+                          className="px-2 sm:px-3 py-1 sm:py-2 bg-red-600 text-white rounded text-xs sm:text-sm hover:opacity-90 transition-opacity"
+                        >
+                          Delete
                         </button>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* System Config Tab */}
-      {activeTab === "config" && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg border p-6">
-            <h2 className="text-xl font-bold text-black mb-4">
-              System Configuration
-            </h2>
-
-            {systemConfig ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold text-black mb-2">
-                      Total Categories
-                    </h4>
-                    <p className="text-lg text-[#FF5D39] font-bold">
-                      {systemConfig.totalCategories || 0}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold text-black mb-2">
-                      Total Flavors
-                    </h4>
-                    <p className="text-lg text-[#FF5D39] font-bold">
-                      {systemConfig.totalFlavors || 0}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold text-black mb-2">
-                      Total Products
-                    </h4>
-                    <p className="text-lg text-[#FF5D39] font-bold">
-                      {systemConfig.totalProducts || 0}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold text-black mb-2">
-                      Default Prices
-                    </h4>
-                    <div className="space-y-1">
-                      {systemConfig.defaultPrices &&
-                        Object.entries(systemConfig.defaultPrices).map(
-                          ([type, price]) => (
-                            <p
-                              key={type}
-                              className="text-sm text-[#FF5D39] font-semibold"
-                            >
-                              {type}: ${price}
-                            </p>
-                          )
-                        )}
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold text-black mb-2">
-                      Supported Categories
-                    </h4>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {Array.isArray(systemConfig.supportedCategories) &&
-                        systemConfig.supportedCategories.map(
-                          (category, index) => (
-                            <span
-                              key={index}
-                              className="bg-[#FF5D39] text-white px-2 py-1 rounded text-sm"
-                            >
-                              {category}
-                            </span>
-                          )
-                        )}
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold text-black mb-2">
-                      Supported Product Types
-                    </h4>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {Array.isArray(systemConfig.supportedProductTypes) &&
-                        systemConfig.supportedProductTypes.map(
-                          (type, index) => (
-                            <span
-                              key={index}
-                              className="bg-blue-500 text-white px-2 py-1 rounded text-sm"
-                            >
-                              {type}
-                            </span>
-                          )
-                        )}
-                    </div>
-                  </div>
+      {/* Inventory Tab */}
+      {activeTab === "inventory" && (
+        <div className="space-y-4 sm:space-y-6">
+          {/* Inventory Management Overview */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg sm:rounded-xl shadow-lg border border-blue-200 p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-bold text-black">Inventory Management</h2>
+                  <p className="text-xs sm:text-sm text-gray-600">Monitor and manage stock levels</p>
                 </div>
               </div>
-            ) : (
+              <div className="text-right">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                  {inventoryAlerts.length} Active Alert{inventoryAlerts.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Low Stock Alerts */}
+          {inventoryAlerts.length > 0 && (
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-red-200 p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <h3 className="text-lg sm:text-xl font-bold text-black">Low Stock Alerts</h3>
+              </div>
+              
+              <div className="space-y-3 sm:space-y-4">
+                {inventoryAlerts.map((alert) => (
+                  <div key={alert.id} className="border border-red-200 rounded-lg p-3 sm:p-4 bg-red-50">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h4 className="font-semibold text-black text-sm sm:text-base">{alert.flavorName}</h4>
+                      </div>
+                      <span className="text-xs sm:text-sm text-gray-600">
+                        Also known as: {alert.flavor?.aliases?.join(', ') || 'No aliases'}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3">
+                      <div className="bg-white rounded-lg p-2 sm:p-3 text-center">
+                        <div className="text-xs sm:text-sm text-gray-600 mb-1">On Hand</div>
+                        <div className="text-lg sm:text-xl font-bold text-gray-900">{alert.onHand}</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-2 sm:p-3 text-center">
+                        <div className="text-xs sm:text-sm text-gray-600 mb-1">Reserved</div>
+                        <div className="text-lg sm:text-xl font-bold text-gray-900">{alert.reserved}</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-2 sm:p-3 text-center">
+                        <div className="text-xs sm:text-sm text-gray-600 mb-1">Safety Stock</div>
+                        <div className="text-lg sm:text-xl font-bold text-gray-900">{alert.safetyStock}</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-2 sm:p-3 text-center">
+                        <div className="text-xs sm:text-sm text-gray-600 mb-1">Available</div>
+                        <div className="text-lg sm:text-xl font-bold text-blue-600">{alert.onHand - alert.reserved}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Update stock"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                        onChange={(e) => {
+                          const newStock = parseInt(e.target.value) || 0;
+                          // Update local state for immediate UI feedback
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          const input = document.querySelector(`input[placeholder="Update stock"]`) as HTMLInputElement;
+                          const newStock = parseInt(input?.value) || 0;
+                          if (newStock >= 0) {
+                            updateInventory(alert.flavorId, newStock);
+                            input.value = '';
+                          }
+                        }}
+                        disabled={updatingInventory[alert.flavorId]}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 text-sm sm:text-base flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+                        </svg>
+                        {updatingInventory[alert.flavorId] ? "Updating..." : "Update Stock"}
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="text-xs sm:text-sm text-gray-600">Stock tracking enabled</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* All Flavors Inventory */}
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-black">All Flavors Inventory</h2>
+                <p className="text-xs sm:text-sm text-gray-600">Manage stock levels for all flavors</p>
+              </div>
+            </div>
+            
+            {flavors.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-600">
-                  Unable to load system configuration.
+                <div className="text-4xl mb-4">📊</div>
+                <h3 className="text-lg font-semibold mb-2 text-black">No flavors found</h3>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  Create flavors first to manage inventory.
                 </p>
+              </div>
+            ) : (
+              <div className="space-y-3 sm:space-y-4">
+                {flavors.map((flavor) => (
+                  <div
+                    key={flavor.id}
+                    className="border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h3 className="font-semibold text-black text-sm sm:text-base">{flavor.name}</h3>
+                        <p className="text-xs sm:text-sm text-gray-600">
+                          Also known as: {flavor.aliases.length > 0 ? flavor.aliases.join(', ') : 'No aliases'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span className="text-xs sm:text-sm text-gray-600">On</span>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3">
+                      <div className="bg-gray-50 rounded-lg p-2 sm:p-3 text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <div className="w-2 h-2 bg-green-500 rounded"></div>
+                          <div className="text-xs sm:text-sm text-gray-600">On Hand</div>
+                        </div>
+                        <div className="text-lg sm:text-xl font-bold text-gray-900">
+                          {flavor.inventory?.onHand || 0}
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-2 sm:p-3 text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                          <div className="text-xs sm:text-sm text-gray-600">Reserved</div>
+                        </div>
+                        <div className="text-lg sm:text-xl font-bold text-gray-900">
+                          {flavor.inventory?.reserved || 0}
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-2 sm:p-3 text-center">
+                        <div className="flex items-center justify-center gap-1 mb-1">
+                          <svg className="w-3 h-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                          </svg>
+                          <div className="text-xs sm:text-sm text-gray-600">Safety Stock</div>
+                        </div>
+                        <div className="text-lg sm:text-xl font-bold text-gray-900">
+                          {flavor.inventory?.safetyStock || 0}
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-2 sm:p-3 text-center">
+                        <div className="text-xs sm:text-sm text-gray-600 mb-1">Available</div>
+                        <div className="text-lg sm:text-xl font-bold text-blue-600">
+                          {(flavor.inventory?.onHand || 0) - (flavor.inventory?.reserved || 0)}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Update stock"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                        onChange={(e) => {
+                          const newStock = parseInt(e.target.value) || 0;
+                          // Update local state for immediate UI feedback
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          const input = document.querySelector(`input[placeholder="Update stock"]`) as HTMLInputElement;
+                          const newStock = parseInt(input?.value) || 0;
+                          if (newStock >= 0) {
+                            updateInventory(flavor.id, newStock);
+                            input.value = '';
+                          }
+                        }}
+                        disabled={updatingInventory[flavor.id]}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 text-sm sm:text-base flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+                        </svg>
+                        {updatingInventory[flavor.id] ? "Updating..." : "Update Stock"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
       )}
 
-      {loading && (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      {/* System Configuration Tab */}
+      {activeTab === "config" && (
+        <div className="space-y-4 sm:space-y-6">
+          {/* System Configuration Overview */}
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-600 rounded-lg flex items-center justify-center">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-black">System Configuration</h2>
+                <p className="text-xs sm:text-sm text-gray-600">Overview of system statistics and settings</p>
+              </div>
+            </div>
+
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4 text-center border border-gray-200">
+                <div className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">Total Categories</div>
+                <div className="text-xl sm:text-2xl font-bold text-red-600">
+                  {systemConfig?.totalCategories || productCategories.length || 0}
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4 text-center border border-gray-200">
+                <div className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">Total Flavors</div>
+                <div className="text-xl sm:text-2xl font-bold text-red-600">
+                  {systemConfig?.totalFlavors || flavors.length || 0}
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4 text-center border border-gray-200">
+                <div className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">Total Products</div>
+                <div className="text-xl sm:text-2xl font-bold text-red-600">
+                  {systemConfig?.totalProducts || products.length || 0}
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4 text-center border border-gray-200">
+                <div className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2">Active Alerts</div>
+                <div className="text-xl sm:text-2xl font-bold text-red-600">
+                  {inventoryAlerts.length}
+                </div>
+              </div>
+            </div>
+
+            {/* Default Prices Section */}
+            <div className="mb-6 sm:mb-8">
+              <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">Default Prices</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {systemConfig?.defaultPrices ? (
+                  Object.entries(systemConfig.defaultPrices).map(([key, value]) => (
+                    <div key={key} className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm sm:text-base font-medium text-gray-700 capitalize">
+                          {key.replace('-', ' ')}:
+                        </span>
+                        <span className="text-lg sm:text-xl font-bold text-red-600">
+                          ${value}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm sm:text-base font-medium text-gray-700">3-pack:</span>
+                        <span className="text-lg sm:text-xl font-bold text-red-600">$27</span>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm sm:text-base font-medium text-gray-700">5-pack:</span>
+                        <span className="text-lg sm:text-xl font-bold text-red-600">$45</span>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* System Settings */}
+            <div className="mb-6 sm:mb-8">
+              <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">System Settings</h3>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm sm:text-base font-medium text-gray-700">Default Price</div>
+                      <div className="text-xs sm:text-sm text-gray-600">Base price for new products</div>
+                    </div>
+                    <span className="text-lg sm:text-xl font-bold text-gray-900">
+                      ${systemConfig?.defaultPrice || 27}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm sm:text-base font-medium text-gray-700">Min Stock Threshold</div>
+                      <div className="text-xs sm:text-sm text-gray-600">Minimum stock level for alerts</div>
+                    </div>
+                    <span className="text-lg sm:text-xl font-bold text-gray-900">
+                      {systemConfig?.minStockThreshold || 5}
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm sm:text-base font-medium text-gray-700">Max Flavors Per Product</div>
+                      <div className="text-xs sm:text-sm text-gray-600">Maximum flavors allowed per product</div>
+                    </div>
+                    <span className="text-lg sm:text-xl font-bold text-gray-900">
+                      {systemConfig?.maxFlavorsPerProduct || 5}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Supported Categories */}
+            <div className="mb-6 sm:mb-8">
+              <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">Supported Categories</h3>
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                {(systemConfig?.supportedCategories || productCategories || ['Custom', 'Sweet', 'Sour', 'Traditional']).map((category) => (
+                  <span
+                    key={category}
+                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm font-medium"
+                  >
+                    {category}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* System Information */}
+            <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+              <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">System Information</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                <div>
+                  <span className="font-medium">Last Updated:</span> {new Date().toLocaleDateString()}
+                </div>
+                <div>
+                  <span className="font-medium">Version:</span> 1.0.0
+                </div>
+                <div>
+                  <span className="font-medium">Environment:</span> Production
+                </div>
+                <div>
+                  <span className="font-medium">Status:</span> 
+                  <span className="ml-1 text-green-600 font-medium">Active</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
