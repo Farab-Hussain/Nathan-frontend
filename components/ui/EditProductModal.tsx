@@ -161,8 +161,9 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           borderRadius: '8px',
           maxWidth: '600px',
           width: '90%',
-          maxHeight: '90vh',
-          overflowY: 'auto',
+          maxHeight: '80vh',
+          overflowY: 'auto',  // Use auto for automatic scrolling when content overflows
+          overflowX: 'hidden', // Prevent horizontal scrolling      
         }}
         className="custom-scrollbar"
         onClick={(e) => e.stopPropagation()}

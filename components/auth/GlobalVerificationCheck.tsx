@@ -29,27 +29,32 @@ export default function GlobalVerificationCheck() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Don't run checks while loading or on public paths
-    if (loading || PUBLIC_PATHS.some(path => pathname.startsWith(path))) {
+    // Don't run checks while loading
+    if (loading) {
       return;
     }
 
     // If user is logged in but not verified, redirect to verification page
     if (user && !user.isVerified) {
-      router.replace(`/auth/verify-email?email=${encodeURIComponent(user.email)}`);
+      // But allow them to stay on verification-related pages
+      if (!pathname.startsWith("/auth/verify")) {
+        router.replace(`/auth/verify-email?email=${encodeURIComponent(user.email)}`);
+      }
+      return;
+    }
+
+    // If user is verified and on auth pages (login/register), redirect to main site
+    if (user && user.isVerified && 
+        (pathname.startsWith("/auth/login") || pathname.startsWith("/auth/register") || pathname.startsWith("/auth/forgot-password"))) {
+      console.log('Redirecting verified user away from auth pages');
+      const redirectUrl = process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || "/";
+      router.replace(redirectUrl);
       return;
     }
 
     // If user is not logged in but trying to access protected routes, redirect to login
     if (!user && VERIFICATION_REQUIRED_PATHS.some(path => pathname.startsWith(path))) {
       router.replace("/auth/login");
-      return;
-    }
-
-    // If user is verified and on login/register pages, redirect to main site
-    if (user && user.isVerified && (pathname.startsWith("/auth/login") || pathname.startsWith("/auth/register"))) {
-      const redirectUrl = process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || "/";
-      router.replace(redirectUrl);
       return;
     }
   }, [user, loading, pathname, router]);

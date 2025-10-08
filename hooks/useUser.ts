@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
+import { clearAuthCookies } from "@/utils/cookieUtils";
 
 export type User = {
   id: string;
@@ -74,6 +75,13 @@ export function useUser() {
           fetchUser(true);
         }, 30000);
       } else {
+        // If auth fails (401/403), clear invalid cookies
+        if (axios.isAxiosError(err) && err.response && 
+            (err.response.status === 401 || err.response.status === 403)) {
+          console.log('Auth failed - clearing invalid cookies');
+          clearAuthCookies();
+          userCache = null;
+        }
         setUser(null);
         setError(null);
       }
