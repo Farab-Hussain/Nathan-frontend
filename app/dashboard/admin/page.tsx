@@ -11,6 +11,10 @@ import axios from "axios";
 import { useUser } from "@/hooks/useUser";
 import Image from "next/image";
 import { toast } from "react-toastify";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+import SimpleModal from "@/components/ui/SimpleModal";
+import EditProductModal from "@/components/ui/EditProductModal";
+import EditFlavorModal from "@/components/ui/EditFlavorModal";
 
 type Flavor = {
   id: string;
@@ -99,6 +103,38 @@ const AdminPageContent = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    productId: string | null;
+    productName: string;
+  }>({
+    isOpen: false,
+    productId: null,
+    productName: "",
+  });
+  const [deleteFlavorModal, setDeleteFlavorModal] = useState<{
+    isOpen: boolean;
+    flavorId: string | null;
+    flavorName: string;
+  }>({
+    isOpen: false,
+    flavorId: null,
+    flavorName: "",
+  });
+  const [editProductModal, setEditProductModal] = useState<{
+    isOpen: boolean;
+    product: Product | null;
+  }>({
+    isOpen: false,
+    product: null,
+  });
+  const [editFlavorModal, setEditFlavorModal] = useState<{
+    isOpen: boolean;
+    flavor: Flavor | null;
+  }>({
+    isOpen: false,
+    flavor: null,
+  });
 
   // Enhanced image compression function with progressive quality reduction
   const compressImage = (
@@ -194,59 +230,6 @@ const AdminPageContent = () => {
     string | null
   >(null);
 
-  const [bulkImageUrl, setBulkImageUrl] = useState("");
-  const [bulkUpdating, setBulkUpdating] = useState(false);
-
-  // Bulk update flavor images
-  const bulkUpdateFlavorImages = async () => {
-    if (!bulkImageUrl.trim()) {
-      setError("Please enter an image URL");
-      toast.error("Please enter an image URL");
-      return;
-    }
-
-    setBulkUpdating(true);
-    setError(null);
-
-    try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      const flavorIds = flavors.map((flavor) => flavor.id);
-
-      const { data } = await axios.put(
-        `${API_URL}/admin/flavors/bulk-update-images`,
-        {
-          flavorIds: flavorIds,
-          imageUrl: bulkImageUrl.trim(),
-        },
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      // Refresh flavors to show updated images
-      await fetchFlavors();
-
-      setBulkImageUrl("");
-      setError(null);
-
-      // Show success message
-      alert(
-        `Successfully updated ${data.updatedCount} flavors with the new image!`
-      );
-    } catch (err: unknown) {
-      const errorMessage =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to update flavor images";
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setBulkUpdating(false);
-    }
-  };
-
   // Helper function to normalize image src with cache busting
   const normalizeImageSrc = (src?: string | null, updatedAt?: string) => {
     if (!src) return "/assets/images/slider.png";
@@ -332,6 +315,8 @@ const AdminPageContent = () => {
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<{ [key: string]: boolean }>({});
+  const [deletingFlavor, setDeletingFlavor] = useState<{ [key: string]: boolean }>({});
+  const [deletingFromModal, setDeletingFromModal] = useState(false);
   const [productCategories, setProductCategories] = useState<string[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [search, setSearch] = useState<string>("");
@@ -793,25 +778,17 @@ const AdminPageContent = () => {
         formData.append("flavorImage", flavorImageFile);
       }
 
-      const { data } = await axios.post(`${API_URL}/admin/flavors`, formData, {
+      await axios.post(`${API_URL}/admin/flavors`, formData, {
         withCredentials: true,
         // Don't set Content-Type manually - let axios handle it for FormData
       });
 
-      // Handle response format - could be direct object or wrapped in response
-      const flavorData = data.flavor || data;
-
-      setFlavors((prev) => [...prev, flavorData]);
-      setAvailableFlavors((prev) => [
-        ...prev,
-        { id: flavorData.id, name: flavorData.name },
-      ]);
+      // Refresh the flavors list to ensure we have the complete data
+      await fetchFlavors();
       setNewFlavor({ name: "", aliases: "", active: true });
       setFlavorImageFile(null);
       setFlavorImagePreview(null);
-
-      // Refresh the flavors list to ensure consistency
-      await fetchFlavors();
+      toast.success("Flavor created successfully");
     } catch (err: unknown) {
       const errorMessage =
         (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -824,15 +801,9 @@ const AdminPageContent = () => {
   };
 
   const deleteFlavor = async (flavorId: string) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this flavor? This action cannot be undone and will affect any products using this flavor."
-      )
-    ) {
-      return;
-    }
-
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    setDeletingFlavor((prev) => ({ ...prev, [flavorId]: true }));
+    setDeletingFromModal(true);
     setError(null);
     try {
       await axios.delete(`${API_URL}/admin/flavors/${flavorId}`, {
@@ -844,12 +815,140 @@ const AdminPageContent = () => {
 
       // Remove the flavor from available flavors
       setAvailableFlavors((prev) => prev.filter((f) => f.id !== flavorId));
+
+      // Refresh the flavors list to ensure consistency
+      try {
+        await fetchFlavors();
+      } catch (refreshError) {
+        console.error("Error refreshing flavors after deletion:", refreshError);
+        // Don't fail the deletion if refresh fails
+      }
+
+      toast.success("Flavor deleted successfully");
+      
+      // Close modal after successful deletion
+      setDeleteFlavorModal({ isOpen: false, flavorId: null, flavorName: "" });
     } catch (err: unknown) {
       const errorMessage =
         (err as { response?: { data?: { message?: string } } })?.response?.data
           ?.message || "Failed to delete flavor";
       setError(errorMessage);
       toast.error(errorMessage);
+    } finally {
+      setDeletingFlavor((prev) => ({ ...prev, [flavorId]: false }));
+      setDeletingFromModal(false);
+    }
+  };
+
+  const handleDeleteFlavorClick = (flavor: Flavor) => {
+    setDeleteFlavorModal({
+      isOpen: true,
+      flavorId: flavor.id,
+      flavorName: flavor.name,
+    });
+  };
+
+  const handleConfirmDeleteFlavor = () => {
+    if (deleteFlavorModal.flavorId) {
+      deleteFlavor(deleteFlavorModal.flavorId);
+    }
+  };
+
+  const handleCancelDeleteFlavor = () => {
+    setDeleteFlavorModal({
+      isOpen: false,
+      flavorId: null,
+      flavorName: "",
+    });
+  };
+
+  const handleEditProductClick = (product: Product) => {
+    console.log("Edit product clicked:", product);
+    setEditProductModal({
+      isOpen: true,
+      product: product,
+    });
+  };
+
+  const handleCloseEditProduct = () => {
+    setEditProductModal({
+      isOpen: false,
+      product: null,
+    });
+  };
+
+  const handleSaveProduct = async (updatedProduct: Product, imageFile?: File | null) => {
+    setSaving(true);
+    try {
+      await updateProductByRow(updatedProduct, updatedProduct, imageFile);
+      setEditProductModal({
+        isOpen: false,
+        product: null,
+      });
+      toast.success("Product updated successfully");
+    } catch (error) {
+      toast.error("Failed to update product");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditFlavorClick = (flavor: Flavor) => {
+    console.log("Edit flavor clicked:", flavor);
+    setEditFlavorModal({
+      isOpen: true,
+      flavor: flavor,
+    });
+  };
+
+  const handleCloseEditFlavor = () => {
+    setEditFlavorModal({
+      isOpen: false,
+      flavor: null,
+    });
+  };
+
+  const handleSaveFlavor = async (updatedFlavor: Flavor, imageFile?: File | null) => {
+    setSaving(true);
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      const { id } = updatedFlavor;
+      
+      if (!id) {
+        throw new Error("Missing flavor ID");
+      }
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append("name", updatedFlavor.name);
+      formData.append("aliases", JSON.stringify(updatedFlavor.aliases));
+      formData.append("active", String(updatedFlavor.active));
+
+      if (imageFile) {
+        formData.append("flavorImage", imageFile);
+      }
+
+      const { data } = await axios.put(
+        `${API_URL}/admin/flavors/${id}`,
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      // Refresh the flavors list to ensure consistency
+      await fetchFlavors();
+      
+      setEditFlavorModal({
+        isOpen: false,
+        flavor: null,
+      });
+      toast.success("Flavor updated successfully");
+    } catch (error) {
+      console.error("Error updating flavor:", error);
+      toast.error("Failed to update flavor");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -1008,19 +1107,21 @@ const AdminPageContent = () => {
       if (imageFile) fd.append("productImage", imageFile);
       if (!imageFile && form.imageUrl) fd.append("imageUrl", form.imageUrl);
 
-      const { data: dataResp } = await axios.post<Product>(
+      await axios.post<Product>(
         `${API_URL}/products/admin/products`,
         fd,
         {
           withCredentials: true,
         }
       );
-      const data = dataResp as Product;
-      setProducts((prev) => [data, ...prev]);
+      
+      // Refresh the products list to ensure we have the complete data
+      await fetchProducts();
       resetForm();
       if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
       setPreview(null);
       setImageFile(null);
+      toast.success("Product created successfully");
     } catch (e) {
       const message =
         (e as { message?: string })?.message ||
@@ -1181,6 +1282,7 @@ const AdminPageContent = () => {
   const deleteProduct = async (id: string) => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
     setDeleting((prev) => ({ ...prev, [id]: true }));
+    setDeletingFromModal(true);
     setError(null);
     try {
       try {
@@ -1198,7 +1300,21 @@ const AdminPageContent = () => {
           throw e;
         }
       }
+      
+      // Remove product from local state
       setProducts((prev) => prev.filter((p) => p.id !== id));
+      
+      // Refresh the products list to ensure consistency
+      try {
+        await fetchProducts();
+      } catch (refreshError) {
+        console.error("Error refreshing products after deletion:", refreshError);
+        // Don't fail the deletion if refresh fails
+      }
+      
+      toast.success("Product deleted successfully");
+      // Close modal after successful deletion
+      setDeleteModal({ isOpen: false, productId: null, productName: "" });
     } catch (e) {
       const message =
         (e as { message?: string })?.message ||
@@ -1207,7 +1323,30 @@ const AdminPageContent = () => {
       toast.error(message);
     } finally {
       setDeleting((prev) => ({ ...prev, [id]: false }));
+      setDeletingFromModal(false);
     }
+  };
+
+  const handleDeleteClick = (product: Product) => {
+    setDeleteModal({
+      isOpen: true,
+      productId: product.id,
+      productName: product.name,
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteModal.productId) {
+      deleteProduct(deleteModal.productId);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModal({
+      isOpen: false,
+      productId: null,
+      productName: "",
+    });
   };
 
   const updateInventory = async (flavorId: string, newStock: number) => {
@@ -1262,7 +1401,8 @@ const AdminPageContent = () => {
           await fetchSystemConfig();
           break;
       }
-    } catch {
+    } catch (fetchError) {
+      console.error("Error fetching data:", fetchError);
       setError("Failed to load data");
       toast.error("Failed to load data");
     } finally {
@@ -1319,7 +1459,7 @@ const AdminPageContent = () => {
   }
 
   return (
-    <div className="w-full h-full layout">
+    <div className="w-full min-h-screen bg-white p-4 sm:p-6">
       <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-black mb-4 sm:mb-6">Add Product</h1>
 
       {error && (
@@ -1627,81 +1767,130 @@ const AdminPageContent = () => {
               <div className="text-gray-500 text-sm sm:text-base">No products found</div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              {/* Mobile Card View */}
+              <div className="block md:hidden space-y-4">
+                {products.map((product) => (
+                  <div key={product.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex gap-3 mb-3">
+                      {product.imageUrl ? (
+                        <img
+                          src={normalizeImageSrc(product.imageUrl)}
+                          alt={product.name}
+                          className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <span className="text-gray-400 text-xs">No image</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-gray-900 mb-1 truncate">{product.name}</h3>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2">
+                          {product.category}
+                        </span>
+                        {product.description && (
+                          <p className="text-xs text-gray-500 line-clamp-2">{product.description}</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 mb-3 pb-3 border-b border-gray-200">
+                      <div>
+                        <span className="text-xs text-gray-600 block mb-1">Price</span>
+                        <span className="text-sm font-semibold text-gray-900">${product.price}</span>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-600 block mb-1">Stock</span>
+                        <span className="text-sm font-semibold text-gray-900">{product.stock}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditProductClick(product)}
+                        className="flex-1 px-3 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(product)}
+                        disabled={deleting[product.id]}
+                        className="flex-1 px-3 py-2 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {deleting[product.id] ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700">Image</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700">Name</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700">Category</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700">Price</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700">Stock</th>
-                    <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700">Actions</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Image</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Name</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Category</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Price</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Stock</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
                 </tr>
               </thead>
                 <tbody className="divide-y divide-gray-200">
                   {products.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-2 sm:px-4 py-2 sm:py-3">
+                        <td className="px-4 py-3">
                         {product.imageUrl ? (
                           <img
                             src={normalizeImageSrc(product.imageUrl)}
                             alt={product.name}
-                            className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg"
+                              className="w-16 h-16 object-cover rounded-lg"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
                             }}
                           />
                         ) : (
-                          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
                             <span className="text-gray-400 text-xs">No image</span>
                           </div>
                         )}
                       </td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900">{product.name}</div>
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
                         <div className="text-xs text-gray-500">{product.description}</div>
                       </td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3">
+                        <td className="px-4 py-3">
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {product.category}
                         </span>
                       </td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3">
-                        <div className="text-xs sm:text-sm font-medium text-gray-900">${product.price}</div>
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-gray-900">${product.price}</div>
                       </td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3">
-                        <div className="text-xs sm:text-sm text-gray-900">{product.stock}</div>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-900">{product.stock}</div>
                       </td>
-                      <td className="px-2 sm:px-4 py-2 sm:py-3">
-                        <div className="flex gap-1 sm:gap-2">
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
                           <button
-                            onClick={() => {
-                              setForm({
-                                name: product.name,
-                                description: product.description,
-                                price: product.price,
-                                stock: product.stock,
-                                category: product.category,
-                                imageUrl: product.imageUrl || "",
-                              });
-                              setPreview(product.imageUrl ? normalizeImageSrc(product.imageUrl) : null);
-                              setImageFile(null);
-                            }}
-                            className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                              onClick={() => handleEditProductClick(product)}
+                              className="px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                           >
                             Edit
                           </button>
                           <button
-                            onClick={() => {
-                              if (confirm(`Are you sure you want to delete "${product.name}"?`)) {
-                                deleteProduct(product.id);
-                              }
-                            }}
-                            className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                          >
-                            Delete
+                              onClick={() => handleDeleteClick(product)}
+                              disabled={deleting[product.id]}
+                              className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {deleting[product.id] ? "Deleting..." : "Delete"}
                           </button>
                         </div>
                       </td>
@@ -1710,6 +1899,7 @@ const AdminPageContent = () => {
               </tbody>
             </table>
             </div>
+            </>
           )}
         </div>
         </div>
@@ -1735,7 +1925,6 @@ const AdminPageContent = () => {
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Flavor Image
                   </label>
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <input
                       type="file"
                       accept="image/*"
@@ -1792,10 +1981,15 @@ const AdminPageContent = () => {
                     }}
                     className="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs sm:file:text-sm file:font-medium file:bg-[#FF5D39] file:text-white hover:file:bg-[#FF5D39]/90"
                   />
-                  <span className="text-xs sm:text-sm text-gray-500 self-center">
-                    {flavorImageFile ? flavorImageFile.name : "No file chosen"}
-                  </span>
+                  {flavorImagePreview && (
+                    <div className="mt-3">
+                      <img
+                        src={flavorImagePreview}
+                        alt="Preview"
+                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                      />
               </div>
+                  )}
             </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -1808,7 +2002,7 @@ const AdminPageContent = () => {
                     value={newFlavor.name}
                     onChange={(e) => setNewFlavor({ ...newFlavor, name: e.target.value })}
                     placeholder="Enter flavor name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base text-gray-900"
                             />
                           </div>
                 
@@ -1821,7 +2015,7 @@ const AdminPageContent = () => {
                     value={newFlavor.aliases}
                     onChange={(e) => setNewFlavor({ ...newFlavor, aliases: e.target.value })}
                     placeholder="e.g., Berry, Blue"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base text-gray-900"
                             />
                           </div>
                         </div>
@@ -1846,39 +2040,6 @@ const AdminPageContent = () => {
               >
                 {creatingFlavor ? "Creating..." : "Create Flavor"}
                             </button>
-            </div>
-                        </div>
-
-          {/* Bulk Update Flavor Images */}
-          <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-bold text-black mb-3 sm:mb-4">Bulk Update Flavor Images</h2>
-            
-            <div className="space-y-3 sm:space-y-4">
-              <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  Image URL for All Flavors
-                </label>
-                            <input
-                  type="url"
-                  value={bulkImageUrl}
-                  onChange={(e) => setBulkImageUrl(e.target.value)}
-                  placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
-                />
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-center">
-                            <button
-                  onClick={bulkUpdateFlavorImages}
-                  disabled={bulkUpdating}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 text-sm sm:text-base"
-                            >
-                  {bulkUpdating ? "Updating..." : "Update All Flavors"}
-                            </button>
-                <span className="text-xs sm:text-sm text-gray-600">
-                  This will update all {flavors.length} flavors with the same image
-                </span>
-                          </div>
                         </div>
           </div>
 
@@ -1895,23 +2056,76 @@ const AdminPageContent = () => {
                 </p>
                       </div>
                     ) : (
-              <div className="space-y-3 sm:space-y-4">
+              <>
+                {/* Mobile Card View */}
+                <div className="block md:hidden space-y-4">
                 {flavors.map((flavor) => (
                   <div
                     key={flavor.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                      className="border border-gray-200 rounded-lg p-4 bg-gray-50"
                   >
-                    <div className="flex items-center gap-3">
+                      <div className="flex gap-3 mb-3">
                       {flavor.imageUrl && (
                         <img
                           src={normalizeImageSrc(flavor.imageUrl, flavor.updatedAt)}
                                 alt={flavor.name}
-                          className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg"
+                            className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold text-gray-900 mb-1">{flavor.name}</h3>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mb-2 ${
+                              flavor.active
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {flavor.active ? "Active" : "Inactive"}
+                          </span>
+                          <p className="text-xs text-gray-500">
+                            {flavor.aliases.length > 0 ? flavor.aliases.join(", ") : "No aliases"}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditFlavorClick(flavor)}
+                          className="flex-1 px-3 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteFlavorClick(flavor)}
+                          disabled={deletingFlavor[flavor.id]}
+                          className="flex-1 px-3 py-2 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {deletingFlavor[flavor.id] ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop List View */}
+                <div className="hidden md:block space-y-3">
+                  {flavors.map((flavor) => (
+                    <div
+                      key={flavor.id}
+                      className="flex items-center justify-between gap-3 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        {flavor.imageUrl && (
+                          <img
+                            src={normalizeImageSrc(flavor.imageUrl, flavor.updatedAt)}
+                            alt={flavor.name}
+                            className="w-16 h-16 object-cover rounded-lg"
                         />
                       )}
                       <div>
-                        <h3 className="font-semibold text-black text-sm sm:text-base">{flavor.name}</h3>
-                        <p className="text-xs sm:text-sm text-gray-600">
+                          <h3 className="font-semibold text-black text-base">{flavor.name}</h3>
+                          <p className="text-sm text-gray-600">
                           {flavor.aliases.length > 0 ? flavor.aliases.join(", ") : "No aliases"}
                         </p>
                       </div>
@@ -1928,31 +2142,26 @@ const AdminPageContent = () => {
                                 {flavor.active ? "Active" : "Inactive"}
                               </span>
                       
-                      <div className="flex gap-1 sm:gap-2">
+                        <div className="flex gap-2">
                           <button
-                            onClick={() => {
-                              setEditingFlavor(flavor.id);
-                              setEditFlavorData({
-                                name: flavor.name,
-                                aliases: flavor.aliases.join(", "),
-                                active: flavor.active,
-                              });
-                          }}
-                          className="px-2 sm:px-3 py-1 sm:py-2 bg-blue-600 text-white rounded text-xs sm:text-sm hover:opacity-90 transition-opacity"
+                            onClick={() => handleEditFlavorClick(flavor)}
+                            className="px-3 py-2 bg-blue-600 text-white rounded text-sm hover:opacity-90 transition-opacity"
                           >
                             Edit
                           </button>
                           <button
-                            onClick={() => deleteFlavor(flavor.id)}
-                          className="px-2 sm:px-3 py-1 sm:py-2 bg-red-600 text-white rounded text-xs sm:text-sm hover:opacity-90 transition-opacity"
+                            onClick={() => handleDeleteFlavorClick(flavor)}
+                            disabled={deletingFlavor[flavor.id]}
+                            className="px-3 py-2 bg-red-600 text-white rounded text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            Delete
+                            {deletingFlavor[flavor.id] ? "Deleting..." : "Delete"}
                           </button>
                         </div>
                     </div>
                   </div>
                 ))}
                 </div>
+              </>
               )}
           </div>
         </div>
@@ -2348,6 +2557,45 @@ const AdminPageContent = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Product Confirmation Modal */}
+      <SimpleModal
+        isOpen={deleteModal.isOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${deleteModal.productName}"? This action cannot be undone.`}
+        isLoading={deletingFromModal}
+      />
+
+      {/* Delete Flavor Confirmation Modal */}
+      <SimpleModal
+        isOpen={deleteFlavorModal.isOpen}
+        onClose={handleCancelDeleteFlavor}
+        onConfirm={handleConfirmDeleteFlavor}
+        title="Delete Flavor"
+        message={`Are you sure you want to delete "${deleteFlavorModal.flavorName}"? This action cannot be undone and will affect any products using this flavor.`}
+        isLoading={deletingFromModal}
+      />
+
+      {/* Edit Product Modal */}
+      <EditProductModal
+        isOpen={editProductModal.isOpen}
+        onClose={handleCloseEditProduct}
+        onSave={handleSaveProduct}
+        product={editProductModal.product}
+        productCategories={productCategories}
+        isLoading={saving}
+      />
+
+      {/* Edit Flavor Modal */}
+      <EditFlavorModal
+        isOpen={editFlavorModal.isOpen}
+        onClose={handleCloseEditFlavor}
+        onSave={handleSaveFlavor}
+        flavor={editFlavorModal.flavor}
+        isLoading={saving}
+      />
     </div>
   );
 };

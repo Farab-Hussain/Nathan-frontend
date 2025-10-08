@@ -326,17 +326,17 @@ const AdminOrdersPage = () => {
   return (
     <div className="w-full h-full layout">
       {/* Header with Stats */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-black">Order Management</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-black">Order Management</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
             Managing {totalOrders.toLocaleString()} orders • Page {page} of{" "}
             {totalPages}
           </p>
         </div>
 
         {/* Auto-refresh controls */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-2">
             <label className="flex items-center gap-2 text-sm text-black">
               <input
@@ -345,7 +345,8 @@ const AdminOrdersPage = () => {
                 onChange={(e) => setAutoRefresh(e.target.checked)}
                 className="rounded border-gray-300"
               />
-              Auto-refresh
+              <span className="hidden sm:inline">Auto-refresh</span>
+              <span className="sm:hidden">Auto</span>
             </label>
             {autoRefresh && (
               <select
@@ -364,7 +365,7 @@ const AdminOrdersPage = () => {
           <button
             onClick={fetchAdminOrders}
             disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm sm:text-base"
           >
             {loading ? "Refreshing..." : "Refresh"}
           </button>
@@ -377,7 +378,7 @@ const AdminOrdersPage = () => {
           Filters & Search
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {/* Search */}
           <div className="xl:col-span-2">
             <label
@@ -501,7 +502,7 @@ const AdminOrdersPage = () => {
         </div>
 
         {/* Value Range Filter */}
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label
               htmlFor="min-value-input"
@@ -654,7 +655,8 @@ const AdminOrdersPage = () => {
 
       {/* Orders Table */}
       <div className="bg-white rounded-lg border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="min-w-full">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
@@ -697,7 +699,7 @@ const AdminOrdersPage = () => {
                   Tracking
                 </th>
                 <th className="px-4 py-3 text-left text-black font-semibold">
-                  Payment Status
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -870,18 +872,175 @@ const AdminOrdersPage = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Card View */}
+        <div className="lg:hidden">
+          {loading && (
+            <div className="p-8 text-center">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#FF5D39] mr-3"></div>
+                Loading orders...
+              </div>
+            </div>
+          )}
+
+          {!loading && adminOrders.length === 0 && (
+            <div className="p-8 text-center text-gray-500">
+              No orders found matching your criteria
+            </div>
+          )}
+
+          {!loading && adminOrders.map((order, idx) => (
+            <div key={order.id} className="border-b border-gray-200 p-4 last:border-b-0">
+              {/* Header with checkbox and order ID */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedOrders.has(order.id)}
+                    onChange={() => handleSelectOrder(order.id)}
+                    className="rounded border-gray-300"
+                  />
+                  <div>
+                    <div className="font-mono text-sm text-black font-medium">
+                      {order.id.slice(0, 12)}...
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {order.createdAt
+                        ? new Date(order.createdAt).toLocaleDateString()
+                        : "N/A"}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold text-black text-lg">
+                    ${order.total.toFixed(2)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Customer Info */}
+              <div className="mb-3">
+                <div className="text-sm font-medium text-black">
+                  {order.user?.name || "N/A"}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {order.user?.email || order.userId.slice(0, 8)}
+                </div>
+              </div>
+
+              {/* Status and Payment */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                <span
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                    order.status
+                  )}`}
+                >
+                  {order.status}
+                </span>
+                <span
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(
+                    order.paymentStatus
+                  )}`}
+                >
+                  {order.paymentStatus}
+                </span>
+              </div>
+
+              {/* Items and Shipping */}
+              <div className="grid grid-cols-2 gap-4 mb-3 text-sm">
+                <div>
+                  <div className="text-gray-500 text-xs">Items</div>
+                  <div className="text-black">
+                    {order.orderItems?.length || 0} items
+                  </div>
+                </div>
+                <div>
+                  <div className="text-gray-500 text-xs">Shipping</div>
+                  <div className="text-black">
+                    {order.shippingStatus ? (
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        order.shippingStatus === 'delivered' ? 'bg-green-100 text-green-800' :
+                        order.shippingStatus === 'shipped' ? 'bg-blue-100 text-blue-800' :
+                        order.shippingStatus === 'in_transit' ? 'bg-yellow-100 text-yellow-800' :
+                        order.shippingStatus === 'failed' ? 'bg-red-100 text-red-800' :
+                        order.shippingStatus === 'label_created' ? 'bg-purple-100 text-purple-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {order.shippingStatus === 'failed' ? 'Failed' : 
+                         order.shippingStatus === 'label_created' ? 'Label Created' :
+                         order.shippingStatus}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">No shipment</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tracking */}
+              {order.trackingNumber && (
+                <div className="mb-3">
+                  <div className="text-gray-500 text-xs mb-1">Tracking</div>
+                  <div className="font-mono text-xs text-blue-600">
+                    {order.trackingNumber.slice(0, 12)}...
+                  </div>
+                  {order.trackingUrl && (
+                    <a 
+                      href={order.trackingUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-500 hover:text-blue-700 underline"
+                    >
+                      Track Package
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                <select
+                  value={order.status}
+                  onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                  className="flex-1 text-xs px-2 py-1 border border-gray-300 rounded text-black bg-white"
+                  disabled={bulkActionLoading}
+                >
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="shipped">Shipped</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <button
+                  onClick={() => handleViewOrder(order.id)}
+                  className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                >
+                  View
+                </button>
+              </div>
+
+              {/* Error Display */}
+              {order.shippingError && (
+                <div className="mt-2 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                  Shipping Error: {order.shippingError}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-6">
-          <div className="text-sm text-gray-600">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6">
+          <div className="text-sm text-gray-600 text-center sm:text-left">
             Showing {(page - 1) * limit + 1} to{" "}
             {Math.min(page * limit, totalOrders)} of{" "}
             {totalOrders.toLocaleString()} orders
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2">
             <button
               className="px-3 py-2 rounded border border-gray-300 text-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               onClick={() => setPage(1)}
