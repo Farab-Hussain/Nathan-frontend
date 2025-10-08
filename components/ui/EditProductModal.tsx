@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 interface Product {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   price: number;
-  stock: number;
+  stock?: number;
   category: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   updatedAt?: string;
 }
 
@@ -45,7 +45,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         name: product.name,
         description: product.description || '',
         price: product.price,
-        stock: product.stock,
+        stock: product.stock || 0,
         category: product.category,
       });
       // Set image preview if product has an image

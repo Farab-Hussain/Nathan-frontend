@@ -2,16 +2,13 @@
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useState,
   Suspense,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { useUser } from "@/hooks/useUser";
-import Image from "next/image";
 import { toast } from "react-toastify";
-import ConfirmModal from "@/components/ui/ConfirmModal";
 import SimpleModal from "@/components/ui/SimpleModal";
 import EditProductModal from "@/components/ui/EditProductModal";
 import EditFlavorModal from "@/components/ui/EditFlavorModal";
@@ -210,25 +207,8 @@ const AdminPageContent = () => {
   };
 
   // File size validation function
-  const validateFileSize = (file: File, maxSizeMB: number = 50): boolean => {
-    const sizeMB = file.size / (1024 * 1024);
-    return sizeMB <= maxSizeMB;
-  };
-
   // Flavors state
   const [flavors, setFlavors] = useState<Flavor[]>([]);
-  const [editingFlavor, setEditingFlavor] = useState<string | null>(null);
-  const [editFlavorData, setEditFlavorData] = useState({
-    name: "",
-    aliases: "",
-    active: true,
-  });
-  const [editFlavorImageFile, setEditFlavorImageFile] = useState<File | null>(
-    null
-  );
-  const [editFlavorImagePreview, setEditFlavorImagePreview] = useState<
-    string | null
-  >(null);
 
   // Helper function to normalize image src with cache busting
   const normalizeImageSrc = (src?: string | null, updatedAt?: string) => {
@@ -295,15 +275,8 @@ const AdminPageContent = () => {
 
   // Products state
   const [products, setProducts] = useState<Product[]>([]);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [pagination, setPagination] = useState<{
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  } | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [page] = useState(1);
+  const [limit] = useState(10);
   const [form, setForm] = useState<Partial<Product>>({
     name: "",
     price: 0,
@@ -318,8 +291,8 @@ const AdminPageContent = () => {
   const [deletingFlavor, setDeletingFlavor] = useState<{ [key: string]: boolean }>({});
   const [deletingFromModal, setDeletingFromModal] = useState(false);
   const [productCategories, setProductCategories] = useState<string[]>([]);
-  const [categoryFilter, setCategoryFilter] = useState<string>("");
-  const [search, setSearch] = useState<string>("");
+  const [categoryFilter] = useState<string>("");
+  const [search] = useState<string>("");
   const [preview, setPreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [availableFlavors, setAvailableFlavors] = useState<
@@ -357,23 +330,6 @@ const AdminPageContent = () => {
   const getFlavorNameById = (id: string): string => {
     const found = availableFlavors.find((f) => f.id === id);
     return found ? found.name : id;
-  };
-
-  const formatFlavors = (flavors?: Array<FlavorDTO>): string => {
-    if (!Array.isArray(flavors) || flavors.length === 0) return "-";
-    return flavors
-      .map((f) => {
-        const name =
-          f.name && String(f.name).trim() !== ""
-            ? String(f.name)
-            : getFlavorNameById(String(f.id));
-        const qtyRaw =
-          typeof f.quantity === "number" ? f.quantity : Number(f.quantity || 1);
-        const quantity =
-          Number.isFinite(qtyRaw) && qtyRaw > 0 ? Number(qtyRaw) : 1;
-        return `${name} (${quantity})`;
-      })
-      .join(", ");
   };
 
   // Extract/normalize flavors from various backend shapes
@@ -632,7 +588,6 @@ const AdminPageContent = () => {
         withCredentials: true,
       });
       setProducts(Array.isArray(data.products) ? data.products : []);
-      setPagination(data.pagination || null);
     } catch (e) {
       // Fallback: try alternate mount
       if (axios.isAxiosError(e) && e.response?.status === 404) {
@@ -656,7 +611,6 @@ const AdminPageContent = () => {
             withCredentials: true,
           });
           setProducts(Array.isArray(data.products) ? data.products : []);
-          setPagination(data.pagination || null);
           setError(null);
         } catch (e2) {
           const message =
@@ -665,7 +619,6 @@ const AdminPageContent = () => {
           setError(message);
           toast.error(message);
           setProducts([]);
-          setPagination(null);
         }
       } else {
         const message =
@@ -674,7 +627,6 @@ const AdminPageContent = () => {
         setError(message);
         toast.error(message);
         setProducts([]);
-        setPagination(null);
       }
     } finally {
       setLoading(false);
@@ -745,7 +697,7 @@ const AdminPageContent = () => {
             name: flavor.name,
           }));
         setAvailableFlavors(activeFlavors);
-      } catch (e2) {
+      } catch {
         toast.error("Failed to load flavors");
         setAvailableFlavors([]);
       }
@@ -886,7 +838,7 @@ const AdminPageContent = () => {
         product: null,
       });
       toast.success("Product updated successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to update product");
     } finally {
       setSaving(false);
@@ -928,7 +880,7 @@ const AdminPageContent = () => {
         formData.append("flavorImage", imageFile);
       }
 
-      const { data } = await axios.put(
+      await axios.put(
         `${API_URL}/admin/flavors/${id}`,
         formData,
         {
@@ -952,89 +904,6 @@ const AdminPageContent = () => {
     }
   };
 
-  const updateFlavorAdmin = async (id: string) => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    setError(null);
-    try {
-      // Validate file size before upload
-      if (editFlavorImageFile && !validateFileSize(editFlavorImageFile, 50)) {
-        setError(
-          "Image file is too large. Please compress the image and try again."
-        );
-        toast.error(
-          "Image file is too large. Please compress the image and try again."
-        );
-        return;
-      }
-
-      const aliasesArray = editFlavorData.aliases
-        .split(",")
-        .map((alias) => alias.trim())
-        .filter((alias) => alias.length > 0);
-
-      // Create FormData for file upload
-      const formData = new FormData();
-      formData.append("name", editFlavorData.name.trim());
-      formData.append("aliases", JSON.stringify(aliasesArray));
-      formData.append("active", editFlavorData.active.toString());
-
-      if (editFlavorImageFile) {
-        formData.append("flavorImage", editFlavorImageFile);
-      }
-
-      const { data } = await axios.put(
-        `${API_URL}/admin/flavors/${id}`,
-        formData,
-        {
-          withCredentials: true,
-          // Don't set Content-Type manually - let axios handle it for FormData
-        }
-      );
-
-      // Update the flavor in state with fresh data
-      const updatedFlavor = data.flavor || data;
-      setFlavors((prev) =>
-        prev.map((f) =>
-          f.id === id
-            ? { ...updatedFlavor, updatedAt: new Date().toISOString() }
-            : f
-        )
-      );
-
-      setEditingFlavor(null);
-      setEditFlavorImageFile(null);
-      setEditFlavorImagePreview(null);
-
-      // Refresh the flavors list to ensure consistency
-      await fetchFlavors();
-    } catch (err: unknown) {
-      const errorResponse = err as {
-        response?: {
-          status?: number;
-          data?: {
-            message?: string;
-            code?: string;
-            maxSize?: string;
-          };
-        };
-      };
-
-      if (errorResponse?.response?.status === 413) {
-        setError(
-          "File too large. Please compress your image and try again. Maximum size is 50MB."
-        );
-        toast.error(
-          "File too large. Please compress your image and try again. Maximum size is 50MB."
-        );
-      } else {
-        const errorMessage =
-          errorResponse?.response?.data?.message || "Failed to update flavor";
-        setError(errorMessage);
-        toast.error(errorMessage);
-      }
-    }
-  };
-
   // Product management functions
   const resetForm = () =>
     setForm({
@@ -1046,44 +915,6 @@ const AdminPageContent = () => {
       sku: "",
       flavors: [],
     });
-
-  const addFlavor = () => {
-    if (form.flavors && form.flavors.length < 3) {
-      setForm((prev) => ({
-        ...prev,
-        flavors: [...(prev.flavors || []), { id: "", name: "", quantity: 1 }],
-      }));
-    }
-  };
-
-  const removeFlavor = (index: number) => {
-    setForm((prev) => ({
-      ...prev,
-      flavors: prev.flavors?.filter((_, i) => i !== index) || [],
-    }));
-  };
-
-  const updateFlavor = (
-    index: number,
-    field: keyof ProductFlavor,
-    value: string | number
-  ) => {
-    setForm((prev) => {
-      const nextFlavors = [...(prev.flavors || [])];
-      const current = nextFlavors[index] || { id: "", name: "", quantity: 1 };
-      if (field === "id") {
-        const selected = availableFlavors.find((f) => f.id === value);
-        nextFlavors[index] = {
-          ...current,
-          id: String(value || ""),
-          name: selected?.name || current.name || "",
-        };
-      } else {
-        nextFlavors[index] = { ...current, [field]: value } as ProductFlavor;
-      }
-      return { ...prev, flavors: nextFlavors };
-    });
-  };
 
   const createProduct = async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -1371,11 +1202,6 @@ const AdminPageContent = () => {
       setUpdatingInventory((prev) => ({ ...prev, [flavorId]: false }));
     }
   };
-
-  const totalPages = useMemo(
-    () => Math.max(1, pagination?.pages || 1),
-    [pagination?.pages]
-  );
 
   const fetchData = useCallback(async () => {
     if (!user || user.role !== "admin") {
@@ -2185,7 +2011,7 @@ const AdminPageContent = () => {
                 </div>
               </div>
               <div className="text-right">
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                <span className="inline-flex items-center px-1 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
                   {inventoryAlerts.length} Active Alert{inventoryAlerts.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -2242,8 +2068,7 @@ const AdminPageContent = () => {
                               min="0"
                         placeholder="Update stock"
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
-                        onChange={(e) => {
-                          const newStock = parseInt(e.target.value) || 0;
+                        onChange={() => {
                           // Update local state for immediate UI feedback
                         }}
                       />
@@ -2362,8 +2187,7 @@ const AdminPageContent = () => {
                             min="0"
                         placeholder="Update stock"
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
-                        onChange={(e) => {
-                          const newStock = parseInt(e.target.value) || 0;
+                        onChange={() => {
                           // Update local state for immediate UI feedback
                         }}
                       />
