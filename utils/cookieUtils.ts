@@ -7,8 +7,9 @@ export const clearAuthCookies = () => {
     // Clear cookie for current domain
     document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     
-    // Clear cookie for parent domain (production)
+    // Clear cookie for parent domain (production) - with and without leading dot
     if (window.location.hostname.includes('licorice4good.com')) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.licorice4good.com;`;
       document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=licorice4good.com;`;
     }
     

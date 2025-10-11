@@ -103,6 +103,15 @@ const LoginPage = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const redirectTo = urlParams.get('redirect');
       
+      // Prevent multiple redirects by checking if we've already redirected
+      const hasRedirected = sessionStorage.getItem('justLoggedIn');
+      if (hasRedirected) {
+        return;
+      }
+      
+      // Mark that we're redirecting
+      sessionStorage.setItem('justLoggedIn', 'true');
+      
       // Redirect admin users to dashboard, regular users to home
       setTimeout(() => {
         if (redirectTo) {
@@ -112,9 +121,9 @@ const LoginPage = () => {
           // Force a full page reload to ensure user data is fresh
           window.location.href = "/dashboard/admin";
         } else {
-          router.push("/");
+          window.location.href = "/";
         }
-      }, 1000);
+      }, 500);
     } catch (err: unknown) {
 
       if (axios.isAxiosError(err)) {

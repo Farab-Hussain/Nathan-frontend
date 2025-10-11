@@ -324,6 +324,11 @@ const AdminPageContent = () => {
   // Don't redirect in useEffect - just show access denied message
   // Redirecting causes race conditions with user data loading
 
+  // Clear login redirect flag when dashboard loads successfully
+  useEffect(() => {
+    sessionStorage.removeItem('justLoggedIn');
+  }, []);
+
   // Handle tab query parameter
   useEffect(() => {
     const tabParam = searchParams.get("tab");
