@@ -21,6 +21,11 @@ interface MeResponse {
 let userCache: { user: User | null; timestamp: number } | null = null;
 const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
+// Global function to clear user cache (call this after login/logout)
+export function clearUserCache() {
+  userCache = null;
+}
+
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);

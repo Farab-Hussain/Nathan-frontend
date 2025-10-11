@@ -6,6 +6,7 @@ import Link from "next/link";
 import AuthCard from "@/components/ui/auth/AuthCard";
 import PasswordInput from "@/components/ui/auth/PasswordInput";
 import { clearAuthCookies, checkCookieExpiry } from "@/utils/cookieUtils";
+import { clearUserCache } from "@/hooks/useUser";
 import { ToastContainer, toast } from "react-toastify";
 
 // Helper function for fallback error messages
@@ -99,26 +100,21 @@ const LoginPage = () => {
       toast.success("Login successful!");
       setSuccess("Login successful!");
       
+      // Clear user cache to ensure fresh data is fetched after login
+      clearUserCache();
+      
       // Check for redirect parameter
       const urlParams = new URLSearchParams(window.location.search);
       const redirectTo = urlParams.get('redirect');
       
-      // Prevent multiple redirects by checking if we've already redirected
-      const hasRedirected = sessionStorage.getItem('justLoggedIn');
-      if (hasRedirected) {
-        return;
-      }
-      
-      // Mark that we're redirecting
-      sessionStorage.setItem('justLoggedIn', 'true');
-      
-      // Redirect admin users to dashboard, regular users to home
+      // Small delay to show success message, then force full page reload
+      // This ensures the cookie is properly set and read by the next page
       setTimeout(() => {
         if (redirectTo) {
           // Redirect to the originally requested page
           window.location.href = redirectTo;
         } else if (userData?.role === "admin") {
-          // Force a full page reload to ensure user data is fresh
+          // Redirect to dashboard with full page reload
           window.location.href = "/dashboard/admin";
         } else {
           window.location.href = "/";

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
 
@@ -18,12 +18,20 @@ export default function GlobalVerificationCheck() {
   const { user, loading } = useUser();
   const router = useRouter();
   const pathname = usePathname();
+  const lastPathname = useRef(pathname);
   const hasRedirected = useRef(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Reset redirect flag when pathname changes
+  useEffect(() => {
+    if (lastPathname.current !== pathname) {
+      hasRedirected.current = false;
+      lastPathname.current = pathname;
+    }
+  }, [pathname]);
 
   useEffect(() => {
-    // Don't run checks while loading, redirecting, or if already redirected
-    if (loading || hasRedirected.current || isRedirecting) {
+    // Don't run checks while loading or if already redirected
+    if (loading || hasRedirected.current) {
       return;
     }
 
@@ -32,41 +40,34 @@ export default function GlobalVerificationCheck() {
       // But allow them to stay on verification-related pages
       if (!pathname.startsWith("/auth/verify")) {
         hasRedirected.current = true;
-        setIsRedirecting(true);
         router.replace(`/auth/verify-email?email=${encodeURIComponent(user.email)}`);
       }
       return;
     }
 
-    // If user is verified and on auth pages, redirect away (ONE TIME ONLY)
+    // If user is verified and on auth pages, redirect away
     const isOnAuthPage = AUTH_PAGES.some(authPath => pathname.startsWith(authPath));
     if (user && user.isVerified && isOnAuthPage) {
-      // Mark as redirected immediately to prevent multiple redirects
       hasRedirected.current = true;
-      setIsRedirecting(true);
       
       // Check if there's a redirect URL in the query params
       const urlParams = new URLSearchParams(window.location.search);
       const redirectTo = urlParams.get('redirect');
       
-      // Use timeout to allow state to update before redirect
-      setTimeout(() => {
-        // If there's a specific redirect, use it
-        if (redirectTo && redirectTo !== pathname) {
-          window.location.href = redirectTo;
-          return;
-        }
-        
-        // If admin user and no specific redirect, send to dashboard
-        if (user.role === 'admin') {
-          window.location.href = '/dashboard/admin';
-          return;
-        }
-        
-        // Default redirect for regular users
-        window.location.href = '/';
-      }, 100);
+      // Use window.location.href for full page reload to ensure cookie is read
+      if (redirectTo && redirectTo !== pathname) {
+        window.location.href = redirectTo;
+        return;
+      }
       
+      // If admin user and no specific redirect, send to dashboard
+      if (user.role === 'admin') {
+        window.location.href = '/dashboard/admin';
+        return;
+      }
+      
+      // Default redirect for regular users
+      window.location.href = '/';
       return;
     }
 
@@ -74,13 +75,12 @@ export default function GlobalVerificationCheck() {
     const isProtectedPath = VERIFICATION_REQUIRED_PATHS.some(path => pathname.startsWith(path));
     if (!user && isProtectedPath) {
       hasRedirected.current = true;
-      setIsRedirecting(true);
       // Save the current path to redirect back after login
       const currentPath = pathname;
       router.replace(`/auth/login?redirect=${encodeURIComponent(currentPath)}`);
       return;
     }
-  }, [user, loading, pathname, router, isRedirecting]);
+  }, [user, loading, pathname, router]);
 
   // This component doesn't render anything
   return null;
