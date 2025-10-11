@@ -75,34 +75,44 @@ const OrderDetailPage = () => {
   const id = typeof params?.id === 'string' ? params.id : Array.isArray(params?.id) ? params?.id[0] : '';
   const { order, loading, error, fetchOrderById, clearOrder } = useOrdersStore();
 
-  // Authentication check
-  useEffect(() => {
-    if (!userLoading && !user) {
-      router.push("/auth/login");
-      return;
-    }
-  }, [user, userLoading, router]);
+  // Removed authentication redirect - show message instead
 
   useEffect(() => {
     if (id && user) fetchOrderById(id).catch(() => {});
     return () => clearOrder();
   }, [id, fetchOrderById, clearOrder, user]);
 
-  // Show loading while checking authentication
-  if (userLoading) {
+  // Show message if not authenticated (no redirect)
+  if (!userLoading && !user) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
-          <p className="text-black text-lg">Loading order...</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Order Details</h2>
+          <p className="text-gray-600 mb-6">
+            Login to view your order details and tracking information.
+          </p>
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push("/auth/login")}
+              className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold py-3 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all"
+            >
+              Login to View Order
+            </button>
+            <button
+              onClick={() => router.push("/shop")}
+              className="w-full border-2 border-gray-300 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-50 transition-all"
+            >
+              Continue Shopping
+            </button>
+          </div>
         </div>
       </div>
     );
-  }
-
-  // Redirect if not authenticated
-  if (!user) {
-    return null;
   }
 
   if (loading)

@@ -225,22 +225,7 @@ const Header = () => {
                 </span>
               )}
             </Link>
-            {user && (
-              <Link
-                href="/profile"
-                className="hidden lg:block text-white hover:opacity-80 transition-opacity"
-              >
-                Profile
-              </Link>
-            )}
-            <div className="hidden lg:block">
-              <CustomButton
-                title={user ? "Logout" : "Login"}
-                onClick={handleClick}
-                loading={logoutLoading}
-                loadingText={user ? "Logging out..." : "Loading..."}
-              />
-            </div>
+            {/* Removed login/profile buttons - only needed for dashboard access */}
             {/* Mobile Nav Toggle */}
             <button
               className="lg:hidden ml-2 p-2 rounded focus:outline-none focus:ring-2 focus:ring-gray-300"
@@ -355,49 +340,8 @@ const Header = () => {
                   </Link>
                 )
               )}
-            {user && (
-              <Link
-                href="/profile"
-                className="text-base font-poppins w-full text-left px-2 py-2 border-b border-gray-200"
-                onClick={() => setMobileNavOpen(false)}
-              >
-                Profile
-              </Link>
-            )}
-            {user?.role === "admin" && (
-              <Link
-                href="/dashboard/admin"
-                className="text-base font-poppins w-full text-left px-2 py-2 border-b border-gray-200"
-                onClick={() => setMobileNavOpen(false)}
-              >
-                Dashboard
-              </Link>
-            )}
+            {/* Removed profile and login/logout from mobile nav - only needed for dashboard */}
           </nav>
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-100">
-            <Link
-              href={"/cart"}
-              onClick={() => setMobileNavOpen(false)}
-              className="relative cursor-pointer"
-            >
-              <ShoppingCart className="w-6 h-6" />
-              {getItemCount() > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#FF5D39] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                  {getItemCount() > 99 ? "99+" : getItemCount()}
-                </span>
-              )}
-            </Link>
-            <CustomButton
-              title={user ? "Logout" : "Login"}
-              onClick={() => {
-                setMobileNavOpen(false);
-                handleClick();
-              }}
-              className="ml-2"
-              loading={logoutLoading}
-              loadingText={user ? "Logging out..." : "Loading..."}
-            />
-          </div>
         </div>
       </div>
     </header>

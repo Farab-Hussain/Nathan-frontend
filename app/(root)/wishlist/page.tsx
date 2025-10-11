@@ -1,8 +1,7 @@
 'use client'
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useWishlistStore, WishlistItem } from '@/store/wishlistStore';
 import { useCartStore } from '@/store/cartStore';
-import { useUser } from '@/hooks/useUser';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, Trash2, ShoppingCart } from 'lucide-react';
@@ -15,7 +14,7 @@ const WHITE = '#FFFFFF';
 
 const WishlistPage = () => {
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
+  // Removed authentication requirement - wishlist works with localStorage
   const { 
     items, 
     removeItem, 
@@ -71,13 +70,7 @@ const WishlistPage = () => {
     removing: {}
   });
 
-  // Authentication check
-  useEffect(() => {
-    if (!userLoading && !user) {
-      router.push("/auth/login");
-      return;
-    }
-  }, [user, userLoading, router]);
+  // Removed authentication check - wishlist is public
 
   const handleMoveToCart = async (item: WishlistItem) => {
     setLoadingStates(prev => ({
@@ -136,23 +129,7 @@ const WishlistPage = () => {
     }
   };
 
-  // Show loading while checking authentication
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
-          <p className="text-black text-lg">Loading wishlist...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect if not authenticated
-  if (!user) {
-    return null;
-  }
-
+  // Wishlist is now public - works with localStorage for guests
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 py-8">

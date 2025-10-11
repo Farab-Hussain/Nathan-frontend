@@ -6,7 +6,9 @@ import { useUser } from "@/hooks/useUser";
 
 type Order = {
   id: string;
-  userId: string;
+  userId: string | null;  // Nullable for guest orders
+  guestId?: string | null;  // Guest identifier
+  guestEmail?: string | null;  // Guest email
   status: string;
   paymentStatus: string;
   total: number;
@@ -170,30 +172,32 @@ const AdminOrdersPage = () => {
     fetchAdminOrders();
   }, [fetchAdminOrders]);
 
-  /*
-  const adminUpdateStatus = async (
-    orderId: string,
-    updates: { status?: string; paymentStatus?: string }
-  ) => {
+  // Handle status change for individual orders
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      await axios.put(`${API_URL}/orders/${orderId}/status`, updates, {
-        withCredentials: true,
-      });
+      await axios.put(`${API_URL}/orders/${orderId}/status`, 
+        { status: newStatus }, 
+        { withCredentials: true }
+      );
 
       // Update local state
       setAdminOrders((prev) =>
         prev.map((order) =>
-          order.id === orderId ? { ...order, ...updates } : order
+          order.id === orderId ? { ...order, status: newStatus } : order
         )
       );
     } catch (e) {
       const message =
-        (e as { message?: string })?.message || "Failed to update order";
+        (e as { message?: string })?.message || "Failed to update order status";
       setError(message);
     }
   };
-  */
+
+  // Handle view order details
+  const handleViewOrder = (orderId: string) => {
+    router.push(`/dashboard/orders/${orderId}`);
+  };
 
   // Bulk operations
   const handleBulkAction = async (action: BulkAction) => {
@@ -752,11 +756,16 @@ const AdminOrdersPage = () => {
                     <td className="px-4 py-3">
                       <div className="text-sm">
                         <div className="font-medium text-black">
-                          {order.user?.name || "N/A"}
+                          {order.user?.name || (order.guestId ? "Guest Customer" : "N/A")}
                         </div>
                         <div className="text-gray-500 text-xs">
-                          {order.user?.email || order.userId.slice(0, 8)}
+                          {order.user?.email || order.guestEmail || (order.userId ? order.userId.slice(0, 8) : "No email")}
                         </div>
+                        {order.guestId && (
+                          <div className="text-xs text-orange-600 mt-1">
+                            👤 Guest Order
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -922,11 +931,16 @@ const AdminOrdersPage = () => {
               {/* Customer Info */}
               <div className="mb-3">
                 <div className="text-sm font-medium text-black">
-                  {order.user?.name || "N/A"}
+                  {order.user?.name || (order.guestId ? "Guest Customer" : "N/A")}
                 </div>
                 <div className="text-xs text-gray-500">
-                  {order.user?.email || order.userId.slice(0, 8)}
+                  {order.user?.email || order.guestEmail || (order.userId ? order.userId.slice(0, 8) : "No email")}
                 </div>
+                {order.guestId && (
+                  <div className="text-xs text-orange-600 mt-1">
+                    👤 Guest Order
+                  </div>
+                )}
               </div>
 
               {/* Status and Payment */}

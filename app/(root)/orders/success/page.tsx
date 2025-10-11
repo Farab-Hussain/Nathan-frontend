@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useUser } from "@/hooks/useUser";
+import { useCartStore } from "@/store/cartStore";
 
 const ORANGE = "#FF5D39";
 const YELLOW = "#F1A900";
@@ -11,47 +11,37 @@ const BLACK = "#000000";
 function OrderSuccessContent() {
   const search = useSearchParams();
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
-  const [seconds, setSeconds] = useState(5);
+  const [seconds, setSeconds] = useState(8);
+  const { clearCart } = useCartStore();
 
   const orderId = search.get("order") || "";
   const sessionId = search.get("session_id") || "";
 
-  // Authentication check
+  // Removed authentication check - page is now public for guest checkout
+
+  // Clear cart immediately on successful checkout
   useEffect(() => {
-    if (!userLoading && !user) {
-      router.push("/auth/login");
-      return;
-    }
-  }, [user, userLoading, router]);
+    const clearCartOnSuccess = async () => {
+      try {
+        console.log("🛒 Clearing cart after successful checkout");
+        await clearCart();
+        console.log("✅ Cart cleared successfully on success page");
+      } catch (error) {
+        console.error("⚠️ Failed to clear cart on success page:", error);
+      }
+    };
+    
+    clearCartOnSuccess();
+  }, [clearCart]);
 
   useEffect(() => {
-    if (user) {
-      const timer = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
-      const redirect = setTimeout(() => router.replace("/profile"), 5000);
-      return () => {
-        clearInterval(timer);
-        clearTimeout(redirect);
-      };
-    }
-  }, [router, user]);
-
-  // Show loading while checking authentication
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5D39] mx-auto mb-4"></div>
-          <p className="text-black text-lg">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect if not authenticated
-  if (!user) {
-    return null;
-  }
+    const timer = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
+    const redirect = setTimeout(() => router.replace("/shop"), 8000);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(redirect);
+    };
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
@@ -77,22 +67,22 @@ function OrderSuccessContent() {
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <button
-            onClick={() => router.replace("/profile")}
+            onClick={() => router.replace("/shop")}
             className="w-full sm:flex-1 font-semibold py-3 rounded-xl"
             style={{ background: `linear-gradient(90deg, ${ORANGE}, ${YELLOW})`, color: WHITE, border: "none" }}
           >
-            View Orders
+            Continue Shopping
           </button>
           <button
-            onClick={() => router.replace("/shop")}
+            onClick={() => router.replace("/")}
             className="w-full sm:flex-1 font-semibold py-3 rounded-xl"
             style={{ border: `2px solid ${ORANGE}`, color: ORANGE, background: WHITE }}
           >
-            Continue Shopping
+            Back to Home
           </button>
         </div>
         <p className="text-xs mt-4" style={{ color: BLACK, opacity: 0.6 }}>
-          Redirecting to your orders in {seconds}s…
+          Redirecting to shop in {seconds}s…
         </p>
       </div>
     </div>

@@ -5,8 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
 import { useOrdersStore } from "@/store/ordersStore";
-import { useUser } from "@/hooks/useUser";
-import VerificationGuard from "@/components/auth/VerificationGuard";
+// Removed auth imports - cart is now public for guest checkout
 import CustomButton from "@/components/custom/CustomButton";
 // Removed ShippingAddressForm import - using Stripe checkout address collection
 import axios from "axios";
@@ -30,7 +29,6 @@ interface Product {
 }
 
 const CartPage = () => {
-  const { user, loading: userLoading } = useUser();
   const {
     items,
     loading,
@@ -160,13 +158,7 @@ const CartPage = () => {
     }
   }, [items]);
 
-  // Authentication check
-  useEffect(() => {
-    if (!userLoading && !user) {
-      router.push("/auth/login");
-      return;
-    }
-  }, [user, userLoading, router]);
+  // Removed authentication check - cart is public for guest checkout
 
   // Fetch flavors for custom pack display
   const fetchFlavors = useCallback(async () => {
@@ -206,29 +198,12 @@ const CartPage = () => {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      loadFromBackend();
-      fetchRecommendedProducts();
-      fetchFlavors();
-    }
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+    loadFromBackend();
+    fetchRecommendedProducts();
+    fetchFlavors();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Show loading while checking authentication
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading cart...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect if not authenticated
-  if (!user) {
-    return null;
-  }
+  // Removed authentication checks - cart is public for guest checkout
 
   const handleQuantity = async (itemId: string, quantity: number) => {
     await updateQuantity(itemId, quantity);
@@ -387,7 +362,7 @@ const CartPage = () => {
           })),
           customerEmail: undefined, // Stripe will collect this
           shippingAddress: undefined, // Stripe will collect this
-          successUrl: `${window.location.origin}/profile?session_id={CHECKOUT_SESSION_ID}`,
+          successUrl: `${window.location.origin}/orders/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/cart`,
         }),
       });
@@ -434,8 +409,7 @@ const CartPage = () => {
   // Removed address handling functions - Stripe will collect address directly
 
   return (
-    <VerificationGuard>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
@@ -739,7 +713,6 @@ const CartPage = () => {
           )}
         </div>
       </div>
-    </VerificationGuard>
   );
 };
 

@@ -2,18 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import axios from "axios";
 
-// Helper function to check if user is authenticated
-const checkAuthentication = async (): Promise<boolean> => {
-  try {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL;
-    await axios.get(`${API_URL}/auth/me`, {
-      withCredentials: true,
-    });
-    return true;
-  } catch {
-    return false;
-  }
-};
+// No authentication check needed - supports guest checkout
 
 export type CartItem = {
   id: string;
@@ -60,20 +49,6 @@ export const useCartStore = create<CartState>()(
 
         set({ loading: true, error: null });
         try {
-          // Check authentication first
-          const isAuthenticated = await checkAuthentication();
-          if (!isAuthenticated) {
-            set({
-              error: "Please log in to add items to your cart",
-              loading: false,
-            });
-            // Redirect to login page
-            if (typeof window !== "undefined") {
-              window.location.href = "/auth/login";
-            }
-            return;
-          }
-
           const API_URL = process.env.NEXT_PUBLIC_API_URL;
           const { items } = get();
 
@@ -118,20 +93,6 @@ export const useCartStore = create<CartState>()(
 
         set({ loading: true, error: null });
         try {
-          // Check authentication first
-          const isAuthenticated = await checkAuthentication();
-          if (!isAuthenticated) {
-            set({
-              error: "Please log in to add items to your cart",
-              loading: false,
-            });
-            // Redirect to login page
-            if (typeof window !== "undefined") {
-              window.location.href = "/auth/login";
-            }
-            return;
-          }
-
           const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
           // Validate recipeId
@@ -199,20 +160,6 @@ export const useCartStore = create<CartState>()(
 
         set({ loading: true, error: null });
         try {
-          // Check authentication first
-          const isAuthenticated = await checkAuthentication();
-          if (!isAuthenticated) {
-            set({
-              error: "Please log in to add items to your cart",
-              loading: false,
-            });
-            // Redirect to login page
-            if (typeof window !== "undefined") {
-              window.location.href = "/auth/login";
-            }
-            return;
-          }
-
           const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
           // Add custom pack to backend cart

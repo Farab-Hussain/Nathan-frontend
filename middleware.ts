@@ -1,38 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// List of routes that should only be accessible to guests (not logged in)
-const GUEST_ONLY_PATHS = [
-  "/auth/login",
-  "/auth/register",
-  "/auth/forgot-password",
-  "/auth/reset-password",
-];
-
-// Routes that don't require authentication (including verification pages)
-const PUBLIC_PATHS = [
-  "/auth/verify-email",
-  "/auth/verify-success",
-  "/",
-  "/shop",
-  "/products",
-];
-
-// Routes that require email verification
-const VERIFICATION_REQUIRED_PATHS = [
-  "/cart",
-  "/checkout", 
-  "/orders",
-  "/profile",
-  "/dashboard",
-];
-
-// List of routes that require authentication
-const AUTH_REQUIRED_PATHS = [
-  "/cart",
-  "/checkout",
-  "/orders",
-  // add more protected routes as needed
-];
+// Only dashboard requires authentication - everything else is public
 const ADMIN_ONLY_PATHS = ["/dashboard"];
 
 // Helper to check if path matches any in a list
@@ -62,37 +30,14 @@ export async function middleware(req: NextRequest) {
     return response;
   }
 
-  // 1. Redirect logged-in users away from guest-only pages
-  if (hasAuthCookie && matchesPath(pathname, GUEST_ONLY_PATHS)) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
-
-  // 2. Allow public paths without authentication
-  if (matchesPath(pathname, PUBLIC_PATHS)) {
-    return NextResponse.next();
-  }
-
-  // 3. Require authentication for protected pages
-  if (!hasAuthCookie && matchesPath(pathname, AUTH_REQUIRED_PATHS)) {
-    return NextResponse.redirect(new URL("/auth/login", req.url));
-  }
-  
-  // 4. For verification-required pages, require authentication
-  if (matchesPath(pathname, VERIFICATION_REQUIRED_PATHS)) {
-    if (!hasAuthCookie) {
-      return NextResponse.redirect(new URL("/auth/login", req.url));
-    }
-    // Let client-side VerificationGuard handle verification status
-  }
-  
-  // 5. For admin pages, require authentication
+  // Only protect dashboard/admin routes - require authentication
   if (matchesPath(pathname, ADMIN_ONLY_PATHS)) {
     if (!hasAuthCookie) {
       return NextResponse.redirect(new URL("/auth/login", req.url));
     }
   }
 
-  // 6. Allow all other requests
+  // Allow all other requests (cart, checkout, orders, etc. are now public)
   return NextResponse.next();
 }
 
