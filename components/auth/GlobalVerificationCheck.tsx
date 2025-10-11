@@ -4,10 +4,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
 
 const VERIFICATION_REQUIRED_PATHS = [
-  "/cart",
-  "/checkout", 
-  "/orders",
-  "/profile",
   "/dashboard",
 ];
 
@@ -52,7 +48,7 @@ export default function GlobalVerificationCheck() {
       return;
     }
 
-    // If user is not logged in but trying to access protected routes, redirect to login
+    // Only protect dashboard - all other pages are public
     if (!user && VERIFICATION_REQUIRED_PATHS.some(path => pathname.startsWith(path))) {
       router.replace("/auth/login");
       return;

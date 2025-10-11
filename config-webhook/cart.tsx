@@ -174,19 +174,15 @@ const CartPage = () => {
       // Try multiple endpoints to find flavors
       let response;
       try {
-        response = await axios.get(`${API_URL}/admin/flavors`, {
+        // Try 3pack flavors endpoint first (public)
+        response = await axios.get(`${API_URL}/3pack/flavors`, {
           withCredentials: true,
         });
       } catch {
-        try {
-          response = await axios.get(`${API_URL}/products/flavors`, {
-            withCredentials: true,
-          });
-        } catch {
-          response = await axios.get(`${API_URL}/3pack/admin/flavors`, {
-            withCredentials: true,
-          });
-        }
+        // Fallback to products flavors endpoint (public)
+        response = await axios.get(`${API_URL}/products/flavors`, {
+          withCredentials: true,
+        });
       }
 
       const flavorsData = Array.isArray(response.data)
