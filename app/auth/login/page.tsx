@@ -99,9 +99,16 @@ const LoginPage = () => {
       toast.success("Login successful!");
       setSuccess("Login successful!");
       
+      // Check for redirect parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectTo = urlParams.get('redirect');
+      
       // Redirect admin users to dashboard, regular users to home
       setTimeout(() => {
-        if (userData?.role === "admin") {
+        if (redirectTo) {
+          // Redirect to the originally requested page
+          window.location.href = redirectTo;
+        } else if (userData?.role === "admin") {
           // Force a full page reload to ensure user data is fresh
           window.location.href = "/dashboard/admin";
         } else {

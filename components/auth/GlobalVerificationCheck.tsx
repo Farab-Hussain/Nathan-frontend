@@ -39,18 +39,32 @@ export default function GlobalVerificationCheck() {
       return;
     }
 
-    // If user is verified and on auth pages (login/register), redirect to main site
+    // If user is verified and on auth pages (login/register), redirect to main site or intended destination
     if (user && user.isVerified && 
         (pathname.startsWith("/auth/login") || pathname.startsWith("/auth/register") || pathname.startsWith("/auth/forgot-password"))) {
       console.log('Redirecting verified user away from auth pages');
-      const redirectUrl = process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || "/";
+      
+      // Check if there's a redirect URL in the query params
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectTo = urlParams.get('redirect');
+      
+      // If admin user and no specific redirect, send to dashboard
+      if (!redirectTo && user.role === 'admin') {
+        router.replace('/dashboard/admin');
+        return;
+      }
+      
+      // Use redirect param or default
+      const redirectUrl = redirectTo || process.env.NEXT_PUBLIC_POST_AUTH_REDIRECT_URL || "/";
       router.replace(redirectUrl);
       return;
     }
 
     // Only protect dashboard - all other pages are public
     if (!user && VERIFICATION_REQUIRED_PATHS.some(path => pathname.startsWith(path))) {
-      router.replace("/auth/login");
+      // Save the current path to redirect back after login
+      const currentPath = pathname;
+      router.replace(`/auth/login?redirect=${encodeURIComponent(currentPath)}`);
       return;
     }
   }, [user, loading, pathname, router]);

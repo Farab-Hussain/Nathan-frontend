@@ -298,6 +298,7 @@ const AdminPageContent = () => {
   const [deletingFlavor, setDeletingFlavor] = useState<{ [key: string]: boolean }>({});
   const [deletingFromModal, setDeletingFromModal] = useState(false);
   const [productCategories, setProductCategories] = useState<string[]>([]);
+  const [categoryObjects, setCategoryObjects] = useState<Array<{id: string; name: string; productCount: number}>>([]);
   const [categoryFilter] = useState<string>("");
   const [search] = useState<string>("");
   const [preview, setPreview] = useState<string | null>(null);
@@ -654,17 +655,30 @@ const AdminPageContent = () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
     
     try {
-      const { data } = await axios.get<string[]>(
-        `${API_URL}/products/categories`,
+      // Try admin endpoint first (returns full objects)
+      const { data: adminData } = await axios.get<{categories: Array<{id: string; name: string; productCount: number}>}>(
+        `${API_URL}/admin/categories`,
         { withCredentials: true }
       );
-      if (Array.isArray(data)) {
-        // Use only the categories from API
-        setProductCategories(data);
+      if (adminData?.categories) {
+        setCategoryObjects(adminData.categories);
+        setProductCategories(adminData.categories.map(c => c.name));
+        return;
       }
     } catch (e) {
-      console.error("Failed to fetch categories:", e);
-      // Keep existing categories on error
+      // Fallback to public endpoint (returns just strings)
+        try {
+          const { data } = await axios.get<string[]>(
+            `${API_URL}/products/categories`,
+            { withCredentials: true }
+          );
+        if (Array.isArray(data)) {
+          setProductCategories(data);
+          setCategoryObjects(data.map(name => ({ id: '', name, productCount: 0 })));
+        }
+        } catch (e2) {
+        console.error("Failed to fetch categories:", e2);
+      }
     }
   }, []);
 
@@ -697,6 +711,28 @@ const AdminPageContent = () => {
       toast.error(errorMessage);
     } finally {
       setCreatingCategory(false);
+    }
+  };
+
+  const deleteCategory = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}" category?`)) {
+      return;
+    }
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    try {
+      await axios.delete(
+        `${API_URL}/admin/categories/${id}`,
+        { withCredentials: true }
+      );
+
+      await fetchProductCategories();
+      toast.success("Category deleted successfully");
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to delete category";
+      toast.error(errorMessage);
     }
   };
 
@@ -1793,10 +1829,10 @@ const AdminPageContent = () => {
               </div>
 
               {/* Image Upload Section - Improved Design */}
-              <div>
+                        <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Product Image
-                </label>
+                          </label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#FF5D39] transition-colors">
                   <div className="flex flex-col items-center space-y-3">
                     {/* Image Preview */}
@@ -1836,56 +1872,56 @@ const AdminPageContent = () => {
                           </p>
                         </div>
                       </label>
-                      <input
+                          <input
                         id="product-image-input"
-                        type="file"
-                        accept="image/*"
+                    type="file"
+                    accept="image/*"
                         className="hidden"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0] || null;
-                          if (file) {
-                            const maxSizeMB = 50;
-                            const fileSizeMB = file.size / (1024 * 1024);
-                            
-                            if (fileSizeMB > maxSizeMB) {
-                              setError(
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0] || null;
+                      if (file) {
+                        const maxSizeMB = 50;
+                        const fileSizeMB = file.size / (1024 * 1024);
+                        
+                        if (fileSizeMB > maxSizeMB) {
+                          setError(
                                 `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB.`
-                              );
+                          );
                               e.target.value = "";
-                              return;
-                            }
+                          return;
+                        }
 
-                            try {
-                              let processedFile = file;
-                              if (file.size > 2 * 1024 * 1024) {
+                        try {
+                          let processedFile = file;
+                          if (file.size > 2 * 1024 * 1024) {
                                 setError("🔄 Compressing your image...");
-                                try {
-                                  processedFile = await compressImage(file);
+                            try {
+                              processedFile = await compressImage(file);
                                   setError(null);
-                                } catch (compressionError) {
-                                  console.error("Compression failed:", compressionError);
+                            } catch (compressionError) {
+                              console.error("Compression failed:", compressionError);
                                   setError(`⚠️ Auto-compression failed! Please choose a smaller image.`);
                                   e.target.value = "";
-                                  return;
-                                }
-                              }
-                              
-                              setImageFile(processedFile);
-                              const blobUrl = URL.createObjectURL(processedFile);
-                              setPreview(blobUrl);
-                              setForm((f) => ({ ...f, imageUrl: "" }));
+                              return;
+                            }
+                          }
+                          
+                          setImageFile(processedFile);
+                          const blobUrl = URL.createObjectURL(processedFile);
+                        setPreview(blobUrl);
+                        setForm((f) => ({ ...f, imageUrl: "" }));
                               setError(null);
-                            } catch (generalError) {
-                              console.error("Image processing error:", generalError);
+                        } catch (generalError) {
+                          console.error("Image processing error:", generalError);
                               setError("❌ Failed to process your image.");
                               e.target.value = "";
                             }
                           }
                         }}
                       />
-                    </div>
+              </div>
                   </div>
-                </div>
+            </div>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
@@ -2066,7 +2102,7 @@ const AdminPageContent = () => {
                 {/* Flavor Image Upload Section - Improved Design */}
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
-                    Flavor Image
+                  Flavor Image
                   </label>
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#FF5D39] transition-colors">
                     <div className="flex flex-col items-center space-y-3">
@@ -2106,57 +2142,57 @@ const AdminPageContent = () => {
                               PNG, JPG, GIF up to 50MB
                             </p>
                           </div>
-                        </label>
-                        <input
+                  </label>
+                    <input
                           id="flavor-image-input"
-                          type="file"
-                          accept="image/*"
+                      type="file"
+                      accept="image/*"
                           className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0] || null;
-                            if (file) {
-                              const maxSizeMB = 50;
-                              const fileSizeMB = file.size / (1024 * 1024);
-                              
-                              if (fileSizeMB > maxSizeMB) {
-                                setError(
+                      onChange={async (e) => {
+                      const file = e.target.files?.[0] || null;
+                        if (file) {
+                        const maxSizeMB = 50;
+                        const fileSizeMB = file.size / (1024 * 1024);
+                        
+                        if (fileSizeMB > maxSizeMB) {
+                          setError(
                                   `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB.`
-                                );
+                          );
                                 e.target.value = "";
-                                return;
-                              }
+                          return;
+                        }
 
-                              try {
-                                let processedFile = file;
-                                if (file.size > 2 * 1024 * 1024) {
+                        try {
+                          let processedFile = file;
+                          if (file.size > 2 * 1024 * 1024) {
                                   setError("🔄 Compressing your image...");
-                                  try {
-                                    processedFile = await compressImage(file);
+                            try {
+                            processedFile = await compressImage(file);
                                     setError(null);
-                                  } catch (compressionError) {
-                                    console.error("Compression failed:", compressionError);
+                            } catch (compressionError) {
+                              console.error("Compression failed:", compressionError);
                                     setError(`⚠️ Auto-compression failed! Please choose a smaller image.`);
                                     e.target.value = "";
-                                    return;
-                                  }
-                                }
-                                
-                                setFlavorImageFile(processedFile);
-                                const blobUrl = URL.createObjectURL(processedFile);
-                                setFlavorImagePreview(blobUrl);
+                              return;
+                            }
+                          }
+                          
+                          setFlavorImageFile(processedFile);
+                          const blobUrl = URL.createObjectURL(processedFile);
+                          setFlavorImagePreview(blobUrl);
                                 setError(null);
-                              } catch (generalError) {
-                                console.error("Image processing error:", generalError);
+                        } catch (generalError) {
+                          console.error("Image processing error:", generalError);
                                 setError("❌ Failed to process your image.");
                                 e.target.value = "";
                               }
                             }
                           }}
-                        />
-                      </div>
+                      />
+              </div>
                     </div>
                   </div>
-                </div>
+            </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                           <div>
@@ -2388,25 +2424,36 @@ const AdminPageContent = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  {productCategories.map((category) => (
+                  {categoryObjects.map((category) => (
                     <div
-                      key={category}
+                      key={category.id || category.name}
                       className="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-[#FF5D39] transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#FF5D39] to-[#FF8A39] rounded-lg flex items-center justify-center">
                           <span className="text-white text-xl font-bold">
-                            {category.charAt(0).toUpperCase()}
+                            {category.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="text-sm font-semibold text-gray-900 truncate">
-                            {category}
+                            {category.name}
                           </h4>
                           <p className="text-xs text-gray-500">
-                            Active Category
+                            {category.productCount} product{category.productCount !== 1 ? 's' : ''}
                           </p>
                         </div>
+                        {category.id && (
+                          <button
+                            onClick={() => deleteCategory(category.id, category.name)}
+                            className="flex-shrink-0 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete category"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -2779,18 +2826,18 @@ const AdminPageContent = () => {
               <div className="flex flex-wrap gap-2 sm:gap-3">
                 {productCategories.length > 0 ? (
                   productCategories.map((category) => (
-                    <span
-                      key={category}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm font-medium"
-                    >
-                      {category}
-                    </span>
+                            <span
+                    key={category}
+                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm font-medium"
+                            >
+                    {category}
+                            </span>
                   ))
                 ) : (
                   <p className="text-sm text-gray-500">No categories yet. Add your first category above.</p>
                 )}
-              </div>
-            </div>
+                    </div>
+                  </div>
 
             {/* System Information */}
             <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
