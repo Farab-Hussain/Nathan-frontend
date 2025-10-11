@@ -95,7 +95,7 @@ const AdminPageContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "products" | "flavors" | "inventory" | "config"
+    "products" | "flavors" | "categories" | "inventory" | "config"
   >("products");
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(false);
@@ -302,6 +302,10 @@ const AdminPageContent = () => {
   const [search] = useState<string>("");
   const [preview, setPreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  
+  // Category management state
+  const [newCategory, setNewCategory] = useState("");
+  const [creatingCategory, setCreatingCategory] = useState(false);
   const [availableFlavors, setAvailableFlavors] = useState<
     Array<{ id: string; name: string }>
   >([]);
@@ -316,20 +320,17 @@ const AdminPageContent = () => {
   );
   const [creatingFlavor, setCreatingFlavor] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (!userLoading && (!user || user.role !== "admin")) {
-      router.replace("/");
-    }
-  }, [user, userLoading, router]);
+  // Don't redirect in useEffect - just show access denied message
+  // Redirecting causes race conditions with user data loading
 
   // Handle tab query parameter
   useEffect(() => {
     const tabParam = searchParams.get("tab");
     if (
       tabParam &&
-      ["products", "flavors", "inventory", "config"].includes(tabParam)
+      ["products", "flavors", "categories", "inventory", "config"].includes(tabParam)
     ) {
-      setActiveTab(tabParam as "products" | "flavors" | "inventory" | "config");
+      setActiveTab(tabParam as "products" | "flavors" | "categories" | "inventory" | "config");
     }
   }, [searchParams]);
 
@@ -651,36 +652,53 @@ const AdminPageContent = () => {
 
   const fetchProductCategories = useCallback(async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    
     try {
       const { data } = await axios.get<string[]>(
         `${API_URL}/products/categories`,
         { withCredentials: true }
       );
-      if (Array.isArray(data)) setProductCategories(data);
-    } catch (e) {
-      if (axios.isAxiosError(e) && e.response?.status === 404) {
-        try {
-          const { data } = await axios.get<string[]>(
-            `${API_URL}/products/categories`,
-            { withCredentials: true }
-          );
-          if (Array.isArray(data)) setProductCategories(data);
-        } catch (e2) {
-          if (axios.isAxiosError(e2) && e2.response?.status === 404) {
-            try {
-              const { data } = await axios.get<string[]>(
-                `${API_URL}/products/categories`,
-                { withCredentials: true }
-              );
-              if (Array.isArray(data)) setProductCategories(data);
-            } catch {
-              /* ignore */
-            }
-          }
-        }
+      if (Array.isArray(data)) {
+        // Use only the categories from API
+        setProductCategories(data);
       }
+    } catch (e) {
+      console.error("Failed to fetch categories:", e);
+      // Keep existing categories on error
     }
   }, []);
+
+  const createCategory = async () => {
+    if (!newCategory.trim()) {
+      setError("Category name is required");
+      toast.error("Category name is required");
+      return;
+    }
+
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;
+    setCreatingCategory(true);
+    setError(null);
+    try {
+      await axios.post(
+        `${API_URL}/admin/categories`,
+        { name: newCategory.trim() },
+        { withCredentials: true }
+      );
+
+      // Refresh categories list
+      await fetchProductCategories();
+      setNewCategory("");
+      toast.success("Category created successfully");
+    } catch (err: unknown) {
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to create category";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
 
   const fetchAvailableFlavors = useCallback(async () => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -1366,6 +1384,9 @@ const AdminPageContent = () => {
         case "flavors":
           await fetchFlavors();
           break;
+        case "categories":
+          await fetchProductCategories();
+          break;
         case "inventory":
           await fetchInventoryAlerts();
           break;
@@ -1419,12 +1440,26 @@ const AdminPageContent = () => {
     );
   }
 
-  // Redirect if user is not authenticated or not admin
+  // Show access denied for non-admin users
   if (!userLoading && (!user || user.role !== "admin")) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 text-lg">Access denied. Redirecting...</p>
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+          <p className="text-gray-600 mb-6">
+            You don&apos;t have permission to access the admin dashboard. Only administrators can view this page.
+          </p>
+          <button
+            onClick={() => router.push("/")}
+            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-red-600 transition-all"
+          >
+            Go to Home
+          </button>
         </div>
       </div>
     );
@@ -1516,13 +1551,14 @@ const AdminPageContent = () => {
             {[
               { id: "products", label: "Products", icon: "📦" },
               { id: "flavors", label: "Flavors", icon: "🍭" },
+              { id: "categories", label: "Categories", icon: "🏷️" },
               { id: "inventory", label: "Inventory", icon: "📊" },
               { id: "config", label: "Config", icon: "⚙️" },
         ].map((tab) => (
           <button
             key={tab.id}
                 onClick={() => {
-                  setActiveTab(tab.id as "products" | "flavors" | "inventory" | "config");
+                  setActiveTab(tab.id as "products" | "flavors" | "categories" | "inventory" | "config");
                   setMenuOpen(false);
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left font-medium transition-colors ${
@@ -1756,85 +1792,100 @@ const AdminPageContent = () => {
                 )}
               </div>
 
-              {/* Image Upload Section */}
-                        <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+              {/* Image Upload Section - Improved Design */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Product Image
-                          </label>
-                <div className="space-y-3">
-                          <input
-                    type="file"
-                    accept="image/*"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0] || null;
-                      if (file) {
-                        // Check file size first (50MB limit)
-                        const maxSizeMB = 50;
-                        const fileSizeMB = file.size / (1024 * 1024);
-                        
-                        if (fileSizeMB > maxSizeMB) {
-                          setError(
-                            `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB. Please choose a smaller image or compress it before uploading.`
-                          );
-                          e.target.value = ""; // Clear the input
-                          return;
-                        }
-
-                        try {
-                          // Compress image if it's larger than 2MB
-                          let processedFile = file;
-                          if (file.size > 2 * 1024 * 1024) {
-                            setError("🔄 Compressing your image for better upload performance...");
-                            try {
-                              processedFile = await compressImage(file);
-                              setError(null); // Clear compression message
-                            } catch (compressionError) {
-                              console.error("Compression failed:", compressionError);
+                </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#FF5D39] transition-colors">
+                  <div className="flex flex-col items-center space-y-3">
+                    {/* Image Preview */}
+                    {preview && (
+                      <div className="relative">
+                        <img
+                          src={preview}
+                          alt="Preview"
+                          className="w-40 h-40 object-cover rounded-lg border-2 border-[#FF5D39] shadow-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (preview?.startsWith("blob:"))
+                              URL.revokeObjectURL(preview);
+                            setPreview(null);
+                            setImageFile(null);
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 text-sm"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
+                    
+                    <div className="w-full">
+                      <label htmlFor="product-image-input" className="block">
+                        <div className="cursor-pointer bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-lg p-4 text-center transition-colors">
+                          <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <p className="mt-2 text-sm text-gray-600">
+                            <span className="font-semibold text-[#FF5D39]">Click to upload</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            PNG, JPG, GIF up to 50MB
+                          </p>
+                        </div>
+                      </label>
+                      <input
+                        id="product-image-input"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0] || null;
+                          if (file) {
+                            const maxSizeMB = 50;
+                            const fileSizeMB = file.size / (1024 * 1024);
+                            
+                            if (fileSizeMB > maxSizeMB) {
                               setError(
-                                `⚠️ Auto-compression failed! Your image is ${fileSizeMB.toFixed(1)}MB. Please try:\n\n• Choose a smaller image (under 2MB)\n• Use an online image compressor (like TinyPNG or Compressor.io)\n• Try a different image format (JPG/PNG)\n• Reduce image dimensions before uploading\n\n💡 Tip: Most phones take photos that are too large. Try resizing them first!`
+                                `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB.`
                               );
-                              e.target.value = ""; // Clear the input
+                              e.target.value = "";
                               return;
                             }
+
+                            try {
+                              let processedFile = file;
+                              if (file.size > 2 * 1024 * 1024) {
+                                setError("🔄 Compressing your image...");
+                                try {
+                                  processedFile = await compressImage(file);
+                                  setError(null);
+                                } catch (compressionError) {
+                                  console.error("Compression failed:", compressionError);
+                                  setError(`⚠️ Auto-compression failed! Please choose a smaller image.`);
+                                  e.target.value = "";
+                                  return;
+                                }
+                              }
+                              
+                              setImageFile(processedFile);
+                              const blobUrl = URL.createObjectURL(processedFile);
+                              setPreview(blobUrl);
+                              setForm((f) => ({ ...f, imageUrl: "" }));
+                              setError(null);
+                            } catch (generalError) {
+                              console.error("Image processing error:", generalError);
+                              setError("❌ Failed to process your image.");
+                              e.target.value = "";
+                            }
                           }
-                          
-                          setImageFile(processedFile);
-                          const blobUrl = URL.createObjectURL(processedFile);
-                        setPreview(blobUrl);
-                        setForm((f) => ({ ...f, imageUrl: "" }));
-                          setError(null); // Clear any previous errors
-                        } catch (generalError) {
-                          console.error("Image processing error:", generalError);
-                          setError(
-                            "❌ Failed to process your image. Please try a different file or check if the image is corrupted."
-                          );
-                          e.target.value = ""; // Clear the input
-                        }
-                      } else {
-                        if (preview?.startsWith("blob:"))
-                          URL.revokeObjectURL(preview);
-                        setPreview(null);
-                        setImageFile(null);
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-xs sm:text-sm text-gray-900"
-                  />
-                  
-                  {/* Image Preview */}
-                  {preview && (
-                    <div className="mt-3">
-                      <img
-                        src={preview}
-                        alt="Preview"
-                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                        }}
                       />
-              </div>
-                  )}
-                  
-                  <p className="text-xs text-gray-500">
-                    📁 Max file size: 50MB • 🔄 Auto-compression for files over 2MB • 📱 Supported: JPG, PNG, GIF
-                  </p>
-            </div>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
@@ -2012,76 +2063,100 @@ const AdminPageContent = () => {
 
             {/* File Upload */}
             <div className="space-y-3 sm:space-y-4">
+                {/* Flavor Image Upload Section - Improved Design */}
                 <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  Flavor Image
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                    Flavor Image
                   </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={async (e) => {
-                      const file = e.target.files?.[0] || null;
-                        if (file) {
-                        // Check file size first (50MB limit)
-                        const maxSizeMB = 50;
-                        const fileSizeMB = file.size / (1024 * 1024);
-                        
-                        if (fileSizeMB > maxSizeMB) {
-                          setError(
-                            `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB. Please choose a smaller image or compress it before uploading.`
-                          );
-                          e.target.value = ""; // Clear the input
-                          return;
-                        }
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-[#FF5D39] transition-colors">
+                    <div className="flex flex-col items-center space-y-3">
+                      {/* Image Preview */}
+                      {flavorImagePreview && (
+                        <div className="relative">
+                          <img
+                            src={flavorImagePreview}
+                            alt="Flavor Preview"
+                            className="w-40 h-40 object-cover rounded-lg border-2 border-[#FF5D39] shadow-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (flavorImagePreview?.startsWith("blob:"))
+                                URL.revokeObjectURL(flavorImagePreview);
+                              setFlavorImagePreview(null);
+                              setFlavorImageFile(null);
+                            }}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 text-sm"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+                      
+                      <div className="w-full">
+                        <label htmlFor="flavor-image-input" className="block">
+                          <div className="cursor-pointer bg-gray-50 hover:bg-gray-100 border border-gray-300 rounded-lg p-4 text-center transition-colors">
+                            <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            <p className="mt-2 text-sm text-gray-600">
+                              <span className="font-semibold text-[#FF5D39]">Click to upload</span> or drag and drop
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              PNG, JPG, GIF up to 50MB
+                            </p>
+                          </div>
+                        </label>
+                        <input
+                          id="flavor-image-input"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0] || null;
+                            if (file) {
+                              const maxSizeMB = 50;
+                              const fileSizeMB = file.size / (1024 * 1024);
+                              
+                              if (fileSizeMB > maxSizeMB) {
+                                setError(
+                                  `📁 File too large! Your image is ${fileSizeMB.toFixed(1)}MB, but the maximum allowed size is ${maxSizeMB}MB.`
+                                );
+                                e.target.value = "";
+                                return;
+                              }
 
-                        try {
-                          // Compress image if it's larger than 2MB
-                          let processedFile = file;
-                          if (file.size > 2 * 1024 * 1024) {
-                            setError("🔄 Compressing your image for better upload performance...");
-                            try {
-                            processedFile = await compressImage(file);
-                              setError(null); // Clear compression message
-                            } catch (compressionError) {
-                              console.error("Compression failed:", compressionError);
-                              setError(
-                                `⚠️ Auto-compression failed! Your image is ${fileSizeMB.toFixed(1)}MB. Please try:\n\n• Choose a smaller image (under 2MB)\n• Use an online image compressor (like TinyPNG or Compressor.io)\n• Try a different image format (JPG/PNG)\n• Reduce image dimensions before uploading\n\n💡 Tip: Most phones take photos that are too large. Try resizing them first!`
-                              );
-                              e.target.value = ""; // Clear the input
-                              return;
+                              try {
+                                let processedFile = file;
+                                if (file.size > 2 * 1024 * 1024) {
+                                  setError("🔄 Compressing your image...");
+                                  try {
+                                    processedFile = await compressImage(file);
+                                    setError(null);
+                                  } catch (compressionError) {
+                                    console.error("Compression failed:", compressionError);
+                                    setError(`⚠️ Auto-compression failed! Please choose a smaller image.`);
+                                    e.target.value = "";
+                                    return;
+                                  }
+                                }
+                                
+                                setFlavorImageFile(processedFile);
+                                const blobUrl = URL.createObjectURL(processedFile);
+                                setFlavorImagePreview(blobUrl);
+                                setError(null);
+                              } catch (generalError) {
+                                console.error("Image processing error:", generalError);
+                                setError("❌ Failed to process your image.");
+                                e.target.value = "";
+                              }
                             }
-                          }
-                          
-                          setFlavorImageFile(processedFile);
-                          const blobUrl = URL.createObjectURL(processedFile);
-                          setFlavorImagePreview(blobUrl);
-                          setError(null); // Clear any previous errors
-                        } catch (generalError) {
-                          console.error("Image processing error:", generalError);
-                          setError(
-                            "❌ Failed to process your image. Please try a different file or check if the image is corrupted."
-                          );
-                          e.target.value = ""; // Clear the input
-                        }
-                      } else {
-                        if (flavorImagePreview?.startsWith("blob:"))
-                          URL.revokeObjectURL(flavorImagePreview);
-                      setFlavorImagePreview(null);
-                        setFlavorImageFile(null);
-                      }
-                    }}
-                    className="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs sm:file:text-sm file:font-medium file:bg-[#FF5D39] file:text-white hover:file:bg-[#FF5D39]/90"
-                  />
-                  {flavorImagePreview && (
-                    <div className="mt-3">
-                      <img
-                        src={flavorImagePreview}
-                        alt="Preview"
-                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
-                      />
-              </div>
-                  )}
-            </div>
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                           <div>
@@ -2254,6 +2329,90 @@ const AdminPageContent = () => {
                 </div>
               </>
               )}
+          </div>
+        </div>
+      )}
+
+      {/* Categories Tab */}
+      {activeTab === "categories" && (
+        <div className="space-y-4 sm:space-y-6">
+          {/* Create New Category */}
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold text-black mb-3 sm:mb-4">Category Management</h2>
+            <p className="text-gray-600 text-xs sm:text-sm mb-4">
+              Add and manage product categories. Categories help organize your products.
+            </p>
+
+            {/* Add New Category Form */}
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 p-4 sm:p-6 rounded-lg mb-6">
+              <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">
+                Add New Category
+              </h3>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  placeholder="Enter category name (e.g., Sweet, Sour, Mixed)"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base text-gray-900"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !creatingCategory) {
+                      createCategory();
+                    }
+                  }}
+                />
+                <button
+                  onClick={createCategory}
+                  disabled={creatingCategory}
+                  className="w-full sm:w-auto px-6 py-2 bg-[#FF5D39] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 text-sm sm:text-base font-medium"
+                >
+                  {creatingCategory ? "Adding..." : "Add Category"}
+                </button>
+              </div>
+            </div>
+
+            {/* Existing Categories Grid */}
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold text-black mb-3">
+                Existing Categories
+              </h3>
+              
+              {productCategories.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <div className="text-4xl mb-4">🏷️</div>
+                  <h4 className="text-base font-semibold mb-2 text-black">No categories yet</h4>
+                  <p className="text-gray-600 text-sm">
+                    Add your first category above to get started.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                  {productCategories.map((category) => (
+                    <div
+                      key={category}
+                      className="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-[#FF5D39] transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-[#FF5D39] to-[#FF8A39] rounded-lg flex items-center justify-center">
+                          <span className="text-white text-xl font-bold">
+                            {category.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold text-gray-900 truncate">
+                            {category}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                            Active Category
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -2609,20 +2768,29 @@ const AdminPageContent = () => {
               </div>
             </div>
 
-            {/* Supported Categories */}
+            {/* Supported Categories - View Only */}
             <div className="mb-6 sm:mb-8">
               <h3 className="text-base sm:text-lg font-semibold text-black mb-3 sm:mb-4">Supported Categories</h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-3">
+                To add or manage categories, go to the Categories tab 🏷️
+              </p>
+              
+              {/* Existing Categories */}
               <div className="flex flex-wrap gap-2 sm:gap-3">
-                {(systemConfig?.supportedCategories || productCategories || ['Custom', 'Sweet', 'Sour', 'Traditional']).map((category) => (
-                            <span
-                    key={category}
-                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm font-medium"
-                            >
-                    {category}
-                            </span>
-                ))}
-                    </div>
-                  </div>
+                {productCategories.length > 0 ? (
+                  productCategories.map((category) => (
+                    <span
+                      key={category}
+                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs sm:text-sm font-medium"
+                    >
+                      {category}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">No categories yet. Add your first category above.</p>
+                )}
+              </div>
+            </div>
 
             {/* System Information */}
             <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">

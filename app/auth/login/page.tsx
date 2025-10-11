@@ -93,12 +93,20 @@ const LoginPage = () => {
         return;
       }
 
+      // Store user data in memory for immediate access
+      const userData = response.data?.user;
+      
       toast.success("Login successful!");
       setSuccess("Login successful!");
       
-      // Redirect to home page after successful login
+      // Redirect admin users to dashboard, regular users to home
       setTimeout(() => {
-        router.push("/");
+        if (userData?.role === "admin") {
+          // Force a full page reload to ensure user data is fresh
+          window.location.href = "/dashboard/admin";
+        } else {
+          router.push("/");
+        }
       }, 1000);
     } catch (err: unknown) {
 
@@ -209,17 +217,7 @@ const LoginPage = () => {
       <AuthCard
         title="Welcome back"
         subtitle="Enter your credentials to access your account"
-        footer={
-          <div>
-            <span>Don&apos;t have an account? </span>
-            <Link
-              href="/auth/register"
-              className="text-primary hover:underline"
-            >
-              Register
-            </Link>
-          </div>
-        }
+        footer={null}
       >
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {error && (
