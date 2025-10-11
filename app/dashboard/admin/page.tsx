@@ -208,11 +208,6 @@ const AdminPageContent = () => {
   };
 
   // File size validation function
-  const validateFileSize = (file: File, maxSizeMB: number = 50): boolean => {
-    const sizeMB = file.size / (1024 * 1024);
-    return sizeMB <= maxSizeMB;
-  };
-
   // Flavors state
   const [flavors, setFlavors] = useState<Flavor[]>([]);
 
@@ -303,6 +298,8 @@ const AdminPageContent = () => {
   const [deletingFlavor, setDeletingFlavor] = useState<{ [key: string]: boolean }>({});
   const [deletingFromModal, setDeletingFromModal] = useState(false);
   const [productCategories, setProductCategories] = useState<string[]>([]);
+  const [categoryFilter] = useState<string>("");
+  const [search] = useState<string>("");
   const [categoryFilter] = useState<string>("");
   const [search] = useState<string>("");
   const [preview, setPreview] = useState<string | null>(null);
@@ -609,7 +606,6 @@ const AdminPageContent = () => {
         withCredentials: true,
       });
       setProducts(Array.isArray(data.products) ? data.products : []);
-      setPagination(data.pagination || null);
     } catch (e) {
       // Fallback: try alternate mount
       if (axios.isAxiosError(e) && e.response?.status === 404) {
@@ -633,7 +629,6 @@ const AdminPageContent = () => {
             withCredentials: true,
           });
           setProducts(Array.isArray(data.products) ? data.products : []);
-          setPagination(data.pagination || null);
           setError(null);
         } catch (e2) {
           const message =
@@ -642,7 +637,6 @@ const AdminPageContent = () => {
           setError(message);
           toast.error(message);
           setProducts([]);
-          setPagination(null);
         }
       } else {
         const message =
@@ -651,7 +645,6 @@ const AdminPageContent = () => {
         setError(message);
         toast.error(message);
         setProducts([]);
-        setPagination(null);
       }
     } finally {
       setLoading(false);
@@ -722,7 +715,7 @@ const AdminPageContent = () => {
             name: flavor.name,
           }));
         setAvailableFlavors(activeFlavors);
-      } catch (e2) {
+      } catch {
         toast.error("Failed to load flavors");
         setAvailableFlavors([]);
       }
@@ -867,6 +860,7 @@ const AdminPageContent = () => {
       });
       toast.success("Product updated successfully");
     } catch {
+    } catch {
       toast.error("Failed to update product");
     } finally {
       setSaving(false);
@@ -909,6 +903,7 @@ const AdminPageContent = () => {
         formData.append("flavorImage", imageFile);
       }
 
+      await axios.put(
       await axios.put(
         `${API_URL}/admin/flavors/${id}`,
         formData,
@@ -1645,6 +1640,125 @@ const AdminPageContent = () => {
                         </div>
                   </div>
 
+              {/* Flavors Selection Section */}
+              <div>
+                <h3 className="text-sm sm:text-base font-medium text-black mb-2">Product Flavors</h3>
+                <hr className="border-gray-200 mb-3 sm:mb-4" />
+                <p className="text-xs text-gray-600 mb-3">
+                  Add up to 3 flavors for this pack product. Each flavor can have a specific quantity.
+                </p>
+                
+                {/* Info Notifier */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <div className="flex items-start gap-2">
+                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-blue-900 mb-1">
+                        Need to add a new flavor?
+                      </p>
+                      <p className="text-xs text-blue-700 mb-2">
+                        You can only select from existing flavors here. To create a new flavor, please go to the Flavors tab.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('flavors')}
+                        className="text-xs font-medium text-blue-600 hover:text-blue-800 underline"
+                      >
+                        → Go to Flavors Tab
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {form.flavors && form.flavors.length > 0 && (
+                  <div className="space-y-3 mb-4">
+                    {form.flavors.map((flavor, index) => (
+                      <div key={index} className="flex flex-col sm:flex-row gap-2 p-3 border border-gray-200 rounded-lg bg-gray-50">
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Flavor
+                          </label>
+                          <select
+                            value={flavor.id || ""}
+                            onChange={(e) => {
+                              const selectedFlavor = availableFlavors.find(f => f.id === e.target.value);
+                              const newFlavors = [...(form.flavors || [])];
+                              newFlavors[index] = {
+                                ...newFlavors[index],
+                                id: e.target.value,
+                                name: selectedFlavor?.name || ""
+                              };
+                              setForm({ ...form, flavors: newFlavors });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm text-gray-900"
+                          >
+                            <option value="">Select flavor</option>
+                            {availableFlavors.map((f) => (
+                              <option key={f.id} value={f.id}>
+                                {f.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        <div className="w-full sm:w-24">
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Quantity
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={flavor.quantity || 1}
+                            onChange={(e) => {
+                              const newFlavors = [...(form.flavors || [])];
+                              newFlavors[index] = {
+                                ...newFlavors[index],
+                                quantity: parseInt(e.target.value) || 1
+                              };
+                              setForm({ ...form, flavors: newFlavors });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm text-gray-900"
+                          />
+                        </div>
+                        
+                        <div className="flex items-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newFlavors = form.flavors?.filter((_, i) => i !== index) || [];
+                              setForm({ ...form, flavors: newFlavors });
+                            }}
+                            className="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {(!form.flavors || form.flavors.length < 3) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newFlavors = [...(form.flavors || []), { id: "", name: "", quantity: 1 }];
+                      setForm({ ...form, flavors: newFlavors });
+                    }}
+                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                  >
+                    + Add Flavor
+                  </button>
+                )}
+                
+                {form.flavors && form.flavors.length >= 3 && (
+                  <p className="text-xs text-orange-600 mt-2">
+                    ⚠️ Maximum of 3 flavors reached
+                  </p>
+                )}
+              </div>
 
               {/* Image Upload Section */}
                         <div>
@@ -2166,7 +2280,7 @@ const AdminPageContent = () => {
                 </div>
               </div>
               <div className="text-right">
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                <span className="inline-flex items-center px-1 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
                   {inventoryAlerts.length} Active Alert{inventoryAlerts.length !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -2223,8 +2337,7 @@ const AdminPageContent = () => {
                               min="0"
                         placeholder="Update stock"
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
-                        onChange={(e) => {
-                          const newStock = parseInt(e.target.value) || 0;
+                        onChange={() => {
                           // Update local state for immediate UI feedback
                         }}
                       />
@@ -2343,8 +2456,7 @@ const AdminPageContent = () => {
                             min="0"
                         placeholder="Update stock"
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
-                        onChange={(e) => {
-                          const newStock = parseInt(e.target.value) || 0;
+                        onChange={() => {
                           // Update local state for immediate UI feedback
                         }}
                       />

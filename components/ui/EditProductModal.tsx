@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
 
+interface ProductFlavor {
+  id: string;
+  name: string;
+  quantity: number;
+}
+
 interface Product {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
   price: number;
-  stock: number;
+  stock?: number;
   category: string;
-  imageUrl?: string;
+  imageUrl?: string | null;
   updatedAt?: string;
+  sku?: string;
+  flavors?: ProductFlavor[];
 }
 
 interface EditProductModalProps {
@@ -17,6 +25,7 @@ interface EditProductModalProps {
   onSave: (product: Product, imageFile?: File | null) => void;
   product: Product | null;
   productCategories: string[];
+  availableFlavors: Array<{ id: string; name: string }>;
   isLoading?: boolean;
 }
 
@@ -26,6 +35,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
   onSave,
   product,
   productCategories,
+  availableFlavors,
   isLoading = false,
 }) => {
   const [formData, setFormData] = useState({
@@ -34,6 +44,8 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
     price: 0,
     stock: 0,
     category: '',
+    sku: '',
+    flavors: [] as ProductFlavor[],
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -45,8 +57,10 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
         name: product.name,
         description: product.description || '',
         price: product.price,
-        stock: product.stock,
+        stock: product.stock || 0,
         category: product.category,
+        sku: product.sku || '',
+        flavors: product.flavors || [],
       });
       // Set image preview if product has an image
       if (product.imageUrl) {
@@ -145,11 +159,13 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
           backgroundColor: 'white',
           padding: '24px',
           borderRadius: '8px',
-          maxWidth: '500px',
+          maxWidth: '600px',
           width: '90%',
-          maxHeight: '85vh',
-          overflowY: 'auto',
+          maxHeight: '80vh',
+          overflowY: 'auto',  // Use auto for automatic scrolling when content overflows
+          overflowX: 'hidden', // Prevent horizontal scrolling      
         }}
+        className="custom-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
@@ -243,7 +259,7 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
             </div>
           </div>
 
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', color: '#374151' }}>
               Category
             </label>
@@ -268,6 +284,199 @@ const EditProductModal: React.FC<EditProductModalProps> = ({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500', color: '#374151' }}>
+              SKU
+            </label>
+            <input
+              type="text"
+              value={formData.sku}
+              onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+              placeholder="e.g., 3P-SWE-WAT-BERRY"
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '4px',
+                fontSize: '14px',
+                color: '#1f2937',
+                backgroundColor: 'white',
+              }}
+            />
+          </div>
+
+          {/* Flavors Section */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#1f2937' }}>
+              Product Flavors
+            </label>
+            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>
+              Add up to 3 flavors for this pack product
+            </p>
+            
+            {/* Info Notifier */}
+            <div style={{ 
+              backgroundColor: '#eff6ff', 
+              border: '1px solid #bfdbfe', 
+              borderRadius: '6px', 
+              padding: '12px', 
+              marginBottom: '12px' 
+            }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <svg 
+                  style={{ width: '20px', height: '20px', color: '#2563eb', flexShrink: 0, marginTop: '2px' }} 
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '12px', fontWeight: '500', color: '#1e3a8a', marginBottom: '4px' }}>
+                    Need to add a new flavor?
+                  </p>
+                  <p style={{ fontSize: '11px', color: '#1e40af', marginBottom: '8px' }}>
+                    You can only select from existing flavors here. To create a new flavor, please close this dialog and go to the Flavors tab in the admin dashboard.
+                  </p>
+                  <p style={{ fontSize: '11px', fontWeight: '500', color: '#2563eb' }}>
+                    💡 Tip: Close this modal → Switch to Flavors tab → Add new flavor → Return here
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {formData.flavors && formData.flavors.length > 0 && (
+              <div style={{ marginBottom: '12px' }}>
+                {formData.flavors.map((flavor, index) => (
+                  <div 
+                    key={index} 
+                    style={{ 
+                      display: 'flex', 
+                      gap: '8px', 
+                      marginBottom: '8px',
+                      padding: '12px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '4px',
+                      backgroundColor: '#f9fafb',
+                    }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>
+                        Flavor
+                      </label>
+                      <select
+                        value={flavor.id || ""}
+                        onChange={(e) => {
+                          const selectedFlavor = availableFlavors.find(f => f.id === e.target.value);
+                          const newFlavors = [...formData.flavors];
+                          newFlavors[index] = {
+                            ...newFlavors[index],
+                            id: e.target.value,
+                            name: selectedFlavor?.name || ""
+                          };
+                          setFormData({ ...formData, flavors: newFlavors });
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '6px 10px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '4px',
+                          fontSize: '13px',
+                          color: '#1f2937',
+                          backgroundColor: 'white',
+                        }}
+                      >
+                        <option value="">Select flavor</option>
+                        {availableFlavors.map((f) => (
+                          <option key={f.id} value={f.id}>
+                            {f.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div style={{ width: '80px' }}>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: '500', color: '#374151', marginBottom: '4px' }}>
+                        Qty
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={flavor.quantity || 1}
+                        onChange={(e) => {
+                          const newFlavors = [...formData.flavors];
+                          newFlavors[index] = {
+                            ...newFlavors[index],
+                            quantity: parseInt(e.target.value) || 1
+                          };
+                          setFormData({ ...formData, flavors: newFlavors });
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '6px 10px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '4px',
+                          fontSize: '13px',
+                          color: '#1f2937',
+                          backgroundColor: 'white',
+                        }}
+                      />
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newFlavors = formData.flavors.filter((_, i) => i !== index);
+                          setFormData({ ...formData, flavors: newFlavors });
+                        }}
+                        style={{
+                          padding: '6px 12px',
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {(!formData.flavors || formData.flavors.length < 3) && (
+              <button
+                type="button"
+                onClick={() => {
+                  const newFlavors = [...(formData.flavors || []), { id: "", name: "", quantity: 1 }];
+                  setFormData({ ...formData, flavors: newFlavors });
+                }}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: '500',
+                }}
+              >
+                + Add Flavor
+              </button>
+            )}
+            
+            {formData.flavors && formData.flavors.length >= 3 && (
+              <p style={{ fontSize: '12px', color: '#f59e0b', marginTop: '8px' }}>
+                ⚠️ Maximum of 3 flavors reached
+              </p>
+            )}
           </div>
 
           <div style={{ marginBottom: '24px' }}>

@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import Step from "@/components/custom/Step";
 import AnimatedSection from "@/components/custom/AnimatedSection";
 

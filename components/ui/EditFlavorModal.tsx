@@ -5,8 +5,9 @@ interface Flavor {
   name: string;
   aliases: string[];
   active: boolean;
-  imageUrl?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  imageUrl?: string | null;
 }
 
 interface EditFlavorModalProps {

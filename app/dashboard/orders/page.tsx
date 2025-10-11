@@ -275,6 +275,32 @@ const AdminOrdersPage = () => {
     setSelectedOrders(newSelected);
   };
 
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    try {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL;
+      await axios.put(
+        `${API_URL}/orders/${orderId}/status`,
+        { status: newStatus },
+        { withCredentials: true }
+      );
+
+      // Update local state
+      setAdminOrders((prev) =>
+        prev.map((order) =>
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
+    } catch (e) {
+      const message =
+        (e as { message?: string })?.message || "Failed to update order status";
+      setError(message);
+    }
+  };
+
+  const handleViewOrder = (orderId: string) => {
+    router.push(`/dashboard/orders/${orderId}`);
+  };
+
   const totalPages = useMemo(
     () => adminPagination?.pages ?? 1,
     [adminPagination]
@@ -899,7 +925,7 @@ const AdminOrdersPage = () => {
             </div>
           )}
 
-          {!loading && adminOrders.map((order, idx) => (
+          {!loading && adminOrders.map((order) => (
             <div key={order.id} className="border-b border-gray-200 p-4 last:border-b-0">
               {/* Header with checkbox and order ID */}
               <div className="flex items-center justify-between mb-3">
