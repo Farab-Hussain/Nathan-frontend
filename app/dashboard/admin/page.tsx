@@ -300,8 +300,6 @@ const AdminPageContent = () => {
   const [productCategories, setProductCategories] = useState<string[]>([]);
   const [categoryFilter] = useState<string>("");
   const [search] = useState<string>("");
-  const [categoryFilter] = useState<string>("");
-  const [search] = useState<string>("");
   const [preview, setPreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [availableFlavors, setAvailableFlavors] = useState<
@@ -860,7 +858,6 @@ const AdminPageContent = () => {
       });
       toast.success("Product updated successfully");
     } catch {
-    } catch {
       toast.error("Failed to update product");
     } finally {
       setSaving(false);
@@ -903,7 +900,6 @@ const AdminPageContent = () => {
         formData.append("flavorImage", imageFile);
       }
 
-      await axios.put(
       await axios.put(
         `${API_URL}/admin/flavors/${id}`,
         formData,
@@ -2683,6 +2679,7 @@ const AdminPageContent = () => {
             onSave={handleSaveProduct}
             product={modalProduct}
             productCategories={productCategories}
+            availableFlavors={availableFlavors}
             isLoading={saving}
           />
         );
