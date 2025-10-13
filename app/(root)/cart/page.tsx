@@ -312,17 +312,14 @@ const CartPage = () => {
 
       // Convert cart items to order items format expected by backend
       const orderItems = items.map((item) => ({
-        productId: item.productId,
+        productId: item.isCustomPack ? "3-pack" : item.productId,
         productName: item.productName,
         quantity: item.quantity,
         price: item.price,
         total: item.price * item.quantity,
-        // Include custom pack data if applicable
-        ...(item.isCustomPack && {
-          isCustomPack: true,
-          flavorIds: item.flavorIds,
-          customPackName: item.customPackName,
-        }),
+        // Always include flavorIds for custom packs
+        flavorIds: item.flavorIds || [],
+        customPackName: item.customPackName || null,
       }));
 
       const orderData = {
@@ -492,13 +489,13 @@ const CartPage = () => {
                   >
                       <div className="flex gap-4 p-4">
                         {/* Product Image */}
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2 flex items-center justify-center">
                           <Image
                             src={item.isCustomPack ? "/assets/images/slider.png" : normalizeImageSrc(item.imageUrl)}
                             alt={item.isCustomPack ? "Custom 3-Pack" : item.productName}
                             width={120}
                             height={120}
-                            className="w-24 h-24 object-cover rounded-lg shadow-md"
+                            className="w-24 h-24 object-contain rounded-lg"
                             onError={(e) => {
                               // Fallback to default image if the image fails to load
                               const target = e.target as HTMLImageElement;
@@ -636,7 +633,7 @@ const CartPage = () => {
                       <textarea
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
+                        className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none placeholder:text-gray-400"
                         rows={2}
                         placeholder="Special instructions..."
                       />
@@ -688,7 +685,7 @@ const CartPage = () => {
                     <CustomButton
                       title="Build Custom Pack"
                       onClick={() => router.push("/shop")}
-                      className="w-full bg-white text-orange-600 border border-orange-300 hover:bg-orange-50 font-semibold py-2.5 rounded-lg transition-all duration-200 text-sm"
+                      className="w-full !bg-white !text-black border-2 border-orange-300 hover:!bg-orange-50 font-semibold py-2.5 rounded-lg transition-all duration-200 text-sm"
                     />
                   </div>
 

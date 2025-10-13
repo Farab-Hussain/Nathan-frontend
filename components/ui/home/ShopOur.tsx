@@ -208,10 +208,10 @@ const ShopOur = () => {
                 </div>
               )}
               {productOptions.length > 0 && (
-                <div className="relative h-[160px] overflow-hidden">
+                <div className="relative h-[200px] sm:h-[180px] md:h-[160px] overflow-hidden">
                   <div
                     className="transition-transform duration-300 ease-in-out"
-                    style={{ transform: `translateY(-${currentIndex * 40}px)` }}
+                    style={{ transform: `translateY(-${currentIndex * 50}px)` }}
                   >
                     {productOptions.map((option, index) => {
                       const isSelected = selectedOption === index;
@@ -220,23 +220,24 @@ const ShopOur = () => {
                       return (
                         <div
                           key={option.id}
-                          className={`flex items-center gap-3 cursor-pointer hover:bg-gray-50 px-2 rounded transition-colors h-10
+                          className={`flex items-center gap-3 sm:gap-4 cursor-pointer hover:bg-gray-50 px-3 sm:px-4 py-2 rounded-lg transition-all duration-200 h-[50px] mb-1
                             ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}
+                            ${isSelected ? "bg-green-50 border-l-4 border-green-500" : "border-l-4 border-transparent"}
                           `}
                           onClick={() => {
                             if (!isDisabled) handleCheckboxChange(index);
                           }}
                         >
                           <div
-                            className={`w-5 h-5 border-2 rounded flex items-center justify-center ${
+                            className={`w-6 h-6 sm:w-7 sm:h-7 md:w-6 md:h-6 border-2 rounded-md flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
                               isSelected
-                                ? "border-green-500 bg-green-500"
-                                : "border-gray-300"
+                                ? "border-green-500 bg-green-500 shadow-md"
+                                : "border-gray-400"
                             } ${isDisabled ? "bg-gray-200" : ""}`}
                           >
                             {isSelected && (
                               <svg
-                                className="w-3 h-3 text-white"
+                                className="w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 text-white"
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                               >
@@ -249,7 +250,7 @@ const ShopOur = () => {
                             )}
                           </div>
                           <span
-                            className={`text-sm ${
+                            className={`text-sm sm:text-base md:text-sm flex-1 ${
                               isSelected
                                 ? "font-semibold text-black"
                                 : "text-gray-700"
@@ -267,14 +268,15 @@ const ShopOur = () => {
 
             {/* Vertical Navigation Buttons - Only show if more than 4 products */}
             {productOptions.length > 4 && (
-              <div className="flex flex-row md:flex-col gap-2 justify-center md:justify-start">
+              <div className="flex flex-row md:flex-col gap-2 sm:gap-3 justify-center md:justify-start">
                 <button
                   onClick={handlePrevious}
-                  className="w-10 h-10 md:w-12 md:h-12 bg-secondary rounded-full flex items-center justify-center text-white transition-colors hover:bg-secondary/80"
+                  className="w-12 h-12 sm:w-14 sm:h-14 md:w-12 md:h-12 bg-secondary rounded-full flex items-center justify-center text-white transition-all duration-200 hover:bg-secondary/80 hover:scale-105 active:scale-95 shadow-lg"
                   title="Previous products"
+                  aria-label="Previous products"
                 >
                   <svg
-                    className="w-6 h-6 md:w-8 md:h-8"
+                    className="w-6 h-6 sm:w-7 sm:h-7 md:w-6 md:h-6"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -282,18 +284,19 @@ const ShopOur = () => {
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       d="M5 15l7-7 7 7"
                     />
                   </svg>
                 </button>
                 <button
                   onClick={handleNext}
-                  className="w-10 h-10 md:w-12 md:h-12 bg-secondary rounded-full flex items-center justify-center text-white transition-colors hover:bg-secondary/80"
+                  className="w-12 h-12 sm:w-14 sm:h-14 md:w-12 md:h-12 bg-secondary rounded-full flex items-center justify-center text-white transition-all duration-200 hover:bg-secondary/80 hover:scale-105 active:scale-95 shadow-lg"
                   title="Next products"
+                  aria-label="Next products"
                 >
                   <svg
-                    className="w-6 h-6 md:w-8 md:h-8"
+                    className="w-6 h-6 sm:w-7 sm:h-7 md:w-6 md:h-6"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -301,7 +304,7 @@ const ShopOur = () => {
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       d="M19 9l-7 7-7-7"
                     />
                   </svg>

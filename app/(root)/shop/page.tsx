@@ -388,8 +388,8 @@ const ShopPage = () => {
                 key={pkg.id}
                 className="group rounded-2xl overflow-hidden bg-white border border-[#FF5D39]/20 hover:border-[#FF5D39] shadow-md hover:shadow-2xl transition-all duration-300 transform-gpu hover:-translate-y-1 h-full flex flex-col"
               >
-                <div className="relative">
-                  <Link href={`/products/${pkg.id}`} className="block">
+                <div className="relative bg-gradient-to-br from-gray-50 to-gray-100">
+                  <Link href={`/products/${pkg.id}`} className="block p-4">
                     {
                       <Image
                         src={normalizeImageSrc(pkg.imageUrl, pkg.updatedAt)}
@@ -397,7 +397,7 @@ const ShopPage = () => {
                         width={640}
                         height={480}
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="w-full aspect-[4/3] object-cover transition-transform duration-300 group-hover:scale-105 rounded-t-2xl"
+                        className="w-full aspect-[4/3] object-contain transition-transform duration-300 group-hover:scale-105"
                       />
                     }
                   </Link>

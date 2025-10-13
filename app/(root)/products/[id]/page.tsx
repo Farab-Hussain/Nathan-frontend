@@ -233,18 +233,18 @@ const ProductDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-12 bg-white rounded-lg sm:rounded-xl lg:rounded-2xl shadow-lg p-3 sm:p-4 lg:p-10">
           {/* Product Image */}
           <div className="relative">
-            <div className="rounded-xl lg:rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white relative group">
+            <div className="rounded-xl lg:rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-gradient-to-br from-gray-50 to-gray-100 relative group flex items-center justify-center p-4 sm:p-6 lg:p-8">
               <Image
                 src={normalizeImageSrc(product.imageUrl, product.updatedAt)}
                 alt={product.name}
                 width={1000}
-                height={750}
-                className="w-full h-48 sm:h-64 lg:h-80 object-cover transition-transform duration-300 group-hover:scale-105"
+                height={1000}
+                className="w-full h-auto max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] object-contain transition-transform duration-300 group-hover:scale-105"
                 sizes="(max-width: 640px) 100vw, (max-width: 768px) 80vw, 600px"
                 priority
               />
               <span
-                className="absolute top-3 left-3 text-white text-xs px-2 py-1 rounded-full shadow font-semibold"
+                className="absolute top-3 left-3 text-white text-xs sm:text-sm px-3 py-1.5 rounded-full shadow-lg font-semibold"
                 style={{
                   background:
                     product.category === "Traditional"

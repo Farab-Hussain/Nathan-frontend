@@ -202,13 +202,13 @@ const WishlistPage = () => {
                   }}
                 >
                   {/* Product Image */}
-                  <div className="relative">
+                  <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
                     <Image
                       src={normalizeImageSrc(item.imageUrl)}
                       alt={item.productName}
                       width={400}
                       height={300}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-contain"
                       onError={(e) => {
                         // Fallback to default image if the image fails to load
                         const target = e.target as HTMLImageElement;

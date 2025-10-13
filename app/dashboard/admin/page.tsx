@@ -1868,7 +1868,7 @@ const AdminPageContent = () => {
                             <span className="font-semibold text-[#FF5D39]">Click to upload</span> or drag and drop
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            PNG, JPG, GIF up to 50MB
+                            PNG, JPG, GIF up to 500MB
                           </p>
                         </div>
                       </label>
@@ -1880,7 +1880,7 @@ const AdminPageContent = () => {
                     onChange={async (e) => {
                       const file = e.target.files?.[0] || null;
                       if (file) {
-                        const maxSizeMB = 50;
+                        const maxSizeMB = 500;
                         const fileSizeMB = file.size / (1024 * 1024);
                         
                         if (fileSizeMB > maxSizeMB) {
@@ -2090,10 +2090,17 @@ const AdminPageContent = () => {
           <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border p-4 sm:p-6">
             <h2 className="text-lg sm:text-xl font-bold text-black mb-3 sm:mb-4">Create New Flavor</h2>
             
+            {/* Error Message Display */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+            
             {/* File Upload Info */}
             <div className="mb-3 sm:mb-4">
               <p className="text-xs sm:text-sm text-gray-600">
-                Maximum file size: 50MB • Images larger than 2MB will be automatically compressed
+                Maximum file size: 500MB • Images larger than 2MB will be automatically compressed
               </p>
                 </div>
 
@@ -2139,7 +2146,7 @@ const AdminPageContent = () => {
                               <span className="font-semibold text-[#FF5D39]">Click to upload</span> or drag and drop
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
-                              PNG, JPG, GIF up to 50MB
+                              PNG, JPG, GIF up to 500MB
                             </p>
                           </div>
                   </label>
@@ -2151,7 +2158,7 @@ const AdminPageContent = () => {
                       onChange={async (e) => {
                       const file = e.target.files?.[0] || null;
                         if (file) {
-                        const maxSizeMB = 50;
+                        const maxSizeMB = 500;
                         const fileSizeMB = file.size / (1024 * 1024);
                         
                         if (fileSizeMB > maxSizeMB) {
@@ -2538,7 +2545,7 @@ const AdminPageContent = () => {
                               type="number"
                               min="0"
                         placeholder="Update stock"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base text-gray-900 bg-white placeholder:text-gray-400"
                         onChange={() => {
                           // Update local state for immediate UI feedback
                         }}
@@ -2657,7 +2664,7 @@ const AdminPageContent = () => {
                             type="number"
                             min="0"
                         placeholder="Update stock"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF5D39] text-sm sm:text-base text-gray-900 bg-white placeholder:text-gray-400"
                         onChange={() => {
                           // Update local state for immediate UI feedback
                         }}

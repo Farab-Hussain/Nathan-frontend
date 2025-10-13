@@ -800,7 +800,7 @@ const AdminOrdersPage = () => {
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-sm text-gray-600">
-                        {order.orderItems?.length || 0} items
+                        {order.orderItems?.reduce((sum, item) => sum + item.quantity, 0) || 0} items
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -966,7 +966,7 @@ const AdminOrdersPage = () => {
                 <div>
                   <div className="text-gray-500 text-xs">Items</div>
                   <div className="text-black">
-                    {order.orderItems?.length || 0} items
+                    {order.orderItems?.reduce((sum, item) => sum + item.quantity, 0) || 0} items
                   </div>
                 </div>
                 <div>
