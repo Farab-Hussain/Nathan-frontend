@@ -3,11 +3,15 @@ import axios from "axios";
 
 export type OrderItem = {
   id?: string;
-  productId: string;
+  productId: string | null;  // NULL for custom packs
   productName: string;
   quantity: number;
   price: number;
   imageUrl?: string;
+  // Custom pack fields
+  flavorIds?: string[];
+  customPackName?: string | null;
+  total?: number;
 };
 
 export type Order = {
@@ -15,7 +19,7 @@ export type Order = {
   userId?: string;
   orderItems?: OrderItem[];
   items?: Array<{
-    productId: string;
+    productId: string | null;
     quantity: number;
   }>;
   total: number;

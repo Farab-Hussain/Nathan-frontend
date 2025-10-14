@@ -51,7 +51,35 @@ const CartPage = () => {
   const [flavors, setFlavors] = useState<Array<{ id: string; name: string }>>(
     []
   );
-  // Removed shipping address modal - Stripe will collect address directly
+  
+  // Shipping address and rates state
+  const [shippingAddress, setShippingAddress] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "US",
+  });
+  const [shippingRates, setShippingRates] = useState<Array<{
+    objectId: string;
+    serviceName: string;
+    carrier: string;
+    amount: number;
+    estimatedDays: number;
+  }>>([]);
+  const [selectedShippingRate, setSelectedShippingRate] = useState<{
+    objectId: string;
+    serviceName: string;
+    carrier: string;
+    amount: number;
+    estimatedDays: number;
+  } | null>(null);
+  const [calculatingShipping, setCalculatingShipping] = useState(false);
+  const [shippingError, setShippingError] = useState<string | null>(null);
+  const [showShippingForm, setShowShippingForm] = useState(false);
 
   const fetchRecommendedProducts = useCallback(async () => {
     setRecommendedLoading(true);
@@ -261,6 +289,69 @@ const CartPage = () => {
     return `${apiUrl}${normalizedSrc}`;
   };
 
+  // Calculate shipping rates based on address
+  const calculateShippingRates = async () => {
+    setCalculatingShipping(true);
+    setShippingError(null);
+    
+    try {
+      // Validate address fields
+      if (!shippingAddress.name || !shippingAddress.email || !shippingAddress.street || 
+          !shippingAddress.city || !shippingAddress.state || !shippingAddress.zipCode) {
+        throw new Error("Please fill in all required address fields");
+      }
+
+      const orderItems = items.map((item) => ({
+        productId: item.isCustomPack ? null : item.productId,
+        quantity: item.quantity,
+        flavorIds: item.flavorIds || [],
+        customPackName: item.customPackName || null,
+      }));
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/shippo/calculate-rates`,
+        {
+          shippingAddress: {
+            name: shippingAddress.name,
+            email: shippingAddress.email,
+            phone: shippingAddress.phone || "",
+            street1: shippingAddress.street,
+            city: shippingAddress.city,
+            state: shippingAddress.state,
+            zip: shippingAddress.zipCode,
+            country: shippingAddress.country,
+          },
+          orderItems,
+        }
+      );
+
+      if (response.data.rates && response.data.rates.length > 0) {
+        setShippingRates(response.data.rates);
+        // Auto-select the cheapest rate
+        type ShippingRate = {
+          objectId: string;
+          serviceName: string;
+          carrier: string;
+          amount: number;
+          estimatedDays: number;
+        };
+        const cheapest = response.data.rates.reduce(
+          (min: ShippingRate, rate: ShippingRate) => 
+            rate.amount < min.amount ? rate : min
+        );
+        setSelectedShippingRate(cheapest);
+      } else {
+        throw new Error("No shipping rates available for this address");
+      }
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } }; message?: string };
+      console.error("Shipping calculation error:", err);
+      setShippingError(err.response?.data?.error || err.message || "Failed to calculate shipping");
+    } finally {
+      setCalculatingShipping(false);
+    }
+  };
+
   const checkout = async () => {
     setOrderError(null);
     
@@ -269,7 +360,19 @@ const CartPage = () => {
       return;
     }
 
-    // Proceed directly to Stripe checkout - no address collection needed
+    // Show shipping form if not already shown
+    if (!showShippingForm) {
+      setShowShippingForm(true);
+      return;
+    }
+
+    // Validate shipping is calculated
+    if (!selectedShippingRate) {
+      setOrderError("Please enter your shipping address and calculate shipping");
+      return;
+    }
+
+    // Proceed with checkout
     await proceedWithCheckout();
   };
 
@@ -312,7 +415,7 @@ const CartPage = () => {
 
       // Convert cart items to order items format expected by backend
       const orderItems = items.map((item) => ({
-        productId: item.isCustomPack ? "3-pack" : item.productId,
+        productId: item.isCustomPack ? null : item.productId,  // NULL for custom packs
         productName: item.productName,
         quantity: item.quantity,
         price: item.price,
@@ -322,39 +425,66 @@ const CartPage = () => {
         customPackName: item.customPackName || null,
       }));
 
+      const subtotal = getTotal();
+      const shippingCost = selectedShippingRate?.amount || 0;
+      const total = subtotal + shippingCost;
+
       const orderData = {
         orderItems,
         orderNotes: notes || "Order from website",
-        total: getTotal(),
-        // Shipping address will be collected by Stripe checkout
+        total: total,
+        shippingAddress: {
+          name: shippingAddress.name,
+          email: shippingAddress.email,
+          phone: shippingAddress.phone,
+          street: shippingAddress.street,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          zipCode: shippingAddress.zipCode,
+          country: shippingAddress.country,
+        },
       };
 
-      // Create Stripe Checkout Session directly without creating order first
+      // Create Stripe Checkout Session with shipping included
       const resp = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/create-checkout-session`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          // Pass order data in metadata instead of orderId
+          // Pass order data in metadata with pre-collected address
           orderData: {
             orderNotes: orderData.orderNotes,
             orderItems: orderData.orderItems,
             total: orderData.total,
-            // Shipping address will be collected by Stripe and provided in webhook
+            shippingAddress: orderData.shippingAddress,
           },
-          items: items.map((item) => ({
-            productId: item.isCustomPack ? item.id : item.productId,
-            productName: item.productName,
-            quantity: item.quantity,
-            price: item.price,
-            ...(item.isCustomPack && {
-              isCustomPack: true,
-              flavorIds: item.flavorIds,
-              sku: item.sku,
-            }),
-          })),
-          customerEmail: undefined, // Stripe will collect this
-          shippingAddress: undefined, // Stripe will collect this
+          items: [
+            ...items.map((item) => ({
+              productId: item.isCustomPack ? item.id : item.productId,
+              productName: item.productName,
+              quantity: item.quantity,
+              price: item.price,
+              ...(item.isCustomPack && {
+                isCustomPack: true,
+                flavorIds: item.flavorIds,
+                sku: item.sku,
+              }),
+            })),
+            // Add shipping as a line item (selectedShippingRate is guaranteed to exist here)
+            ...(selectedShippingRate ? [{
+              productName: `Shipping - ${selectedShippingRate.carrier} ${selectedShippingRate.serviceName}`,
+              quantity: 1,
+              price: shippingCost,
+            }] : [])
+          ],
+          customerEmail: shippingAddress.email,
+          shippingAddress: orderData.shippingAddress,
+          selectedShippingRate: selectedShippingRate ? {
+            carrier: selectedShippingRate.carrier,
+            amount: selectedShippingRate.amount,
+            serviceName: selectedShippingRate.serviceName,
+            objectId: selectedShippingRate.objectId,
+          } : undefined,
           successUrl: `${window.location.origin}/orders/success?session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${window.location.origin}/cart`,
         }),
@@ -595,9 +725,201 @@ const CartPage = () => {
               
               </div>
 
-              {/* Right Side - Order Summary & Checkout */}
+              {/* Right Side - Shipping & Order Summary */}
               <div className="lg:col-span-1">
                 <div className="sticky top-4 lg:top-6 space-y-3 sm:space-y-4 lg:space-y-6">
+                  
+                  {/* Shipping Address Form */}
+                  {showShippingForm && (
+                    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-semibold text-gray-900">
+                          Shipping Address
+                        </h2>
+                        <svg className="w-6 h-6 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+
+                      <div className="space-y-4">
+                        {/* Name & Email Row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Full Name <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={shippingAddress.name}
+                              onChange={(e) => setShippingAddress({ ...shippingAddress, name: e.target.value })}
+                              className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="John Doe"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Email <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="email"
+                              value={shippingAddress.email}
+                              onChange={(e) => setShippingAddress({ ...shippingAddress, email: e.target.value })}
+                              className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="john@example.com"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        {/* Phone */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Phone Number
+                          </label>
+                          <input
+                            type="tel"
+                            value={shippingAddress.phone}
+                            onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
+                            className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="+1 (555) 123-4567"
+                          />
+                        </div>
+
+                        {/* Street Address */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Street Address <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={shippingAddress.street}
+                            onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
+                            className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            placeholder="123 Main St, Apt 4B"
+                            required
+                          />
+                        </div>
+
+                        {/* City, State, ZIP Row */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              City <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={shippingAddress.city}
+                              onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                              className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="New York"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              State <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={shippingAddress.state}
+                              onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
+                              className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="NY"
+                              maxLength={2}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              ZIP <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={shippingAddress.zipCode}
+                              onChange={(e) => setShippingAddress({ ...shippingAddress, zipCode: e.target.value })}
+                              className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                              placeholder="10001"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        {/* Calculate Shipping Button */}
+                        <button
+                          onClick={calculateShippingRates}
+                          disabled={calculatingShipping}
+                          className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {calculatingShipping ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                              Calculating Shipping...
+                            </span>
+                          ) : (
+                            <span className="flex items-center justify-center gap-2">
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                              </svg>
+                              Calculate Shipping
+                            </span>
+                          )}
+                        </button>
+
+                        {/* Shipping Error */}
+                        {shippingError && (
+                          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-600">{shippingError}</p>
+                          </div>
+                        )}
+
+                        {/* Shipping Options */}
+                        {shippingRates.length > 0 && (
+                          <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Select Shipping Method
+                            </label>
+                            {shippingRates.map((rate) => (
+                              <label
+                                key={rate.objectId}
+                                className={`flex items-center justify-between p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                                  selectedShippingRate?.objectId === rate.objectId
+                                    ? 'border-orange-500 bg-orange-50'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <input
+                                    type="radio"
+                                    name="shippingRate"
+                                    checked={selectedShippingRate?.objectId === rate.objectId}
+                                    onChange={() => setSelectedShippingRate(rate)}
+                                    className="w-4 h-4 text-orange-600 focus:ring-orange-500"
+                                  />
+                                  <div>
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {rate.carrier} - {rate.serviceName}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {rate.estimatedDays} business days
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-sm font-bold text-gray-900">
+                                  ${rate.amount.toFixed(2)}
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Order Summary */}
                   <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
                     <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -613,13 +935,25 @@ const CartPage = () => {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Shipping</span>
-                        <span className="text-green-600 font-medium">Free</span>
+                        {selectedShippingRate ? (
+                          <span className="font-medium text-gray-900">
+                            ${selectedShippingRate.amount.toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 italic text-xs">Calculated at checkout</span>
+                        )}
                       </div>
+                      {selectedShippingRate && (
+                        <div className="text-xs text-gray-500 flex justify-end">
+                          {selectedShippingRate.carrier} - {selectedShippingRate.serviceName}
+                          {selectedShippingRate.estimatedDays && ` (${selectedShippingRate.estimatedDays} days)`}
+                        </div>
+                      )}
                       <div className="border-t border-gray-200 pt-3">
                         <div className="flex justify-between items-center">
                           <span className="text-lg font-semibold text-gray-900">Total</span>
                           <span className="text-2xl font-bold text-orange-600">
-                            ${getTotal().toFixed(2)}
+                            ${(getTotal() + (selectedShippingRate?.amount || 0)).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -648,12 +982,12 @@ const CartPage = () => {
 
                     {/* Checkout Button */}
                     <CustomButton
-                      title="Proceed to Checkout"
+                      title={!showShippingForm ? "Continue to Shipping" : !selectedShippingRate ? "Calculate Shipping First" : "Complete Checkout"}
                       onClick={checkout}
                       loading={orderLoading}
                       loadingText="Processing..."
-                      disabled={orderLoading}
-                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl text-base"
+                      disabled={orderLoading || (showShippingForm && !selectedShippingRate)}
+                      className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl text-base disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
 

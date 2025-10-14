@@ -350,7 +350,7 @@ const CartPage = () => {
 
       // Convert cart items to order items format expected by backend
       const orderItems = items.map((item) => ({
-        productId: item.isCustomPack ? "3-pack" : item.productId,
+        productId: item.isCustomPack ? null : item.productId,  // NULL for custom packs
         productName: item.productName,
         quantity: item.quantity,
         price: item.price,
